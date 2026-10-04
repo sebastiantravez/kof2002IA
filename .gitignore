@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.pyc
+
+# Archivos temporales que escriben los scripts Lua / el bot en cada frame
+state.txt
+state.txt.tmp
+lock_req.txt
+lock_req.tmp
+lock_resp.txt
+lock_resp.tmp
+lua_frame.txt
+lua_test.txt
+
+# Partidas guardadas del emulador (estado del juego). savestate.create(1) desde Lua
+# la guarda como un archivo llamado "1" junto al script.
+*.fs
+lua/[0-9]
+
+# Capturas de pantalla y capturas con RAM para identificar datos (pesadas)
+captures/
+recordings/snaps_*/
+
+# Respaldos locales de lo aprendido (se generan en cada sesion)
+backups/

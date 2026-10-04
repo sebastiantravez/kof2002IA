@@ -1,0 +1,628 @@
+{
+ "castigar|d0": {
+  "golpe bajo 2B": [
+   1,
+   -4.0
+  ],
+  "agarre": [
+   2,
+   0.5
+  ],
+  "castigo: 2B 2A Oniyaki": [
+   3,
+   -5.333
+  ],
+  "castigo: 2B 2A Dokugami Tsumi Yomi": [
+   2,
+   0.5
+  ],
+  "castigo: C Dokugami Tsumi Yomi": [
+   2,
+   -2.0
+  ]
+ },
+ "castigar|d1": {
+  "castigo: C Dokugami Tsumi Yomi": [
+   1,
+   -6.0
+  ],
+  "golpe bajo 2B": [
+   14,
+   -4.143
+  ],
+  "barrida 2D": [
+   19,
+   -3.948
+  ],
+  "castigo: 2B 2A Oniyaki": [
+   2,
+   -26.0
+  ],
+  "castigo: 2B 2A Dokugami Tsumi Yomi": [
+   2,
+   -21.0
+  ],
+  "agarre": [
+   3,
+   2.667
+  ]
+ },
+ "castigar|d2": {
+  "barrida 2D": [
+   31,
+   -0.612
+  ],
+  "golpe bajo 2B": [
+   33,
+   0.15
+  ]
+ },
+ "estoy en el aire|d0": {
+  "golpe aereo D": [
+   4,
+   -2.0
+  ],
+  "golpe aereo C": [
+   1,
+   -18.0
+  ]
+ },
+ "estoy en el aire|d1": {
+  "sin ataque": [
+   2,
+   -11.0
+  ],
+  "golpe aereo C": [
+   4,
+   -9.5
+  ],
+  "golpe aereo D": [
+   10,
+   -5.9
+  ]
+ },
+ "estoy en el aire|d2": {
+  "golpe aereo D": [
+   9,
+   -4.0
+  ],
+  "golpe aereo C": [
+   7,
+   -1.571
+  ],
+  "sin ataque": [
+   5,
+   1.8
+  ]
+ },
+ "estoy en el aire|d3": {
+  "golpe aereo D": [
+   4,
+   -7.75
+  ],
+  "golpe aereo C": [
+   9,
+   1.333
+  ],
+  "sin ataque": [
+   2,
+   1.0
+  ]
+ },
+ "estoy en el aire|d4": {
+  "golpe aereo C": [
+   4,
+   0.0
+  ],
+  "sin ataque": [
+   3,
+   0.0
+  ],
+  "golpe aereo D": [
+   9,
+   -1.556
+  ]
+ },
+ "estoy en el aire|d5": {
+  "golpe aereo D": [
+   5,
+   0.0
+  ],
+  "golpe aereo C": [
+   4,
+   0.0
+  ],
+  "sin ataque": [
+   1,
+   0.0
+  ]
+ },
+ "estoy en el aire|d6": {
+  "golpe aereo C": [
+   1,
+   0.0
+  ]
+ },
+ "me golpearon|d0": {
+  "guardia": [
+   6,
+   -2.5
+  ],
+  "reversal": [
+   6,
+   -0.667
+  ],
+  "roll atras": [
+   3,
+   3.667
+  ]
+ },
+ "me golpearon|d1": {
+  "guardia": [
+   8,
+   -8.75
+  ],
+  "roll atras": [
+   7,
+   -1.429
+  ],
+  "reversal": [
+   3,
+   -6.667
+  ]
+ },
+ "me golpearon|d2": {
+  "guardia": [
+   15,
+   -1.133
+  ],
+  "roll atras": [
+   6,
+   -5.5
+  ],
+  "reversal": [
+   7,
+   2.857
+  ]
+ },
+ "me golpearon|d3": {
+  "guardia": [
+   9,
+   -1.111
+  ],
+  "reversal": [
+   4,
+   -9.5
+  ],
+  "roll atras": [
+   3,
+   -2.0
+  ]
+ },
+ "me golpearon|d4": {
+  "guardia": [
+   4,
+   0.0
+  ],
+  "reversal": [
+   1,
+   0.0
+  ]
+ },
+ "media distancia|d1": {
+  "guardia": [
+   1,
+   -16.0
+  ],
+  "poke": [
+   1,
+   0.0
+  ],
+  "hop adelante": [
+   3,
+   1.667
+  ],
+  "caminar adelante": [
+   2,
+   6.5
+  ]
+ },
+ "media distancia|d2": {
+  "caminar adelante": [
+   27,
+   -0.147
+  ],
+  "poke": [
+   12,
+   -1.999
+  ],
+  "barrida 2D": [
+   8,
+   1.75
+  ],
+  "roll adelante": [
+   12,
+   -2.584
+  ],
+  "guardia": [
+   10,
+   -1.6
+  ],
+  "especial de media": [
+   12,
+   -2.084
+  ],
+  "hop adelante": [
+   8,
+   -5.25
+  ]
+ },
+ "media distancia|d3": {
+  "especial de media": [
+   10,
+   -2.3
+  ],
+  "guardia": [
+   17,
+   1.471
+  ],
+  "hop adelante": [
+   6,
+   -5.333
+  ],
+  "barrida 2D": [
+   6,
+   0.0
+  ],
+  "caminar adelante": [
+   17,
+   -0.587
+  ],
+  "roll adelante": [
+   7,
+   -2.286
+  ],
+  "poke": [
+   6,
+   -3.667
+  ]
+ },
+ "media distancia|d4": {
+  "caminar adelante": [
+   6,
+   2.0
+  ],
+  "roll adelante": [
+   5,
+   -2.2
+  ],
+  "hop adelante": [
+   3,
+   0.0
+  ],
+  "poke": [
+   6,
+   -1.0
+  ],
+  "guardia": [
+   2,
+   -6.0
+  ]
+ },
+ "pegado al rival|d0": {
+  "combo: 2B 2A Dokugami Tsumi Yomi": [
+   2,
+   4.0
+  ],
+  "backdash": [
+   3,
+   -2.667
+  ],
+  "agarre": [
+   4,
+   2.75
+  ],
+  "guardia": [
+   5,
+   -6.8
+  ],
+  "combo: C Dokugami Tsumi Yomi": [
+   5,
+   -0.4
+  ],
+  "golpe bajo 2B": [
+   2,
+   -13.0
+  ],
+  "overhead": [
+   1,
+   -26.0
+  ]
+ },
+ "pegado al rival|d1": {
+  "guardia": [
+   18,
+   -1.112
+  ],
+  "agarre": [
+   4,
+   -2.0
+  ],
+  "combo: 2B 2A Oniyaki": [
+   7,
+   3.857
+  ],
+  "golpe bajo 2B": [
+   9,
+   -1.778
+  ],
+  "barrida 2D": [
+   10,
+   -0.0
+  ],
+  "acercarse a rango de combo": [
+   3,
+   -12.333
+  ],
+  "combo: 2B 2A Dokugami Tsumi Yomi": [
+   3,
+   -2.667
+  ],
+  "backdash": [
+   4,
+   0.0
+  ]
+ },
+ "rival ataca desde el aire|d1": {
+  "guardia": [
+   2,
+   0.5
+  ]
+ },
+ "rival ataca desde el aire|d2": {
+  "guardia": [
+   2,
+   2.5
+  ]
+ },
+ "rival ataca desde el aire|d3": {
+  "anti-aire normal": [
+   1,
+   0.0
+  ],
+  "guardia": [
+   2,
+   0.0
+  ]
+ },
+ "rival ataca desde el aire|d4": {
+  "guardia": [
+   1,
+   8.0
+  ],
+  "retroceder": [
+   1,
+   0.0
+  ]
+ },
+ "rival ataca|d0": {
+  "guardia": [
+   3,
+   -5.333
+  ],
+  "backdash": [
+   1,
+   -4.0
+  ]
+ },
+ "rival ataca|d1": {
+  "guardia": [
+   7,
+   -12.429
+  ],
+  "reversal": [
+   1,
+   -24.0
+  ],
+  "backdash": [
+   4,
+   0.75
+  ]
+ },
+ "rival ataca|d2": {
+  "guardia": [
+   13,
+   -1.231
+  ],
+  "reversal": [
+   1,
+   -16.0
+  ],
+  "backdash": [
+   6,
+   -2.667
+  ]
+ },
+ "rival ataca|d3": {
+  "backdash": [
+   2,
+   0.0
+  ],
+  "guardia": [
+   4,
+   0.0
+  ]
+ },
+ "rival ataca|d4": {
+  "guardia": [
+   1,
+   0.0
+  ]
+ },
+ "rival cae hacia mi|d0": {
+  "anti-aire especial": [
+   3,
+   2.333
+  ],
+  "anti-aire normal": [
+   1,
+   7.0
+  ],
+  "guardia": [
+   1,
+   0.0
+  ]
+ },
+ "rival cae hacia mi|d1": {
+  "anti-aire especial": [
+   1,
+   7.0
+  ],
+  "anti-aire normal": [
+   2,
+   8.0
+  ]
+ },
+ "rival cae hacia mi|d2": {
+  "anti-aire especial": [
+   6,
+   4.667
+  ],
+  "anti-aire normal": [
+   1,
+   0.0
+  ],
+  "guardia": [
+   2,
+   0.0
+  ]
+ },
+ "rival en el aire, esperando|d0": {
+  "esperar": [
+   1,
+   0.0
+  ],
+  "guardia": [
+   2,
+   -9.0
+  ],
+  "retroceder un paso": [
+   3,
+   -7.333
+  ]
+ },
+ "rival en el aire, esperando|d1": {
+  "retroceder un paso": [
+   3,
+   -8.0
+  ],
+  "guardia": [
+   2,
+   -1.0
+  ],
+  "esperar": [
+   3,
+   -6.0
+  ]
+ },
+ "rival en el aire, esperando|d2": {
+  "guardia": [
+   6,
+   1.833
+  ],
+  "esperar": [
+   4,
+   -4.0
+  ],
+  "retroceder un paso": [
+   3,
+   2.667
+  ]
+ },
+ "rival en el aire, esperando|d3": {
+  "guardia": [
+   6,
+   1.167
+  ],
+  "retroceder un paso": [
+   2,
+   0.0
+  ],
+  "esperar": [
+   2,
+   0.0
+  ]
+ },
+ "rival en el aire, esperando|d4": {
+  "guardia": [
+   1,
+   0.0
+  ]
+ },
+ "rival lejos|d4": {
+  "hop adelante": [
+   1,
+   0.0
+  ],
+  "esperar": [
+   1,
+   0.0
+  ],
+  "proyectil / especial de lejos": [
+   3,
+   4.0
+  ],
+  "correr": [
+   8,
+   0.75
+  ],
+  "caminar adelante": [
+   1,
+   0.0
+  ]
+ },
+ "rival lejos|d5": {
+  "hop adelante": [
+   8,
+   -0.75
+  ],
+  "proyectil / especial de lejos": [
+   11,
+   0.0
+  ],
+  "caminar adelante": [
+   7,
+   1.0
+  ],
+  "correr": [
+   12,
+   -1.917
+  ],
+  "esperar": [
+   2,
+   -2.0
+  ]
+ },
+ "rival lejos|d6": {
+  "correr": [
+   5,
+   0.0
+  ],
+  "hop adelante": [
+   1,
+   0.0
+  ],
+  "proyectil / especial de lejos": [
+   1,
+   0.0
+  ],
+  "caminar adelante": [
+   1,
+   0.0
+  ],
+  "esperar": [
+   1,
+   0.0
+  ]
+ }
+}

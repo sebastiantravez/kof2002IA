@@ -1,0 +1,162 @@
+{
+  "emulator_processes": [
+    "fcadefbneo.exe",
+    "fbneo64.exe",
+    "fbneo.exe"
+  ],
+  "fps": 59.1856,
+  "keys": {
+    "up": "up",
+    "down": "down",
+    "left": "left",
+    "right": "right",
+    "A": "a",
+    "B": "s",
+    "C": "d",
+    "D": "f",
+    "start": "1",
+    "coin": "5"
+  },
+  "motion_step_frames": 2,
+  "button_hold_frames": 3,
+  "focus_delay_frames": 4,
+  "kill_switch_key": "F8",
+  "characters": {
+    "Kyo": {
+      "_fuente": "GameFAQs Kyo Guide (faq 20973) + Basic Game Combos FAQ (29140), KOF 2002 vanilla",
+      "anti_air": "623A",
+      "anti_air_normal": "2C",
+      "reversal": "623C",
+      "far_special": "421B",
+      "mid_special": "421B",
+      "poke": "D",
+      "overhead": "6B",
+      "_combos_verificados": "tools/combo_lab.py en practica: todos conectan siempre (3/3, 4/4, 3/3)",
+      "combos": {
+        "2B 2A Dokugami Tsumi Yomi": "2B>2A>236C>63214A",
+        "2B 2A Oniyaki": "2B>2A>623A",
+        "C Dokugami Tsumi Yomi": "C>236C>63214C"
+      },
+      "punish": {
+        "C Dokugami Tsumi Yomi": "C>236C>63214C",
+        "2B 2A Dokugami Tsumi Yomi": "2B>2A>236C>63214A",
+        "2B 2A Oniyaki": "2B>2A>623A"
+      },
+      "dm_combos": {
+        "C Orochinagi (DM)": "C>2141236C",
+        "2B 2A Orochinagi (DM)": "2B>2A>2141236A"
+      },
+      "_dm": "dm_combos: solo con 1+ barra (RAM +0x1E3); inputs de las guias, sin verificar en laboratorio"
+    },
+    "Iori": {
+      "_fuente": "dreamcancel.com/wiki/The_King_of_Fighters_2002/Iori_Yagami",
+      "anti_air": "623A",
+      "anti_air_normal": "2C",
+      "reversal": "623C",
+      "far_special": "236C",
+      "mid_special": "236C",
+      "poke": "2C",
+      "overhead": "6B",
+      "combos": {
+        "C Aoi Hana x3": "C>214A>214A>214A",
+        "2A 6A A Yami Barai": "2A>6A>A>236C",
+        "C Kototsuki In": "C>63214B"
+      },
+      "punish": {
+        "C Aoi Hana x3": "C>214A>214A>214A",
+        "C Kototsuki In": "C>63214D",
+        "2A 6A A Yami Barai": "2A>6A>A>236C"
+      },
+      "dm_combos": {
+        "C Ya Otome (DM)": "C>23663214A",
+        "C 6A Ya Otome (DM)": "C>6A>23663214A"
+      },
+      "_dm": "dm_combos: solo con 1+ barra (RAM +0x1E3); inputs de las guias, sin verificar en laboratorio"
+    },
+    "Kim": {
+      "_fuente": "dreamcancel.com/wiki/The_King_of_Fighters_2002/Kim_Kaphwan",
+      "anti_air": "2[35]8B",
+      "anti_air_normal": "2C",
+      "reversal": "2[35]8B",
+      "far_special": "9[8]5[12]236B",
+      "mid_special": "214D",
+      "poke": "2D",
+      "overhead": "6B",
+      "_combos_verificados": "tools/combo_lab.py en practica 2026-10-04: los 4 conectan siempre; los seguimientos del Sankuu Kyaku (9D, 2D) van sin hit-confirm dentro de la misma parte",
+      "combos": {
+        "C Sankuu Kyaku (BnB)": "C>214C5[8]9D5[8]2D",
+        "2B 2A Sankuu Kyaku": "2B>2A>214C5[8]9D5[8]2D",
+        "C Hangetsu Zan": "C>214D",
+        "2A Sankuu": "2A>214C",
+        "6C 1A 63214A (de repeticiones)": "6C>1A>63214A"
+      },
+      "punish": {
+        "C Sankuu Kyaku (BnB)": "C>214C5[8]9D5[8]2D",
+        "2B 2A Sankuu Kyaku": "2B>2A>214C5[8]9D5[8]2D",
+        "C Hangetsu Zan": "C>214D"
+      },
+      "dm_combos": {
+        "C Hou'ou Kyaku (DM)": "C>21441236D",
+        "2B 2A Hou'ou Kyaku (DM)": "2B>2A>21441236D"
+      },
+      "anti_air_dm": "236236D",
+      "_dm": "dm_combos: solo con 1+ barra (RAM +0x1E3); inputs de las guias, sin verificar en laboratorio"
+    },
+    "Choi": {
+      "_fuente": "dreamcancel.com/wiki/The_King_of_Fighters_2002/Choi_Bounge (sin buen anti-aire ni reversal sin barra)",
+      "anti_air": "623B",
+      "anti_air_normal": "2C",
+      "reversal": "623B",
+      "far_special": "9[8]5[12]236B",
+      "mid_special": "214A",
+      "poke": "2C",
+      "overhead": "6B",
+      "combos": {
+        "2B 2B Kaiten Hien Zan": "2B>2B>214A",
+        "2C Kaiten Hien Zan": "2C>214A"
+      },
+      "punish": {
+        "2B 2B Kaiten Hien Zan": "2B>2B>214A"
+      },
+      "dm_combos": {
+        "2B 2B A Hou'ou Kyaku (DM, 1 stock)": "2B>2B>A>23663214B",
+        "2C Hou'ou Kyaku (DM, 1 stock)": "2C>23663214D"
+      },
+      "_dm": "dm_combos: solo con 1+ barra (RAM +0x1E3); inputs de las guias, sin verificar en laboratorio"
+    },
+    "Rugal": {
+      "_fuente": "perfil generico + combos de repeticiones (recordings/imitation.json); comandos sin verificar",
+      "anti_air": "623D",
+      "anti_air_normal": "2C",
+      "reversal": "623D",
+      "far_special": "236A",
+      "mid_special": "236A",
+      "poke": "2D",
+      "overhead": "6B",
+      "combos": {
+        "2B 236A": "2B>236A"
+      },
+      "punish": {
+        "2B 236A": "2B>236A"
+      }
+    },
+    "Generico": {
+      "_fuente": "comandos genericos, verificar con la lista del personaje",
+      "anti_air": "623A",
+      "anti_air_normal": "2C",
+      "reversal": "623A",
+      "far_special": "236A",
+      "mid_special": "214A",
+      "poke": "2D",
+      "overhead": "6B",
+      "combos": {
+        "2B 2A": "2B>2A",
+        "C 236A": "C>236A"
+      },
+      "punish": {
+        "C 236A": "C>236A",
+        "2B 2A": "2B>2A"
+      }
+    }
+  }
+}

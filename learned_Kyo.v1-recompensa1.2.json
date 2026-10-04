@@ -1,0 +1,562 @@
+{
+ "estoy en el aire|d0": {
+  "golpe aereo D": [
+   13,
+   -4.354
+  ],
+  "golpe aereo C": [
+   5,
+   -0.32
+  ],
+  "sin ataque": [
+   4,
+   -3.9
+  ]
+ },
+ "estoy en el aire|d1": {
+  "golpe aereo C": [
+   21,
+   -0.515
+  ],
+  "golpe aereo D": [
+   34,
+   -0.236
+  ],
+  "sin ataque": [
+   4,
+   -3.4
+  ]
+ },
+ "estoy en el aire|d2": {
+  "golpe aereo C": [
+   16,
+   1.038
+  ],
+  "golpe aereo D": [
+   23,
+   0.383
+  ],
+  "sin ataque": [
+   3,
+   -3.133
+  ]
+ },
+ "estoy en el aire|d3": {
+  "golpe aereo D": [
+   17,
+   -2.247
+  ],
+  "sin ataque": [
+   8,
+   0.0
+  ],
+  "golpe aereo C": [
+   9,
+   -3.467
+  ]
+ },
+ "estoy en el aire|d4": {
+  "golpe aereo C": [
+   6,
+   0.0
+  ],
+  "golpe aereo D": [
+   9,
+   1.089
+  ]
+ },
+ "estoy en el aire|d5": {
+  "golpe aereo D": [
+   11,
+   -1.036
+  ],
+  "golpe aereo C": [
+   2,
+   0.0
+  ]
+ },
+ "estoy en el aire|d6": {
+  "golpe aereo C": [
+   2,
+   0.0
+  ],
+  "golpe aereo D": [
+   1,
+   0.0
+  ],
+  "sin ataque": [
+   1,
+   0.0
+  ]
+ },
+ "me golpearon|d0": {
+  "reversal": [
+   19,
+   -1.895
+  ],
+  "bloquear agachado": [
+   27,
+   -2.615
+  ],
+  "bloquear de pie": [
+   8,
+   -6.75
+  ],
+  "roll atras": [
+   20,
+   -1.602
+  ]
+ },
+ "me golpearon|d1": {
+  "bloquear agachado": [
+   55,
+   -1.843
+  ],
+  "bloquear de pie": [
+   14,
+   -1.886
+  ],
+  "reversal": [
+   32,
+   -1.138
+  ],
+  "roll atras": [
+   7,
+   -1.543
+  ]
+ },
+ "me golpearon|d2": {
+  "reversal": [
+   17,
+   -1.352
+  ],
+  "bloquear agachado": [
+   31,
+   -1.137
+  ],
+  "roll atras": [
+   6,
+   -1.833
+  ],
+  "bloquear de pie": [
+   8,
+   -0.75
+  ]
+ },
+ "me golpearon|d3": {
+  "bloquear de pie": [
+   8,
+   -0.75
+  ],
+  "reversal": [
+   9,
+   -0.067
+  ],
+  "bloquear agachado": [
+   17,
+   -2.188
+  ],
+  "roll atras": [
+   2,
+   0.0
+  ]
+ },
+ "me golpearon|d4": {
+  "reversal": [
+   3,
+   -3.6
+  ],
+  "roll atras": [
+   4,
+   0.0
+  ],
+  "bloquear agachado": [
+   6,
+   -2.2
+  ],
+  "bloquear de pie": [
+   2,
+   0.0
+  ]
+ },
+ "me golpearon|d5": {
+  "bloquear agachado": [
+   4,
+   0.0
+  ],
+  "reversal": [
+   4,
+   0.0
+  ],
+  "roll atras": [
+   1,
+   0.0
+  ]
+ },
+ "me golpearon|d6": {
+  "reversal": [
+   2,
+   0.0
+  ],
+  "roll atras": [
+   2,
+   0.0
+  ],
+  "bloquear agachado": [
+   2,
+   0.0
+  ]
+ },
+ "media distancia|d1": {
+  "hop adelante": [
+   10,
+   0.66
+  ],
+  "especial de media": [
+   16,
+   -0.137
+  ],
+  "caminar adelante": [
+   15,
+   -1.094
+  ],
+  "bloquear agachado": [
+   7,
+   -0.257
+  ],
+  "poke barrida": [
+   7,
+   -1.086
+  ],
+  "roll adelante": [
+   6,
+   1.333
+  ]
+ },
+ "media distancia|d2": {
+  "roll adelante": [
+   41,
+   0.239
+  ],
+  "caminar adelante": [
+   74,
+   0.079
+  ],
+  "poke barrida": [
+   111,
+   2.237
+  ],
+  "bloquear agachado": [
+   79,
+   1.799
+  ],
+  "especial de media": [
+   68,
+   0.679
+  ],
+  "hop adelante": [
+   73,
+   -0.165
+  ]
+ },
+ "media distancia|d3": {
+  "roll adelante": [
+   46,
+   -2.345
+  ],
+  "caminar adelante": [
+   77,
+   -1.531
+  ],
+  "poke barrida": [
+   51,
+   -1.829
+  ],
+  "especial de media": [
+   54,
+   -0.162
+  ],
+  "hop adelante": [
+   53,
+   -2.58
+  ],
+  "bloquear agachado": [
+   69,
+   -0.072
+  ]
+ },
+ "media distancia|d4": {
+  "poke barrida": [
+   17,
+   -1.765
+  ],
+  "hop adelante": [
+   20,
+   -3.13
+  ],
+  "caminar adelante": [
+   38,
+   0.346
+  ],
+  "roll adelante": [
+   26,
+   -2.063
+  ],
+  "especial de media": [
+   19,
+   -0.727
+  ],
+  "bloquear agachado": [
+   10,
+   -3.96
+  ]
+ },
+ "pegado al rival|d0": {
+  "combo corto": [
+   73,
+   3.546
+  ],
+  "agarre": [
+   40,
+   0.089
+  ],
+  "golpe bajo 2B": [
+   17,
+   -1.8
+  ],
+  "golpe fuerte C": [
+   50,
+   0.498
+  ],
+  "reversal": [
+   6,
+   -2.867
+  ],
+  "backdash": [
+   13,
+   0.522
+  ],
+  "bloquear agachado": [
+   17,
+   -5.952
+  ]
+ },
+ "pegado al rival|d1": {
+  "bloquear agachado": [
+   59,
+   2.674
+  ],
+  "combo corto": [
+   54,
+   1.301
+  ],
+  "reversal": [
+   28,
+   1.929
+  ],
+  "agarre": [
+   66,
+   3.641
+  ],
+  "golpe fuerte C": [
+   52,
+   3.492
+  ],
+  "golpe bajo 2B": [
+   35,
+   0.321
+  ],
+  "backdash": [
+   32,
+   1.725
+  ]
+ },
+ "rival cae hacia mi|d0": {
+  "anti-aire especial": [
+   19,
+   3.505
+  ],
+  "bloquear de pie": [
+   4,
+   -13.15
+  ],
+  "anti-aire normal": [
+   7,
+   -2.914
+  ]
+ },
+ "rival cae hacia mi|d1": {
+  "anti-aire especial": [
+   23,
+   0.349
+  ],
+  "anti-aire normal": [
+   6,
+   -0.6
+  ],
+  "bloquear de pie": [
+   8,
+   6.225
+  ]
+ },
+ "rival cae hacia mi|d2": {
+  "anti-aire normal": [
+   44,
+   0.654
+  ],
+  "bloquear de pie": [
+   12,
+   -2.183
+  ],
+  "anti-aire especial": [
+   30,
+   1.726
+  ]
+ },
+ "rival cae hacia mi|d3": {
+  "anti-aire especial": [
+   2,
+   0.0
+  ],
+  "anti-aire normal": [
+   2,
+   7.0
+  ]
+ },
+ "rival en el aire, esperando|d0": {
+  "esperar": [
+   21,
+   -1.98
+  ],
+  "retroceder un paso": [
+   7,
+   -0.286
+  ],
+  "bloquear de pie": [
+   17,
+   -0.576
+  ]
+ },
+ "rival en el aire, esperando|d1": {
+  "bloquear de pie": [
+   26,
+   -0.084
+  ],
+  "esperar": [
+   19,
+   -3.757
+  ],
+  "retroceder un paso": [
+   11,
+   -4.164
+  ]
+ },
+ "rival en el aire, esperando|d2": {
+  "esperar": [
+   31,
+   -2.653
+  ],
+  "bloquear de pie": [
+   28,
+   -2.243
+  ],
+  "retroceder un paso": [
+   18,
+   -1.466
+  ]
+ },
+ "rival en el aire, esperando|d3": {
+  "bloquear de pie": [
+   13,
+   -2.031
+  ],
+  "retroceder un paso": [
+   9,
+   -2.133
+  ],
+  "esperar": [
+   28,
+   -0.108
+  ]
+ },
+ "rival en el aire, esperando|d4": {
+  "retroceder un paso": [
+   2,
+   0.0
+  ],
+  "esperar": [
+   10,
+   -2.88
+  ],
+  "bloquear de pie": [
+   5,
+   4.8
+  ]
+ },
+ "rival lejos|d4": {
+  "caminar adelante": [
+   17,
+   -1.4
+  ],
+  "correr": [
+   13,
+   -4.646
+  ],
+  "hop adelante": [
+   9,
+   1.444
+  ],
+  "esperar": [
+   9,
+   -0.178
+  ],
+  "proyectil / especial de lejos": [
+   14,
+   -0.542
+  ]
+ },
+ "rival lejos|d5": {
+  "hop adelante": [
+   11,
+   -2.4
+  ],
+  "correr": [
+   24,
+   -0.592
+  ],
+  "caminar adelante": [
+   25,
+   0.185
+  ],
+  "proyectil / especial de lejos": [
+   11,
+   0.109
+  ],
+  "esperar": [
+   6,
+   -1.2
+  ]
+ },
+ "rival lejos|d6": {
+  "proyectil / especial de lejos": [
+   7,
+   0.0
+  ],
+  "hop adelante": [
+   9,
+   0.0
+  ],
+  "correr": [
+   15,
+   -0.24
+  ],
+  "caminar adelante": [
+   10,
+   -1.56
+  ],
+  "esperar": [
+   5,
+   0.0
+  ]
+ }
+}
