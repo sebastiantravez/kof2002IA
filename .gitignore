@@ -23,3 +23,6 @@ recordings/snaps_*/
 
 # Respaldos locales de lo aprendido (se generan en cada sesion)
 backups/
+
+# Registros defensivos de cada sesion
+logs/

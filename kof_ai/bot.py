@@ -165,6 +165,7 @@ class RuleBot(_BaseBot):
         super().__init__(keyboard, clock, config, hwnd, facing_right, on_log, **mode)
         self._brain = brain or RuleBrain(reader, moves)
         self._last_situation = None
+        self.current = (None, None, 0)   # (situacion, accion, numero de decision)
         self._saved_at = time.perf_counter()
         self.save_every = 30   # segundos entre guardados de lo aprendido
 
@@ -198,6 +199,7 @@ class RuleBot(_BaseBot):
             self._halt("sin vision (carga lua/kof_state.lua)")
             return False
         situation, option = decision
+        self.current = (situation, option.name, self.current[2] + 1)   # para el registro defensivo
         if situation != self._last_situation:
             self._log(f"[{situation}]")
             self._last_situation = situation
@@ -222,10 +224,17 @@ class RuleBot(_BaseBot):
             if not self._play(option.notation, lambda: urgent() or self._brain.being_thrown()):
                 return False
         # Pausa corta entre acciones: en guardia si el rival esta cerca, si no, neutral.
-        pause = random.randint(2, 6)
+        # Con ofensiva estrategica solo se guarda ante una amenaza real (y la pausa es mas
+        # corta) para no quedarse quieto cubriendose sin motivo.
         state = self._brain.state()
-        if state and state.distance <= GUARD_PAUSE_DISTANCE:
-            return self._guard(pause)
+        if getattr(self._brain, "strategy", None):
+            if self._brain.threat_now():
+                return self._guard(random.randint(2, 6))
+            pause = random.randint(1, 3)
+        else:
+            pause = random.randint(2, 6)
+            if state and state.distance <= GUARD_PAUSE_DISTANCE:
+                return self._guard(pause)
         return self._clock.wait_frames(
             pause, lambda: self._should_stop() or self._brain.urgent() or self._brain.being_thrown()) \
             or not self._should_stop()

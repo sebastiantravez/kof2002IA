@@ -27,8 +27,36 @@ velocidad y sin necesitar el foco: se puede usar la PC mientras entrena. Cada ro
 2. Cargar `lua\kof_train.lua` en el emulador (detener antes `kof_state.lua`).
 3. `python tools\train_fast.py Kim 15` (personaje, minutos; `--normal` para mirar sin acelerar).
 
+**Probar lo aprendido** (sin explorar y sin guardar, a velocidad normal):
+`python tools\train_fast.py Kim 10 --play` para mirarlo contra la CPU, o
+`python tools\train_fast.py Kim 10 --play --no-reset` para pelear tú contra él como P2.
+
 Respalda lo aprendido en `backups\` antes de cada sesión y se detiene solo (restaurando el
 respaldo) si en 1 minuto de juego no recibe ningún golpe, señal de que es el dummy de práctica.
+
+## Defensa (estilo defensivo, Iori)
+
+`config.json` → perfil → `"style": "defensive"` y `"reaction_frames"` (retraso de percepción
+configurable). El bot se cubre alto/bajo según el rival, no suelta la guardia bajo presión,
+castiga solo ataques largos/fallados, se defiende distinto acorralado y no usa el anti-aire
+automáticamente. Cada sesión deja `logs\defensa_*.csv`; resumen acumulado por amenaza y por rival:
+`python tools\defense_report.py Iori`. Agarres y proyectiles no se detectan en la RAM leída: se
+reportan como "posible".
+
+## Ofensiva estratégica (DEFENSIVE OFFENSE AI V2)
+
+`config.json` → perfil → `"offense": "strategic"` (o `"off"` para la versión solo defensiva).
+La defensa sigue teniendo prioridad: solo sin amenaza real el bot pasa a NEUTRAL y elige un modo
+(APPROACH, POKE, PRESSURE, BAIT, RETREAT) según distancia, esquina, ventaja de vida y el modelo del
+rival (saltos, agresividad, ataques bajos, golpes fallados, si se cubre mucho), con histéresis de
+20 frames. Añade WHIFF_PUNISH (castiga corriendo un golpe fallado de lejos), un `passivity_score`
+que empuja a hacer algo útil si se queda quieto, y penaliza las acciones arriesgadas. Entre
+acciones solo se cubre si hay amenaza. Código en [kof_ai/strategy.py](kof_ai/strategy.py).
+
+Comparar versiones: `python tools\train_fast.py Iori 15 --offense=off`, luego
+`--offense=strategic`, y `python tools\compare_sessions.py Iori` (daño por ronda, defensa correcta,
+castigos, ataques fallidos, ofensiva tras defensa, tiempo quieto y tiempo por estado).
+Pruebas sin el juego: `python -m unittest discover tests`.
 
 ## Imitación de jugadores top
 

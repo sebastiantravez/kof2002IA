@@ -34,6 +34,7 @@ class Lockstep:
         self.timeout = timeout       # tras esto se avisa que el script no responde
         self.max_wait = max_wait     # y tras esto se abandona
         self.on_reconnect = None     # callback() si el script Lua se reinicio
+        self.on_step = None          # callback(estado, teclas) en cada intercambio (registro)
         self.last_seq = None
         self.state = None
         self.keys = set()
@@ -86,6 +87,8 @@ class Lockstep:
         elif self._resetting and me.life > 0 and rival.life > 0:
             self._resetting = False
             self._round_start = self.frames
+        if self.on_step and not self._resetting:
+            self.on_step(self.state, self.keys)
         self._respond(seq, hold)
         self.frames += hold
         return self.state
