@@ -13,8 +13,8 @@ personaje (+0x71), +0x73, +0xE0, vida (+0x139), barras (+0x1E3). Nada más.
 |---|---|---|
 | Posición, altura (en el aire), vida, barras | RAM verificada | buena |
 | Rival atacando | +0xE0 bit0 | cubre toda la animación, incluida la recuperación |
-| Rival agachado | +0xE0 bit2 | **solo agachado quieto: se apaga durante el ataque agachado** |
-| Ataque bajo | inferido: ataque que empieza ≤4 frames después de estar agachado quieto | **no detecta un 2B/2D que sale directo de pie** |
+| Rival agachado | +0xE0 bit2 | **corregido (sección 4): también se enciende en ataques agachados, 74–87% desde el primer frame** |
+| Ataque bajo | inferido del bit de agachado | **corregido (sección 4): sí detecta el 2B/2D directo desde de pie (87%)** |
 | Overhead | no existe señal | todo golpe de pie se trata igual |
 | Agarre recibido | +0x73 bit1 desactivado por falsos positivos (`THROWN_OFFSET = None`) | **no hay detección** |
 | Proyectiles | no existe señal | — |
@@ -24,7 +24,7 @@ personaje (+0x71), +0x73, +0xE0, vida (+0x139), barras (+0x1E3). Nada más.
 
 ## 2. Hallazgos con evidencia
 
-### H1 — La guardia baja casi nunca se activa (golpes a los pies)
+### H1 — (CORREGIDO en la sección 4) La guardia baja casi nunca se activa
 - Código: `RuleBrain.guard_low()` → abajo solo si el rival está agachado quieto, o si su ataque
   empezó ≤4 frames después de estar agachado quieto. En cualquier otro caso: guardia de pie.
 - Datos (Chin): de 930 ataques rivales cercanos, solo **29** se clasificaron "bajo"; 869 como
