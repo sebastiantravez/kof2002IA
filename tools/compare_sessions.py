@@ -26,7 +26,7 @@ for path in sorted((ROOT / "logs").glob(f"sesion_{character}_*.json")):
     s = json.loads(path.read_text(encoding="utf-8"))
     if not s.get("modo_prueba") and (rival is None or s.get("rival") in (rival, None)):
         mode = s.get("modo") or {"strategic": "BALANCED_EXPERIMENTAL"}.get(s.get("ofensiva"), "DEFENSE_ONLY")
-        groups[mode].append(s)
+        groups[mode + (" + preventiva" if s.get("preventiva") else "")].append(s)
 if not groups:
     sys.exit(f"No hay sesiones de {character} en logs/ (corre tools/train_fast.py primero).")
 

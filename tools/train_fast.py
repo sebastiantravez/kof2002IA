@@ -16,6 +16,7 @@ Uso:
      --reuse-save: no guardar un punto de reinicio nuevo: cargar el de la sesion anterior
                  (mismo rival y escenario, para comparar modos en igualdad de condiciones).
      --rival=Chin: detener si P2 no es ese personaje.
+     --preventive=on|off: guardia preventiva (sin acciones largas cerca del rival).
   Se detiene solo si P1 no es el personaje pedido (p. ej. la demo del arcade).
 """
 import json
@@ -46,6 +47,8 @@ wanted_rival = next((a.split("=", 1)[1] for a in sys.argv[1:] if a.startswith("-
 config = json.loads((ROOT / "config.json").read_text(encoding="utf-8"))
 moves = dict(config["characters"][character])
 for a in sys.argv[1:]:
+    if a.startswith("--preventive="):   # guardia preventiva on|off (docs/DEFENSE_AUDIT_V4.md)
+        moves["preventive_guard"] = a.split("=", 1)[1].lower() in ("on", "1", "true", "si")
     if a.startswith("--mode="):      # modo de combate (kof_ai/arbiter.py)
         moves["combat_mode"] = a.split("=", 1)[1].upper()
     if a.startswith("--offense="):   # compatibilidad: off | strategic
@@ -167,7 +170,8 @@ defense = DefenseLogger(ROOT / "logs" / f"defensa_{character}_{time.strftime('%Y
                         lambda: bot.current)
 link.on_step = defense.observe
 offense = brain.combat_mode
-print(f"Estilo: {brain.style}, modo: {offense}, tiempo de reaccion extra: {brain.reaction_frames} frames")
+print(f"Estilo: {brain.style}, modo: {offense}, guardia preventiva: {'si' if brain.preventive_guard else 'no'}, "
+      f"tiempo de reaccion extra: {brain.reaction_frames} frames")
 
 start = time.time()
 frames0 = link.frames
@@ -237,7 +241,8 @@ if brain.strategy:
 summary = {"personaje": character, "modo": offense, "estilo": brain.style, "modo_prueba": play,
            "minutos_juego": frames / 59.19 / 60, "ganadas": stats["ganadas"], "perdidas": stats["perdidas"],
            "otras": stats["empates"], "combos": dict(combo_stats), "rival": first.rival.character,
-           "decisiones": dict(brain.arbiter.decisions), **defense.metrics(rounds)}
+           "decisiones": dict(brain.arbiter.decisions), "preventiva": brain.preventive_guard,
+           **defense.metrics(rounds)}
 session_path = defense.path.with_name(defense.path.stem.replace("defensa_", "sesion_") + ".json")
 session_path.write_text(json.dumps(summary, indent=1, ensure_ascii=False), encoding="utf-8")
 print(f"Resumen de sesion: {session_path}")

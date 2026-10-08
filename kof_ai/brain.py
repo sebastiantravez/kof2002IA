@@ -33,6 +33,11 @@ LONG_ATTACK_FRAMES = 24   # ataque rival que dura >= N frames: lo deja vulnerabl
 # sin que empiece otro (ataques de varias partes apagan el bit de ataque entre partes).
 # Configurable por perfil: "punish_confirm_frames".
 PUNISH_CONFIRM_FRAMES = 4
+# Guardia preventiva: situaciones sin amenaza pero con el rival en rango, y acciones que alli
+# dejan a Iori atado (no se pueden cortar a tiempo: el golpe rival llega en 3-5 frames).
+PREVENTIVE_SITUATIONS = {"pegado al rival", "media distancia", "acorralado", "rival en el aire, esperando"}
+PREVENTIVE_DROP = ("combo", "hop", "salto", "roll", "especial de media", "overhead", "reversal",
+                   "acercarse a rango de combo")
 
 # Estilo "defensive" (perfil "style" en config.json): multiplicadores de peso por opcion.
 # Mas guardia y retroceso; menos riesgo; combos solo como castigo confirmado.
@@ -68,6 +73,9 @@ class RuleBrain:
         self.combat_mode = mode_from_profile(moves)
         self.arbiter = CombatActionArbiter(self.combat_mode)
         self.punish_confirm_frames = int(moves.get("punish_confirm_frames", PUNISH_CONFIRM_FRAMES))
+        # Guardia preventiva: sin acciones largas no interrumpibles cerca del rival (perfil
+        # "preventive_guard"; apagada = defensa original exacta).
+        self.preventive_guard = bool(moves.get("preventive_guard", False))
         # Ofensiva estrategica (kof_ai/strategy.py): solo en BALANCED_EXPERIMENTAL.
         self.strategy = Strategy() if self.combat_mode == BALANCED_EXPERIMENTAL else None
         self._attack_min_dist = 999       # distancia minima durante el ataque rival en curso
@@ -290,9 +298,31 @@ class RuleBrain:
     def _options_for(self, state):
         """La defensa original y el ataque proponen por separado; el arbitro elige."""
         if self.combat_mode == DEFENSE_ONLY:
-            return self.arbiter.select(Proposal(*self._defense_options(state, allow_punish=True)))
-        defense = Proposal(*self._defense_options(state, allow_punish=False))
-        return self.arbiter.select(defense, self._punish_proposal(state), self._attack_proposal(state))
+            situation, options = self.arbiter.select(Proposal(*self._defense_options(state, allow_punish=True)))
+        else:
+            defense = Proposal(*self._defense_options(state, allow_punish=False))
+            situation, options = self.arbiter.select(defense, self._punish_proposal(state),
+                                                     self._attack_proposal(state))
+        if self.preventive_guard:
+            options = self._preventive(situation, options)
+        return situation, options
+
+    @staticmethod
+    def _preventive(situation, options):
+        """Guardia preventiva (docs/DEFENSE_AUDIT_V4.md, seccion 4): el golpe rival conecta 3-5
+        frames despues de verse, asi que cerca del rival Iori no puede estar atado a una accion
+        larga que no se corta. Sin amenaza y en rango: fuera combos, DM, saltos, rolls, overhead
+        y reversal (quedan para el castigo); las esperas neutrales pasan a ser guardia."""
+        if situation not in PREVENTIVE_SITUATIONS:
+            return options
+        kept = []
+        for o in options:
+            if o.name.startswith(PREVENTIVE_DROP):
+                continue
+            if o.name == "esperar":
+                o = Option(o.weight, "guardia", "G" + o.notation[1:] if o.notation.startswith("5[") else "G[4]")
+            kept.append(o)
+        return kept or [Option(1, "guardia", "G[8]")]
 
     def _punish_proposal(self, state):
         d = state.distance

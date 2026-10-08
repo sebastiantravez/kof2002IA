@@ -230,3 +230,45 @@ class DefenseLoggerRegression(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class PreventiveGuardDefense(DefenseRegression, unittest.TestCase):
+    """Con guardia preventiva, la defensa ante amenazas tiene que seguir igual."""
+    profile = {**IORI, "combat_mode": "DEFENSE_ONLY", "preventive_guard": True}
+
+
+class PreventiveGuard(unittest.TestCase):
+    def brain(self, states, preventive=True):
+        feed = Feed()
+        brain = RuleBrain(feed, {**IORI, "combat_mode": "DEFENSE_ONLY", "preventive_guard": preventive})
+        for s in states:
+            feed.s = s
+            brain.state()
+        return brain
+
+    def test_close_without_threat_has_no_long_actions(self):
+        b = self.brain([st(f, mx=400, rx=430) for f in range(0, 80)])   # d=30, sin amenaza
+        sit, opts = b._options_for(b.state())
+        self.assertEqual(sit, "pegado al rival")
+        names = [o.name for o in opts]
+        self.assertFalse([n for n in names if n.startswith(("combo", "salto", "hop", "roll", "overhead", "reversal"))])
+        self.assertIn("guardia", names)
+
+    def test_off_keeps_original_options(self):
+        b = self.brain([st(f, mx=400, rx=430) for f in range(0, 80)], preventive=False)
+        names = [o.name for o in b._options_for(b.state())[1]]
+        self.assertTrue([n for n in names if n.startswith("combo")])
+
+    def test_waiting_for_airborne_rival_becomes_guard(self):
+        heights = [0] * 70 + [20, 40, 60, 80]          # subiendo: aun no "cae hacia mi"
+        b = self.brain([st(f, rh=h) for f, h in enumerate(heights)])
+        sit, opts = b._options_for(b.state())
+        self.assertEqual(sit, "rival en el aire, esperando")
+        self.assertNotIn("esperar", [o.name for o in opts])
+        self.assertTrue(all(not o.notation.startswith("5[") for o in opts))
+
+    def test_punish_keeps_combos(self):
+        b = self.brain([st(f, ratk=(5 <= f < 40)) for f in range(0, 43)])
+        sit, opts = b._options_for(b.state())
+        self.assertEqual(sit, "castigar")
+        self.assertTrue([o for o in opts if o.name.startswith("castigo")])
