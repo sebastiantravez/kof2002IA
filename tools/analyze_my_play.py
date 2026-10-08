@@ -4,6 +4,7 @@ combos que hiciste y cuanto quitaron, cada golpe que recibiste con su causa prob
 que el bot aun no tiene (ataque bajo, guardia/bloqueo), usando el volcado .bin.
 
 Uso: python tools/analyze_my_play.py [grabacion.csv] [--me=1|2]
+     python tools/analyze_my_play.py --ram [grabaciones.csv...]   (RAM juntando grabaciones)
      sin archivo: la grabacion mas reciente de recordings/.  --me: que jugador eras tu
      (sin --me se analizan los dos lados).
 Solo informacion observable: lo que no se puede saber se dice.
@@ -87,7 +88,7 @@ def analyze_side(rows, me):
         dmg = pr["life"] - r["life"]
         if 0 < dmg <= 60:
             dealt += dmg
-            hits.append((f, pending[-1][1] if pending else "?", dmg))
+            hits.append((f, pending[-1][1] if pending else "?", dmg, char_name(row[f"p{me}char"])))
         pending = [(pf, pl) for pf, pl in pending if f - pf <= HIT_WINDOW]
         # danio recibido
         got = pm["life"] - m["life"]
@@ -124,31 +125,34 @@ def classify_hit(f, dmg, guard, attack_start, last_hit_frame, my_last_press, dis
 
 
 def combos_of(hits):
-    combos = defaultdict(list)
+    """{personaje: {combo: [(golpes, danio), ...]}}"""
+    combos = defaultdict(lambda: defaultdict(list))
     group = []
-    for h in hits + [(10 ** 9, None, 0)]:
-        if group and h[0] - group[-1][0] > COMBO_GAP:
+    for h in hits + [(10 ** 9, None, 0, None)]:
+        if group and (h[0] - group[-1][0] > COMBO_GAP or h[3] != group[-1][3]):
             labels = []
-            for _, lab, _ in group:
+            for _, lab, _, _ in group:
                 if not labels or labels[-1] != lab:
                     labels.append(lab)
-            combos[">".join(labels)].append((len(group), sum(x[2] for x in group)))
+            combos[group[0][3]][">".join(labels)].append((len(group), sum(x[2] for x in group)))
             group = []
         if h[1] is not None:
             group.append(h)
     return combos
 
 
-def ram_search(rows, bin_path):
-    """Bits de la estructura del jugador que separan (a) ataque bajo de ataque de pie y
-    (b) bloqueando de no bloqueando. Etiquetas sacadas de los inputs, no supuestas."""
+# Etiquetas (sacadas de los inputs del jugador, no supuestas) para buscar bits en la RAM.
+RAM_PAIRS = (("ataque agachado", "ataque de pie"), ("defendiendo (sin perder vida)", "sin sostener atras"))
+
+
+def collect_ram_samples(rows, bin_path, groups):
+    """Agrega a groups[etiqueta] tuplas (estructura de 0x200 bytes, personaje)."""
     data = bin_path.read_bytes()
     if len(data) < len(rows) * 2 * STRUCT:
-        return [f"El volcado {bin_path.name} es mas corto que el CSV: no se analiza la RAM."]
+        return f"{bin_path.name}: el volcado es mas corto que el CSV, se omite"
     def struct(i, n):
         start = i * 2 * STRUCT + (n - 1) * STRUCT
         return data[start:start + STRUCT]
-    groups = defaultdict(list)    # nombre -> lista de estructuras
     for n in (1, 2):
         other = 3 - n
         for i in range(4, len(rows) - 4):
@@ -157,22 +161,27 @@ def ram_search(rows, bin_path):
                 continue
             p, pp = player(row, n), player(prev, n)
             face = facing(row, n, other)
-            if p["attacking"] and not pp["attacking"] and p["h"] == 0 and pressed_button(row, prev, n) or (
-                    p["attacking"] and not pp["attacking"] and p["h"] == 0 and pressed_button(prev, rows[i - 2], n)):
-                low = any(numpad(rows[j]["inputs"], n, face) in (1, 2, 3) for j in range(i - 2, i + 1))
+            char = char_name(row[f"p{n}char"])
+            started = p["attacking"] and not pp["attacking"] and p["h"] == 0
+            if started and (pressed_button(row, prev, n) or pressed_button(prev, rows[i - 2], n)):
+                crouch = any(numpad(rows[j]["inputs"], n, face) in (1, 2, 3) for j in range(i - 2, i + 1))
                 for k in range(1, 4):
-                    groups["ataque bajo" if low else "ataque de pie"].append(struct(i + k, n))
+                    groups["ataque agachado" if crouch else "ataque de pie"].append((struct(i + k, n), char))
             # bloqueo: el rival ataca cerca, yo sostengo atras y no pierdo vida
-            o, po = player(row, other), player(prev, other)
+            o = player(row, other)
             if o["attacking"] and abs(p["x"] - o["x"]) <= 120:
                 d = numpad(row["inputs"], n, face)
                 lost = player(rows[i + 3], n)["life"] < p["life"]
                 if d in (1, 4) and not lost:
-                    groups["defendiendo (sin perder vida)"].append(struct(i, n))
+                    groups["defendiendo (sin perder vida)"].append((struct(i, n), char))
                 elif d not in (1, 4):
-                    groups["sin sostener atras"].append(struct(i, n))
+                    groups["sin sostener atras"].append((struct(i, n), char))
+    return None
+
+
+def ram_report(groups):
     lines = []
-    for a, b in (("ataque bajo", "ataque de pie"), ("defendiendo (sin perder vida)", "sin sostener atras")):
+    for a, b in RAM_PAIRS:
         ga, gb = groups[a], groups[b]
         lines.append(f"  {a} ({len(ga)}) vs {b} ({len(gb)}):")
         if len(ga) < MIN_SAMPLES or len(gb) < MIN_SAMPLES:
@@ -181,12 +190,24 @@ def ram_search(rows, bin_path):
         scores = []
         for off in range(STRUCT):
             for bit in range(8):
-                fa = sum(s[off] >> bit & 1 for s in ga) / len(ga)
-                fb = sum(s[off] >> bit & 1 for s in gb) / len(gb)
+                fa = sum(s[off] >> bit & 1 for s, _ in ga) / len(ga)
+                fb = sum(s[off] >> bit & 1 for s, _ in gb) / len(gb)
                 scores.append((abs(fa - fb), off, bit, fa, fb))
         scores.sort(reverse=True)
-        for sep, off, bit, fa, fb in scores[:8]:
+        chars = sorted({c for _, c in ga} & {c for _, c in gb})
+        for sep, off, bit, fa, fb in scores[:6]:
             lines.append(f"    +0x{off:03X} bit{bit}: {100 * fa:5.1f}% vs {100 * fb:5.1f}%  (separacion {sep:.2f})")
+            # Un bit util tiene que separar con TODOS los personajes, no solo con uno.
+            per = []
+            for c in chars:
+                ca = [s for s, ch in ga if ch == c]
+                cb = [s for s, ch in gb if ch == c]
+                if len(ca) >= 3 and len(cb) >= 3:
+                    pa = sum(s[off] >> bit & 1 for s in ca) / len(ca)
+                    pb = sum(s[off] >> bit & 1 for s in cb) / len(cb)
+                    per.append(f"{c} {100 * pa:.0f}/{100 * pb:.0f}")
+            if per:
+                lines.append("        por personaje (%): " + ", ".join(per))
     lines.append("  Un bit candidato se confirma solo con una prueba controlada (ver docs/DEFENSE_AUDIT_V4.md).")
     return lines
 
@@ -194,6 +215,20 @@ def ram_search(rows, bin_path):
 def main():
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     me_arg = next((a.split("=", 1)[1] for a in sys.argv[1:] if a.startswith("--me=")), None)
+    if "--ram" in sys.argv:
+        # Busqueda en la RAM juntando varias grabaciones (mas casos, varios personajes).
+        paths = [Path(a) for a in args] or [Path(p) for p in glob.glob(str(ROOT / "recordings" / "rec_*.csv"))]
+        groups = defaultdict(list)
+        for path in paths:
+            if not path.with_suffix(".bin").exists():
+                continue
+            rows = load(path)
+            if rows and "p1char" in rows[0]:
+                problem = collect_ram_samples(rows, path.with_suffix(".bin"), groups)
+                print(problem or f"{path.name}: {len(rows)} frames")
+        print("\n===== Busqueda en la RAM (todas las grabaciones) =====")
+        print("\n".join(ram_report(groups)))
+        return
     path = Path(args[0]) if args else Path(max(glob.glob(str(ROOT / "recordings" / "rec_*.csv")),
                                                key=lambda p: Path(p).stat().st_mtime))
     rows = load(path)
@@ -209,13 +244,17 @@ def main():
               f"vs {', '.join(c for c, _ in rivals.most_common(3))} =====")
         print(f"KO: {rounds.count('ganado')} ganados, {rounds.count('perdido')} perdidos; "
               f"danio hecho {dealt}, recibido {recv}")
-        combos = combos_of(hits)
-        multi = sorted(((sum(d for _, d in v) / len(v), k, v) for k, v in combos.items() if ">" in k),
-                       reverse=True)
-        print("Combos (2+ golpes distintos), por danio medio:")
-        for avg, key, v in multi[:12]:
-            print(f"  {avg:5.1f} danio  x{len(v):<3d} {key}")
-        if not multi:
+        print("Combos (2+ golpes distintos), por personaje y danio medio:")
+        any_combo = False
+        for char, combos in sorted(combos_of(hits).items()):
+            multi = sorted(((sum(d for _, d in v) / len(v), k, v) for k, v in combos.items() if ">" in k),
+                           reverse=True)
+            if multi:
+                any_combo = True
+                print(f"  -- {char}")
+                for avg, key, v in multi[:8]:
+                    print(f"    {avg:5.1f} danio  x{len(v):<3d} {key}")
+        if not any_combo:
             print("  ninguno")
         print("Golpes recibidos por causa:")
         for cause, n in Counter(t["causa"] for t in taken).most_common():
@@ -230,7 +269,9 @@ def main():
     bin_path = path.with_suffix(".bin")
     print("\n===== Busqueda en la RAM =====")
     if bin_path.exists():
-        print("\n".join(ram_search(rows, bin_path)))
+        groups = defaultdict(list)
+        problem = collect_ram_samples(rows, bin_path, groups)
+        print(problem or "\n".join(ram_report(groups)))
     else:
         print("  Sin volcado .bin (grabacion anterior al volcado completo).")
 
