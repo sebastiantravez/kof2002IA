@@ -34,7 +34,14 @@ class Lockstep:
         self.timeout = timeout       # tras esto se avisa que el script no responde
         self.max_wait = max_wait     # y tras esto se abandona
         self.on_reconnect = None     # callback() si el script Lua se reinicio
+        self.on_step = None          # callback(estado, teclas) en cada intercambio (registro)
         self.last_seq = None
+        # Pedido que ya estaba en el archivo al arrancar: es de un script Lua anterior
+        # (posiblemente ya detenido); no tomarlo como conexion.
+        try:
+            self._stale_seq = int(self.req.read_text().split()[0])
+        except (OSError, ValueError, IndexError):
+            self._stale_seq = None
         self.state = None
         self.keys = set()
         self.frames = 0
@@ -86,6 +93,8 @@ class Lockstep:
         elif self._resetting and me.life > 0 and rival.life > 0:
             self._resetting = False
             self._round_start = self.frames
+        if self.on_step and not self._resetting:
+            self.on_step(self.state, self.keys)
         self._respond(seq, hold)
         self.frames += hold
         return self.state
@@ -107,6 +116,9 @@ class Lockstep:
             if len(parts) != 6 or parts[0] != parts[5] or len(parts[3]) != size or len(parts[4]) != size:
                 continue
             seq = int(parts[0])
+            if self.last_seq is None and seq == self._stale_seq:
+                time.sleep(0.01)   # archivo viejo: esperar a que el script Lua escriba
+                continue
             if seq == self.last_seq:
                 time.sleep(0 if not warned else 0.01)
                 continue

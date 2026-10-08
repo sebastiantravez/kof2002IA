@@ -12,6 +12,15 @@ from .motions import parse, play
 
 SEPARATOR = ">"
 CONFIRM_TIMEOUT = 24   # frames maximos esperando a que conecte cada parte
+# Los DM (supers) golpean despues de la pausa de "super" y su recorrido: el danio
+# llega mucho mas tarde que en un golpe normal.
+DM_CONFIRM_TIMEOUT = 150
+DM_MIN_DIRECTIONS = 7  # un movimiento de 7+ direcciones (236 63214, 214 41236...) es un DM
+
+
+def is_dm(notation):
+    """True si la notacion contiene el movimiento largo de un DM."""
+    return sum(ch.isdigit() for ch in notation.split("[")[0]) >= DM_MIN_DIRECTIONS
 
 
 def is_combo(notation):
@@ -29,12 +38,14 @@ def play_combo(keyboard, clock, notation, facing_right, rival_life, step_frames,
         watch.hit = False
         if not play(keyboard, clock, parse(part, step_frames, button_frames), facing_right, watch):
             return connected, watch.damage, False
-        if not watch.hit and not _wait_hit(clock, watch):
+        timeout = DM_CONFIRM_TIMEOUT if is_dm(part) else CONFIRM_TIMEOUT
+        if not watch.hit and not _wait_hit(clock, watch, timeout):
             return connected, watch.damage, i == len(parts) - 1   # no conecto: cortar el combo
         connected += 1
         if after_hit_delay and i < len(parts) - 1:
             clock.wait_frames(after_hit_delay, watch)
-    clock.wait_frames(20, watch)   # recoger el danio de los ultimos golpes multi-hit
+    # recoger el danio de los ultimos golpes (un DM sigue pegando mucho tiempo)
+    clock.wait_frames(DM_CONFIRM_TIMEOUT if is_dm(parts[-1]) else 20, watch)
     return connected, watch.damage, True
 
 
@@ -58,8 +69,8 @@ class _HitWatcher:
         return bool(self._should_stop and self._should_stop())
 
 
-def _wait_hit(clock, watch):
-    for _ in range(CONFIRM_TIMEOUT):
+def _wait_hit(clock, watch, timeout=CONFIRM_TIMEOUT):
+    for _ in range(timeout):
         if not clock.wait_frames(1, watch):
             return False
         if watch.hit:

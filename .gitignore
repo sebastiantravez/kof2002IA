@@ -23,3 +23,10 @@ recordings/snaps_*/
 
 # Respaldos locales de lo aprendido (se generan en cada sesion)
 backups/
+
+# Registros defensivos de cada sesion
+logs/
+dist/KOF_Grabador/
+
+# Volcados completos de la RAM por frame (pesados: ~4 MB por minuto de juego)
+recordings/*.bin

@@ -14,8 +14,10 @@ import threading
 from pathlib import Path
 
 from .brain import DISTANCE_BUCKET, RuleBrain
+from .combo import is_dm
 
 REWARD_FRAMES = 40
+DM_REWARD_FRAMES = 150   # los DM golpean tras la pausa de super y su recorrido
 TAKEN_WEIGHT = 2.0  # recibir danio pesa el doble: priorizar cubrirse
 TEMPERATURE = 4.0
 SHRINK = 3          # pocas muestras -> valor cerca de 0 (no confiar en la suerte)
@@ -51,7 +53,9 @@ class LearningBrain(RuleBrain):
         top = max(scores)
         weights = [math.exp(s - top) for s in scores]
         choice = random.choices(options, weights=weights)[0]
-        self._pending.append((key, choice.name, state.frame, self.dealt_total, self.taken_total))
+        # Un DM golpea mucho despues de elegirlo: su recompensa necesita una ventana larga.
+        window = DM_REWARD_FRAMES if is_dm(choice.notation) else REWARD_FRAMES
+        self._pending.append((key, choice.name, state.frame, self.dealt_total, self.taken_total, window))
         return choice
 
     @staticmethod
@@ -64,12 +68,13 @@ class LearningBrain(RuleBrain):
     def _settle(self, state):
         """Cierra las decisiones cuya ventana de recompensa ya paso."""
         still = []
-        for key, name, frame0, dealt0, taken0 in self._pending:
+        for entry in self._pending:
+            key, name, frame0, dealt0, taken0, window = entry
             elapsed = state.frame - frame0
-            if elapsed < 0 or elapsed > REWARD_FRAMES * 3:
+            if elapsed < 0 or elapsed > window * 3:
                 continue  # el juego se reinicio o paso demasiado tiempo (menus): descartar
-            if elapsed < REWARD_FRAMES:
-                still.append((key, name, frame0, dealt0, taken0))
+            if elapsed < window:
+                still.append(entry)
                 continue
             reward = (self.dealt_total - dealt0) - TAKEN_WEIGHT * (self.taken_total - taken0)
             self._update(key, name, reward)

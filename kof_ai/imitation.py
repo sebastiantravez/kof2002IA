@@ -26,6 +26,8 @@ SITUATION_MAP = {
     "rival en el aire, esperando": "rival en el aire cerca",
     "rival ataca desde el aire": "rival en el aire cerca",
     "rival ataca": "rival ataca",
+    "presion del rival": "rival ataca",
+    "acorralado": "pegado al rival",
     "rival lejos": "rival lejos",
     "media distancia": "media distancia",
     "pegado al rival": "pegado al rival",

@@ -18,10 +18,15 @@ from dataclasses import dataclass
 from pathlib import Path
 
 MAX_LIFE = 102
+# Paredes del escenario (x en el escenario), medidas en las grabaciones: picos de
+# personajes acorralados en x~32 y x~736-751.
+LEFT_WALL_X = 32
+RIGHT_WALL_X = 751
+CORNER_MARGIN = 28
 CHARACTER_OFFSET = 0x071
 # Verificados con capturas de una repeticion (KOF 2002 Plus): Kyo 0, Kim 6, Choi 8, Iori 21.
 # 39 = Rugal: deducido (el usuario vio a Rugal y un jugador lo uso toda la repeticion), sin captura.
-CHARACTER_IDS = {0: "Kyo", 6: "Kim", 8: "Choi", 21: "Iori", 39: "Rugal"}
+CHARACTER_IDS = {0: "Kyo", 6: "Kim", 8: "Choi", 9: "Athena", 11: "Chin", 21: "Iori", 39: "Rugal"}
 STRUCT_SIZE = 0x200
 
 
@@ -106,6 +111,19 @@ class GameState:
     @property
     def facing_right(self):
         return self.me.x <= self.rival.x
+
+    @property
+    def back_to_wall(self):
+        """Estoy acorralado: la pared esta detras de mi (no puedo retroceder)."""
+        if self.facing_right:
+            return self.me.x <= LEFT_WALL_X + CORNER_MARGIN
+        return self.me.x >= RIGHT_WALL_X - CORNER_MARGIN
+
+    @property
+    def rival_cornered(self):
+        if self.facing_right:
+            return self.rival.x >= RIGHT_WALL_X - CORNER_MARGIN
+        return self.rival.x <= LEFT_WALL_X + CORNER_MARGIN
 
 
 class StateReader:

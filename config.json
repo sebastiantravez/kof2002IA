@@ -49,7 +49,7 @@
       "_dm": "dm_combos: solo con 1+ barra (RAM +0x1E3); inputs de las guias, sin verificar en laboratorio"
     },
     "Iori": {
-      "_fuente": "dreamcancel.com/wiki/The_King_of_Fighters_2002/Iori_Yagami",
+      "_fuente": "docs/KOF_AI_Lab_Iori_Magic_Plus_Manual.md + dreamcancel.com + repeticiones de jugadores top",
       "anti_air": "623A",
       "anti_air_normal": "2C",
       "reversal": "623C",
@@ -58,20 +58,27 @@
       "poke": "2C",
       "overhead": "6B",
       "combos": {
-        "C Aoi Hana x3": "C>214A>214A>214A",
-        "2A 6A A Yami Barai": "2A>6A>A>236C",
-        "C Kototsuki In": "C>63214B"
+        "6C 623C 63214B 623C (jugadores top)": "6C>623C>63214B>623C",
+        "C Aoi Hana C x3": "C>214C>214C>214C",
+        "C Oniyaki C": "C>623C",
+        "C Yami Barai C": "C>236C"
       },
       "punish": {
-        "C Aoi Hana x3": "C>214A>214A>214A",
-        "C Kototsuki In": "C>63214D",
-        "2A 6A A Yami Barai": "2A>6A>A>236C"
+        "6C 623C 63214B 623C (jugadores top)": "6C>623C>63214B>623C",
+        "C Aoi Hana C x3": "C>214C>214C>214C",
+        "C Oniyaki C": "C>623C"
       },
       "dm_combos": {
-        "C Ya Otome (DM)": "C>23663214A",
-        "C 6A Ya Otome (DM)": "C>6A>23663214A"
+        "C Oniyaki C + Ya Otome (super cancel)": "C>623C23663214A",
+        "Ya Otome (DM)": "23663214A"
       },
-      "_dm": "dm_combos: solo con 1+ barra (RAM +0x1E3); inputs de las guias, sin verificar en laboratorio"
+      "_dm": "dm_combos: solo con 1+ barra. Verificados 2026-10-07: C>623C+Ya Otome 33.5 de danio, Ya Otome solo 25 (el danio de un DM llega ~100 frames despues: combo.py y learning.py esperan 150)",
+      "_combos_verificados": "tools/combo_lab.py en practica 2026-10-07: todos conectan siempre (3 intentos). Yumebiki (6A,A) y Kototsuki no encadenan fiable: fuera.",
+      "style": "defensive",
+      "combat_mode": "DEFENSE_ONLY",
+      "punish_confirm_frames": 4,
+      "reaction_frames": 0,
+      "_estilo": "style 'defensive': mas guardia/retroceso, menos riesgo, castigo solo de ataques largos, no soltar la guardia bajo presion. reaction_frames: retraso extra de percepcion (0 = solo la latencia del sistema, ~2-4 frames; 10-15 ~ humano)."
     },
     "Kim": {
       "_fuente": "dreamcancel.com/wiki/The_King_of_Fighters_2002/Kim_Kaphwan",
