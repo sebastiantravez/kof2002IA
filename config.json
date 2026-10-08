@@ -77,6 +77,7 @@
       "style": "defensive",
       "combat_mode": "DEFENSE_ONLY",
       "punish_confirm_frames": 4,
+      "preventive_guard": true,
       "reaction_frames": 0,
       "_estilo": "style 'defensive': mas guardia/retroceso, menos riesgo, castigo solo de ataques largos, no soltar la guardia bajo presion. reaction_frames: retraso extra de percepcion (0 = solo la latencia del sistema, ~2-4 frames; 10-15 ~ humano)."
     },
