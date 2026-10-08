@@ -9,28 +9,84 @@
 -- Ademas recordings/rec_<fecha>.bin: las dos estructuras completas por frame (~3,6 MB por
 -- minuto de juego), para tools/analyze_my_play.py.
 
--- Carpeta base: la que contiene la carpeta lua/ de este script (asi funciona igual en el
--- proyecto y en el paquete portatil KOF_Grabador de otra PC). Las grabaciones van a
--- <base>/recordings/.
-local function base_dir()
-  local ok, info = pcall(debug.getinfo, 1, "S")
-  local src = ok and info and info.source or ""
-  src = src:gsub("^@", ""):gsub("\\", "/")
-  local dir = src:match("^(.*/)lua/[^/]*$")
-  return dir or "C:/Users/Sebas PC/Desktop/kof2002IA/"
+-- ===== CARPETA DE GRABACIONES =====================================================
+-- Normalmente se encuentra sola. Si la consola dice que no encontro la carpeta, escribe
+-- aqui la ruta de tu carpeta KOF_Grabador (con / y terminando en /), por ejemplo:
+--   local CARPETA = "C:/Users/TuUsuario/Desktop/KOF_Grabador/"
+local CARPETA = nil
+-- ==================================================================================
+
+-- Carpeta base = la que contiene lua/ y recordings/. Algunos FBNeo no dicen la ruta del
+-- script (sin libreria debug), asi que se prueban tambien los lugares habituales.
+local function add_unique(list, dir)
+  if type(dir) ~= "string" or dir == "" then return end
+  dir = dir:gsub("\\", "/")
+  if dir:sub(-1) ~= "/" then dir = dir .. "/" end
+  for _, d in ipairs(list) do if d == dir then return end end
+  list[#list + 1] = dir
 end
-local ROOT = base_dir()
+
+local function script_dir()
+  if not (debug and debug.getinfo) then return nil end
+  local ok, info = pcall(debug.getinfo, 1, "S")
+  local src = ok and info and info.source
+  if type(src) ~= "string" then return nil end
+  src = src:gsub("^@", ""):gsub("\\", "/")
+  return src:match("^(.*/)lua/[^/]*$")
+end
+
+local function candidates()
+  local list = {}
+  add_unique(list, KOF_GRABADOR_DIR)   -- definido por kof_record_turbo.lua si lo encontro
+  add_unique(list, CARPETA)
+  add_unique(list, script_dir())
+  local home = os and os.getenv and (os.getenv("USERPROFILE") or "") or ""
+  if home ~= "" then
+    for _, place in ipairs({"Desktop", "Escritorio", "OneDrive/Desktop", "OneDrive/Escritorio",
+                            "Downloads", "Descargas", "Documents", "Documentos"}) do
+      add_unique(list, home .. "/" .. place .. "/KOF_Grabador")
+      add_unique(list, home .. "/" .. place .. "/KOF_Grabador/KOF_Grabador")   -- "Extraer todo"
+      add_unique(list, home .. "/" .. place .. "/kof2002IA")
+    end
+  end
+  add_unique(list, "C:/Users/Sebas PC/Desktop/kof2002IA")
+  add_unique(list, "")   -- carpeta actual del emulador (ultimo recurso)
+  return list
+end
+
+local function writable(dir)
+  local probe = dir .. "recordings/.prueba_escritura"
+  local f = io.open(probe, "w")
+  if not f then return false end
+  f:close()
+  if os and os.remove then pcall(os.remove, probe) end
+  return true
+end
+
+local ROOT
+local tried = candidates()
+for _, dir in ipairs(tried) do
+  if writable(dir) then ROOT = dir break end
+end
+print("kof_record.lua iniciando...")
+if not ROOT then
+  print("ERROR: no encontre la carpeta recordings. Probe:")
+  for _, dir in ipairs(tried) do print("  " .. dir .. "recordings/") end
+  print("Solucion: pon la carpeta KOF_Grabador en el Escritorio, o escribe su ruta en")
+  print("la linea 'local CARPETA = ...' al inicio de kof_record.lua.")
+  return
+end
+KOF_GRABADOR_DIR = ROOT
 local stamp = (os and os.date and os.date("%Y%m%d_%H%M%S"))
   or (os and os.time and tostring(os.time())) or tostring(emu.framecount())
 local REC = ROOT .. "recordings/rec_" .. stamp .. ".csv"
-print("kof_record.lua iniciando...")
 
 local P1 = 0x108100
 local P2 = 0x108300
 
 local rec = io.open(REC, "w")
 if not rec then
-  print("ERROR: no se pudo crear " .. REC .. " (existe la carpeta recordings?)")
+  print("ERROR: no se pudo crear " .. REC)
   return
 end
 -- Volcado completo: las dos estructuras de jugador (0x200 bytes cada una) por frame, en
