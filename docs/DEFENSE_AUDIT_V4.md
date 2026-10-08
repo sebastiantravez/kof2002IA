@@ -97,3 +97,43 @@ cada estructura no se han explorado para eso. Es la causa raíz de H1 y H3.
 
 Con E1–E3 se corrigen H1, H3 y H5 con datos. La regla de guardia por defecto (H1) se cambia solo
 después de E2, comparando bloqueos con la regla actual y la nueva sobre la misma traza.
+
+## 4. Mediciones con grabaciones del usuario (2026-10-08)
+
+Datos: 6 grabaciones propias (`recordings/rec_20261008_*`: práctica con Iori/Kim/Kyo/Choi/Rugal y dos
+repeticiones online), ~60 min de juego, con inputs de los dos jugadores y la memoria completa por frame.
+Herramientas: `tools/analyze_my_play.py --ram` y los scripts de medición descritos abajo.
+
+### Corrección de H1: el bit de agachado SÍ marca los ataques agachados
+`+0x0E0 bit2` frame a frame alrededor del inicio del ataque (frame 0 = primer frame con el bit de
+ataque; la etiqueta sale de los inputs del jugador):
+
+| Grupo | casos | frame −1 | frame 0 | frame 5 | frame 10 |
+|---|---|---|---|---|---|
+| Ataque agachado, ya agachado antes | 450 | 53% | 74% | 74% | 67% |
+| Ataque agachado directo desde de pie | 78 | 66% | 87% | 87% | 79% |
+| Ataque de pie | 485 | 3% | 1% | 1% | 2% |
+
+La afirmación anterior ("el bit se apaga durante el ataque agachado") era falsa. El resto (~13–26%)
+es compatible con etiquetas imperfectas: un especial con `623`/`236` pasa por abajo-adelante y se
+cuenta como "agachado" sin serlo. `guard_low()` ya usa este bit, así que el bot SÍ puede ver los
+ataques agachados a tiempo. Ojo: "agachado" no es lo mismo que "bajo" (algunos puños agachados se
+cubren de pie), pero la guardia agachada cubre ambos. Contra Chin solo 29 de 930 ataques fueron
+agachados: allí los golpes bajos no eran el problema principal.
+
+### H4 medido: el bit de ataque llega con poco margen
+- De la pulsación del botón al encendido del bit de ataque: **4 frames** en 105 de 131 casos.
+- Del encendido del bit al impacto (primer golpe de cada intercambio, 208 casos): **3 frames 22%,
+  ≤4 frames 48%, ≤5 frames 61%**.
+- El bot aplica su input 1 frame después de ver el bit (2 si está en una espera vigilada). Si en
+  ese momento ya está en guardia o libre, llega justo; si está atacando, caminando sin cortar, o en
+  la recuperación de su propio golpe, **no llega**.
+- Conclusión con datos: reaccionar al bit de ataque solo sirve si Iori ya está libre para cubrirse.
+  La guardia tiene que ser preventiva cuando el rival está en rango, no una reacción; y las acciones
+  no interrumpibles cerca del rival son las que dejan los huecos (H2).
+
+### Sin señal todavía
+- Bloqueo/blockstun: la etiqueta "sostiene atrás y no pierde vida" es demasiado amplia; los bits
+  con mayor separación dependían del personaje (artefacto). Hace falta etiquetar golpes realmente
+  bloqueados (el rival conecta a distancia corta y la vida no baja).
+- Agarres: sin datos etiquetados.

@@ -25,6 +25,7 @@ STRUCT = 0x200
 ATTACK_LOOKBACK = 30     # un golpe recibido se atribuye al ataque rival que empezo en estos frames
 THROW_RANGE = 40         # golpe sin ataque visible a esta distancia: posible agarre
 MIN_SAMPLES = 10         # minimo de casos por grupo para proponer un bit de la RAM
+PRESS_LOOKBACK = 6       # medido: el bit de ataque (+0xE0 bit0) se enciende ~4 frames tras pulsar
 
 
 def pressed_button(row, prev, n):
@@ -153,18 +154,27 @@ def collect_ram_samples(rows, bin_path, groups):
     def struct(i, n):
         start = i * 2 * STRUCT + (n - 1) * STRUCT
         return data[start:start + STRUCT]
+    def on_screen(row, n):
+        # Como in_fight, pero sin exigir vida al otro: en practica el muneco puede quedar
+        # en 0 y los ataques siguen siendo validos para buscar senales en la RAM.
+        return (150 <= row["p1sy"] <= 240 and 150 <= row["p2sy"] <= 240
+                and row[f"p{n}life"] > 0)
+
     for n in (1, 2):
         other = 3 - n
-        for i in range(4, len(rows) - 4):
+        for i in range(PRESS_LOOKBACK + 2, len(rows) - 4):
             row, prev = rows[i], rows[i - 1]
-            if not (in_fight(row) and in_fight(prev)):
+            if not (on_screen(row, n) and on_screen(prev, n)):
                 continue
             p, pp = player(row, n), player(prev, n)
             face = facing(row, n, other)
             char = char_name(row[f"p{n}char"])
             started = p["attacking"] and not pp["attacking"] and p["h"] == 0
-            if started and (pressed_button(row, prev, n) or pressed_button(prev, rows[i - 2], n)):
-                crouch = any(numpad(rows[j]["inputs"], n, face) in (1, 2, 3) for j in range(i - 2, i + 1))
+            # el bit de ataque se enciende unos 4 frames despues de pulsar el boton
+            press = next((j for j in range(i, i - PRESS_LOOKBACK - 1, -1)
+                          if pressed_button(rows[j], rows[j - 1], n)), None) if started else None
+            if press is not None:
+                crouch = any(numpad(rows[j]["inputs"], n, face) in (1, 2, 3) for j in (press - 1, press))
                 for k in range(1, 4):
                     groups["ataque agachado" if crouch else "ataque de pie"].append((struct(i + k, n), char))
             # bloqueo: el rival ataca cerca, yo sostengo atras y no pierdo vida
