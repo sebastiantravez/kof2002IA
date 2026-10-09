@@ -315,3 +315,31 @@ class ChipDamageInBrain(unittest.TestCase):
     def test_holding_forward_is_not_guard(self):
         b = self.run_states({"right"})
         self.assertEqual(b.taken_total, 1)
+
+
+class PreventiveGuardHeight(unittest.TestCase):
+    """Guardia preventiva: agachada sin ataque (no camina hacia atras), de pie ante saltos
+    y ataques de pie, agachada ante ataques agachados."""
+
+    def brain(self, states, preventive=True):
+        feed = Feed()
+        b = RuleBrain(feed, {**IORI, "combat_mode": "DEFENSE_ONLY", "preventive_guard": preventive})
+        for s in states:
+            feed.s = s
+            b.state()
+        return b
+
+    def test_idle_rival_crouch_guard(self):
+        self.assertTrue(self.brain([st(f) for f in range(10)]).guard_low())
+
+    def test_standing_attack_stand_guard(self):
+        self.assertFalse(self.brain([st(f, ratk=(f >= 5)) for f in range(10)]).guard_low())
+
+    def test_crouching_attack_low_guard(self):
+        self.assertTrue(self.brain([st(f, rcr=(f >= 3), ratk=(f >= 5)) for f in range(10)]).guard_low())
+
+    def test_airborne_stand_guard(self):
+        self.assertFalse(self.brain([st(f, rh=(30 if f >= 5 else 0)) for f in range(10)]).guard_low())
+
+    def test_original_unchanged(self):
+        self.assertFalse(self.brain([st(f) for f in range(10)], preventive=False).guard_low())

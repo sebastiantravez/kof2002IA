@@ -267,6 +267,12 @@ class RuleBrain:
         state = self.state()
         if state is None or state.rival.airborne:
             return False
+        if self.preventive_guard and not state.rival.attacking:
+            # Sin ataque en curso: guardia agachada. Sostener atras de pie sin que llegue un
+            # golpe hace CAMINAR hacia atras (medido: acorralado en el 40% de los ataques
+            # rivales vs 17%). Agachado cubre bajos y medios; contra saltos y ataques de pie
+            # (overheads) se pasa a guardia de pie en cuanto se ven (1-2 frames).
+            return True
         return state.rival.crouching or (state.rival.attacking and self._rival_attack_low)
 
     def can_punish_now(self):
