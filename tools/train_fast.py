@@ -228,7 +228,8 @@ print(f"Tiempo real {elapsed / 60:.1f} min, frames de juego {frames} "
       f"({frames / 59.19 / 60:.1f} min de juego, {frames / max(elapsed, 1) / 59.19:.1f}x)")
 print(f"Rondas {rounds}: {stats['ganadas']} ganadas, {stats['perdidas']} perdidas, {stats['empates']} otras "
       f"({100 * stats['ganadas'] / max(rounds, 1):.0f}% ganadas)")
-print(f"Danio hecho {brain.dealt_total}, recibido {brain.taken_total}")
+print(f"Danio hecho {brain.dealt_total}, recibido {brain.taken_total} en golpes "
+      f"+ {brain.chip_total} de raspado bloqueando especiales")
 print(f"Combos: {combo_stats['intentos']} intentos, {combo_stats['con 2+ golpes']} con 2+ golpes, "
       f"{combo_stats['completos']} completos")
 print(f"Aprendizaje: +{brain.updates} experiencias (antes {known_before}), "

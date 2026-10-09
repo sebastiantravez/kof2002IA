@@ -287,3 +287,31 @@ class PreventiveGuard(unittest.TestCase):
         sit, opts = b._options_for(b.state())
         self.assertEqual(sit, "castigar")
         self.assertTrue([o for o in opts if o.name.startswith("castigo")])
+
+
+class ChipDamageInBrain(unittest.TestCase):
+    """Perder 1 punto con guardia puesta es raspado (bloqueo), no un golpe."""
+
+    def run_states(self, keys):
+        feed = Feed()
+        brain = RuleBrain(feed, {**IORI, "combat_mode": "DEFENSE_ONLY"})
+        brain.held_keys = lambda: keys
+        for f in range(0, 30):
+            feed.s = st(f, ml=102 if f < 20 else 101, ratk=(10 <= f < 25))
+            brain.state()
+        return brain
+
+    def test_chip_while_guarding_is_not_a_hit(self):
+        b = self.run_states({"left"})            # rival a la derecha: atras = left
+        self.assertEqual(b.chip_total, 1)
+        self.assertEqual(b.taken_total, 0)
+        self.assertFalse(b._recently_hit(b.state()))
+
+    def test_same_damage_without_guard_is_a_hit(self):
+        b = self.run_states(set())
+        self.assertEqual(b.taken_total, 1)
+        self.assertTrue(b._recently_hit(b.state()))
+
+    def test_holding_forward_is_not_guard(self):
+        b = self.run_states({"right"})
+        self.assertEqual(b.taken_total, 1)

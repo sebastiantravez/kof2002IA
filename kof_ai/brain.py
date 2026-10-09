@@ -19,6 +19,7 @@ ANTI_AIR_RANGE = 120     # el rival tiene que estar cayendo dentro de este rango
 ANTI_AIR_MAX_HEIGHT = 70  # y ya no muy alto, para que el anti-aire conecte
 HIT_MEMORY_FRAMES = 40   # cuanto tiempo "recuerdo" haber recibido un golpe
 MAX_DAMAGE_PER_FRAME = 60  # caidas mayores son KO/transiciones de ronda, no golpes
+CHIP_DAMAGE = 2           # perder <= N con guardia puesta = raspado de un especial bloqueado
 WHIFF_PUNISH_RANGE = 130  # golpe fallado del rival: se castiga corriendo hasta esta distancia
 PUNISH_WINDOW = 12       # frames tras el fin de un ataque rival en los que se puede castigar
 BLOCK_FRAMES = 18         # primeros frames de un ataque rival: bloquear; despues es recuperacion
@@ -94,6 +95,9 @@ class RuleBrain:
         self._air_attacked = False   # ya ataque en este salto
         self.dealt_total = 0         # danio acumulado hecho / recibido (para recompensas)
         self.taken_total = 0
+        self.chip_total = 0          # raspado de especiales bloqueados (no cuenta como golpe)
+        # Teclas aplicadas ahora mismo (las pone el bot): para saber si Iori estaba cubriendose.
+        self.held_keys = None
         self._rival_attack_start_frame = -10_000
         self._rival_crouch_frame = -10_000
         self._rival_attack_low = False
@@ -111,7 +115,11 @@ class RuleBrain:
                 self._prev = self._cached
                 taken = self._cached.me.life - state.me.life
                 dealt = self._cached.rival.life - state.rival.life
-                if 0 < taken <= MAX_DAMAGE_PER_FRAME:
+                if 0 < taken <= CHIP_DAMAGE and self._was_guarding(self._cached):
+                    # Raspado de un especial BLOQUEADO (medido, docs/DEFENSE_AUDIT_V4.md): no es
+                    # un golpe. No pasa a "me golpearon" ni castiga al aprendizaje por cubrirse.
+                    self.chip_total += taken
+                elif 0 < taken <= MAX_DAMAGE_PER_FRAME:
                     self._last_hit_frame = state.frame
                     self.taken_total += taken
                 if 0 < dealt <= MAX_DAMAGE_PER_FRAME:
@@ -138,6 +146,13 @@ class RuleBrain:
                     self._settle_our_attacks(state)
             self._cached = state
         return self._cached
+
+    def _was_guarding(self, prev_state):
+        """Iori sostenia atras (guardia alta o baja) segun las teclas que estan aplicadas."""
+        keys = self.held_keys() if self.held_keys else None
+        if not keys:
+            return False
+        return ("left" if prev_state.facing_right else "right") in keys
 
     def _perceived(self, latest):
         """Estado que 've' el cerebro: el de hace reaction_frames frames."""

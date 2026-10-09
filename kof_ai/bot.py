@@ -164,6 +164,9 @@ class RuleBot(_BaseBot):
                  **mode):
         super().__init__(keyboard, clock, config, hwnd, facing_right, on_log, **mode)
         self._brain = brain or RuleBrain(reader, moves)
+        # El cerebro distingue el raspado de un especial bloqueado de un golpe con las teclas
+        # que estan aplicadas (guardia = atras sostenido).
+        self._brain.held_keys = lambda: getattr(self._keyboard, "_pressed", None)
         self._last_situation = None
         self.current = (None, None, 0)   # (situacion, accion, numero de decision)
         self._saved_at = time.perf_counter()
