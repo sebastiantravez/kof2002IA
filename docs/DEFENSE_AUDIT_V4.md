@@ -137,3 +137,17 @@ agachados: allí los golpes bajos no eran el problema principal.
   con mayor separación dependían del personaje (artefacto). Hace falta etiquetar golpes realmente
   bloqueados (el rival conecta a distancia corta y la vida no baja).
 - Agarres: sin datos etiquetados.
+
+### Corrección de medición: el raspado de especiales bloqueados se contaba como golpe
+Sesión de diagnóstico contra id34 (2026-10-08) con lo que pasaba en el frame del impacto: de 99
+"golpes aéreos", 84 llegaron con Iori sosteniendo atrás, sin cruce (98 de 99) y con el rival a punto
+de aterrizar; **57 de esos quitaron exactamente 1 punto**. En las 4 sesiones registradas, perder 1
+punto ocurre casi solo con guardia puesta (105 vs 18, 142 vs 22, 116 vs 15, 177 vs 53): es el
+raspado de un especial bloqueado, no un golpe. Los golpes reales quitan 4 o más.
+
+`DefenseLogger` ahora cuenta ≤2 puntos con guardia puesta el frame anterior como bloqueo con raspado.
+Recalculado (ataques rivales evitados): original 60% → **71%**; con guardia preventiva 66% → **76%**
+(aéreos 49% → 71%, bajos 81% → 89%, de pie 70% → 77%).
+
+Pendiente (no cambiado): el cerebro también trata ese raspado como "me golpearon" (`_recently_hit`)
+y el aprendizaje lo penaliza como daño recibido.

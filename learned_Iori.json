@@ -1,206 +1,214 @@
 {
  "acorralado|d0": {
   "guardia": [
-   113,
-   2.824
+   530,
+   0.756
   ],
   "roll adelante (salir de la esquina)": [
-   39,
-   2.154
+   53,
+   0.907
   ],
   "combo: C Yami Barai C": [
-   1,
-   12.0
+   6,
+   8.833
   ],
   "poke": [
-   13,
-   6.0
+   80,
+   5.223
   ],
   "combo: pro: C>214C>623C>236C": [
-   2,
-   11.0
+   5,
+   5.4
   ],
   "salto adelante": [
-   17,
-   1.06
+   23,
+   0.435
   ],
   "combo: C Aoi Hana C x3": [
-   2,
-   12.0
+   8,
+   8.875
   ],
   "combo: 6C 623C 63214B 623C (jugadores top)": [
-   1,
-   12.0
+   2,
+   6.0
+  ],
+  "combo: pro: D>C>6C>236C": [
+   2,
+   5.5
+  ],
+  "combo: C Oniyaki C": [
+   6,
+   5.333
   ]
  },
  "acorralado|d1": {
   "roll adelante (salir de la esquina)": [
-   50,
-   -1.319
+   75,
+   -0.52
   ],
   "guardia": [
-   228,
-   1.508
+   992,
+   1.396
   ],
   "salto adelante": [
-   32,
-   -0.594
+   42,
+   -0.263
   ],
   "poke": [
-   16,
-   4.0
+   98,
+   4.316
   ]
  },
  "acorralado|d2": {
   "guardia": [
-   162,
-   0.645
+   1260,
+   0.596
   ],
   "salto adelante": [
-   73,
-   0.973
+   107,
+   0.925
   ],
   "roll adelante (salir de la esquina)": [
-   78,
-   -1.066
+   138,
+   -0.749
   ],
   "poke": [
-   46,
-   2.045
+   458,
+   2.291
   ]
  },
  "acorralado|d3": {
   "salto adelante": [
-   64,
-   -0.248
+   99,
+   0.539
   ],
   "guardia": [
-   159,
-   -0.079
+   1064,
+   0.184
   ],
   "roll adelante (salir de la esquina)": [
-   77,
-   -1.573
+   120,
+   -0.993
   ],
   "poke": [
-   54,
-   -0.352
+   267,
+   -0.956
   ]
  },
  "acorralado|d4": {
   "guardia": [
-   31,
-   -1.128
+   344,
+   -0.019
   ],
   "roll adelante (salir de la esquina)": [
-   37,
-   -0.27
+   60,
+   0.184
   ],
   "salto adelante": [
-   23,
-   -1.305
+   41,
+   -0.025
   ],
   "poke": [
-   25,
-   -1.32
+   92,
+   -0.436
   ]
  },
  "castigar|d0": {
   "castigo DM: C Oniyaki C + Ya Otome (super cancel)": [
-   154,
-   -0.487
+   205,
+   -0.363
   ],
   "castigo: pro: C>214C>623C>236C": [
-   22,
-   -2.363
+   53,
+   0.285
   ],
   "castigo DM: Ya Otome (DM)": [
-   53,
-   -0.453
+   98,
+   0.611
   ],
   "castigo: pro: D>C>6C>236C": [
-   5,
-   -14.0
+   18,
+   -4.555
   ],
   "castigo: C Oniyaki C": [
    10,
    -16.0
   ],
   "agarre": [
-   33,
-   -2.241
+   69,
+   -0.998
   ],
   "golpe bajo 2B": [
-   6,
-   -14.667
+   9,
+   -9.778
   ],
   "castigo: C Aoi Hana C x3": [
-   108,
-   1.571
+   143,
+   2.123
   ],
   "castigo: pro: 6C>623C>63214B>623C": [
-   8,
-   -10.5
+   21,
+   -0.81
   ],
   "castigo: 6C 623C 63214B 623C (jugadores top)": [
-   43,
-   -2.583
+   55,
+   -1.729
   ]
  },
  "castigar|d1": {
   "barrida 2D": [
-   524,
-   1.296
+   1080,
+   2.322
   ],
   "golpe bajo 2B": [
-   327,
-   0.374
+   673,
+   1.764
   ],
   "castigo: 6C 623C 63214B 623C (jugadores top)": [
    1,
    -40.0
   ],
   "castigo DM: Ya Otome (DM)": [
-   142,
-   4.54
+   330,
+   8.999
   ],
   "agarre": [
-   13,
-   -0.769
+   18,
+   0.0
   ],
   "castigo: C Aoi Hana C x3": [
-   7,
-   -2.428
+   8,
+   1.126
   ],
   "castigo: pro: C>214C>623C>236C": [
-   5,
-   -2.4
+   8,
+   -4.624
   ],
   "castigo: C Oniyaki C": [
-   5,
-   3.6
+   9,
+   -2.444
   ],
   "castigo DM: C Oniyaki C + Ya Otome (super cancel)": [
-   2,
-   -22.5
+   3,
+   -20.333
   ],
   "castigo: pro: 6C>623C>63214B>623C": [
    4,
    -14.25
   ],
   "castigo: pro: D>C>6C>236C": [
-   8,
-   2.75
+   15,
+   2.933
   ]
  },
  "castigar|d2": {
   "barrida 2D": [
-   612,
-   3.242
+   1485,
+   3.333
   ],
   "golpe bajo 2B": [
-   373,
-   1.684
+   919,
+   2.46
   ]
  },
  "castigo seguro|d0": {
@@ -225,189 +233,189 @@
  },
  "estoy en el aire|d0": {
   "golpe aereo C": [
-   43,
-   -11.188
+   73,
+   -11.44
   ],
   "sin ataque": [
-   22,
-   -12.455
+   29,
+   -12.207
   ],
   "golpe aereo D": [
-   83,
-   -8.433
+   140,
+   -9.137
   ]
  },
  "estoy en el aire|d1": {
   "golpe aereo D": [
-   90,
-   -7.755
+   159,
+   -5.078
   ],
   "golpe aereo C": [
-   143,
-   -4.686
+   225,
+   -4.419
   ],
   "sin ataque": [
-   40,
-   -5.6
+   57,
+   -5.579
   ]
  },
  "estoy en el aire|d2": {
   "golpe aereo D": [
-   233,
-   0.219
+   378,
+   -0.302
   ],
   "golpe aereo C": [
-   113,
-   -0.335
+   231,
+   -1.137
   ],
   "sin ataque": [
-   43,
-   -0.093
+   75,
+   -0.187
   ]
  },
  "estoy en el aire|d3": {
   "golpe aereo D": [
-   203,
-   0.626
+   331,
+   0.436
   ],
   "golpe aereo C": [
-   87,
-   -0.791
+   164,
+   -1.131
   ],
   "sin ataque": [
-   32,
-   -0.124
+   53,
+   -1.565
   ]
  },
  "estoy en el aire|d4": {
   "golpe aereo D": [
-   127,
-   -1.365
+   214,
+   -0.695
   ],
   "golpe aereo C": [
-   146,
-   -0.59
+   240,
+   -0.858
   ],
   "sin ataque": [
-   11,
-   -6.364
+   24,
+   -2.917
   ]
  },
  "estoy en el aire|d5": {
   "golpe aereo D": [
-   90,
-   -1.29
+   150,
+   -0.775
   ],
   "sin ataque": [
-   19,
-   -3.578
+   31,
+   -1.806
   ],
   "golpe aereo C": [
-   83,
-   -0.688
+   151,
+   -0.523
   ]
  },
  "estoy en el aire|d6": {
   "golpe aereo D": [
-   47,
-   -0.51
+   71,
+   -0.337
   ],
   "sin ataque": [
-   10,
-   -0.4
+   13,
+   -0.231
   ],
   "golpe aereo C": [
-   34,
-   -0.059
+   60,
+   -0.02
   ]
  },
  "me golpearon|d0": {
   "roll atras": [
-   55,
-   -9.78
+   115,
+   -7.72
   ],
   "guardia": [
-   290,
-   -8.365
+   530,
+   -8.196
   ],
   "reversal": [
-   49,
-   -7.287
+   84,
+   -6.299
   ]
  },
  "me golpearon|d1": {
   "guardia": [
-   450,
-   -2.106
+   994,
+   -1.395
   ],
   "roll atras": [
-   135,
-   -2.519
+   237,
+   -2.124
   ],
   "reversal": [
-   78,
-   0.092
+   160,
+   1.274
   ]
  },
  "me golpearon|d2": {
   "guardia": [
-   320,
-   0.825
+   855,
+   0.192
   ],
   "reversal": [
-   42,
-   2.381
+   113,
+   3.339
   ],
   "roll atras": [
-   46,
-   -0.977
+   168,
+   -0.791
   ]
  },
  "me golpearon|d3": {
   "guardia": [
-   131,
-   -0.568
+   279,
+   -0.262
   ],
   "roll atras": [
-   38,
-   -0.948
+   70,
+   -0.942
   ],
   "reversal": [
-   15,
-   1.867
+   23,
+   1.999
   ]
  },
  "me golpearon|d4": {
   "roll atras": [
-   27,
-   -0.074
+   30,
+   -0.067
   ],
   "guardia": [
-   104,
-   -0.242
+   133,
+   -0.202
   ],
   "reversal": [
-   17,
-   0.648
+   22,
+   1.092
   ]
  },
  "me golpearon|d5": {
   "guardia": [
-   47,
-   -0.959
+   70,
+   -0.643
   ],
   "reversal": [
-   5,
+   6,
    0.0
   ],
   "roll atras": [
-   17,
+   25,
    0.0
   ]
  },
  "me golpearon|d6": {
   "guardia": [
-   17,
+   18,
    0.0
   ],
   "roll atras": [
@@ -421,520 +429,532 @@
  },
  "media distancia|d1": {
   "guardia": [
-   44,
-   -0.999
+   111,
+   0.109
   ],
   "roll adelante": [
-   10,
-   -1.6
+   12,
+   -1.334
   ],
   "hop adelante": [
-   15,
-   4.734
+   23,
+   4.131
   ],
   "caminar adelante": [
-   33,
-   0.787
+   88,
+   0.394
   ],
   "especial de media": [
-   10,
-   8.5
+   15,
+   4.467
   ],
   "poke": [
-   26,
-   7.346
+   69,
+   6.539
   ],
   "barrida 2D": [
-   8,
-   6.5
+   24,
+   7.085
   ]
  },
  "media distancia|d2": {
   "hop adelante": [
-   189,
-   2.491
+   247,
+   2.357
   ],
   "guardia": [
-   517,
-   0.319
+   1520,
+   1.393
   ],
   "caminar adelante": [
-   407,
-   0.515
+   955,
+   0.976
   ],
   "roll adelante": [
-   125,
-   0.688
+   177,
+   0.537
   ],
   "poke": [
-   64,
-   1.158
+   218,
+   1.808
   ],
   "especial de media": [
-   46,
-   2.477
+   64,
+   2.327
   ],
   "barrida 2D": [
-   99,
-   4.248
+   365,
+   7.257
   ]
  },
  "media distancia|d3": {
   "guardia": [
-   716,
-   0.067
+   1929,
+   0.44
   ],
   "roll adelante": [
-   137,
-   -0.262
+   193,
+   -0.157
   ],
   "especial de media": [
-   75,
-   1.466
+   93,
+   1.462
   ],
   "hop adelante": [
-   179,
-   1.46
+   222,
+   1.003
   ],
   "poke": [
-   86,
-   1.324
+   212,
+   0.032
   ],
   "caminar adelante": [
-   360,
-   -0.472
+   940,
+   0.099
   ],
   "barrida 2D": [
-   97,
-   1.67
+   245,
+   3.034
   ]
  },
  "media distancia|d4": {
   "guardia": [
-   879,
-   -0.07
+   1571,
+   0.02
   ],
   "poke": [
-   201,
-   0.05
+   355,
+   -0.174
   ],
   "roll adelante": [
-   204,
-   -0.221
+   262,
+   0.08
   ],
   "caminar adelante": [
-   590,
-   -0.093
+   962,
+   -0.021
   ],
   "barrida 2D": [
-   128,
-   -0.227
+   221,
+   0.205
   ],
   "especial de media": [
-   86,
-   -0.186
+   99,
+   -0.15
   ],
   "hop adelante": [
-   173,
-   0.313
+   195,
+   0.276
   ]
  },
  "pegado al rival|d0": {
   "combo: C Oniyaki C": [
-   19,
-   3.736
+   33,
+   4.334
   ],
   "combo: C Yami Barai C": [
-   44,
-   6.861
+   68,
+   5.396
   ],
   "overhead": [
-   16,
-   -0.875
+   24,
+   1.291
   ],
   "combo: pro: 6C>623C>63214B>623C": [
    3,
    0.0
   ],
   "guardia": [
-   191,
-   1.625
+   630,
+   2.543
   ],
   "combo: C Aoi Hana C x3": [
-   60,
-   6.851
+   78,
+   6.309
   ],
   "combo: pro: C>214C>623C>236C": [
-   25,
-   7.4
+   53,
+   5.076
   ],
   "combo DM: C Oniyaki C + Ya Otome (super cancel)": [
-   82,
-   6.988
+   104,
+   5.057
   ],
   "combo DM: Ya Otome (DM)": [
-   40,
-   7.049
+   51,
+   4.253
   ],
   "backdash": [
-   67,
-   4.329
+   216,
+   2.513
   ],
   "agarre D": [
-   24,
-   4.292
+   66,
+   3.758
   ],
   "combo: pro: D>C>6C>236C": [
-   21,
-   6.049
+   31,
+   5.0
   ],
   "salto atras (evitar agarre)": [
-   35,
-   2.913
+   62,
+   2.95
   ],
   "golpe bajo 2B": [
-   33,
-   4.939
+   100,
+   3.839
   ],
   "agarre C": [
-   23,
-   4.435
+   92,
+   3.022
   ],
   "combo: 6C 623C 63214B 623C (jugadores top)": [
-   2,
-   -10.5
+   3,
+   -15.0
+  ],
+  "reversal": [
+   1,
+   10.0
   ]
  },
  "pegado al rival|d1": {
   "guardia": [
-   511,
-   1.366
+   1412,
+   1.923
   ],
   "salto atras (evitar agarre)": [
-   88,
-   1.83
+   145,
+   1.938
   ],
   "barrida 2D": [
-   70,
-   3.916
+   191,
+   4.057
   ],
   "overhead": [
-   79,
-   3.948
+   110,
+   3.991
   ],
   "acercarse a rango de combo": [
-   264,
-   0.205
+   419,
+   0.878
   ],
   "combo: pro: 6C>623C>63214B>623C": [
    4,
    -12.75
   ],
   "golpe bajo 2B": [
-   100,
-   2.711
+   266,
+   2.944
   ],
   "backdash": [
-   137,
-   1.503
+   394,
+   1.638
   ],
   "combo: C Aoi Hana C x3": [
    1,
    -42.0
   ],
   "combo DM: Ya Otome (DM)": [
-   96,
-   8.594
+   179,
+   8.377
   ],
   "combo DM: C Oniyaki C + Ya Otome (super cancel)": [
-   8,
-   -0.876
+   11,
+   2.0
   ],
   "combo: C Yami Barai C": [
-   19,
-   8.631
+   33,
+   9.575
   ],
   "agarre D": [
-   4,
-   8.5
+   28,
+   5.001
   ],
   "combo: C Oniyaki C": [
-   3,
-   -3.0
+   4,
+   -2.25
   ],
   "combo: pro: D>C>6C>236C": [
    7,
    4.714
   ],
   "agarre C": [
-   21,
-   3.143
+   49,
+   3.695
   ],
   "combo: 6C 623C 63214B 623C (jugadores top)": [
-   17,
-   6.353
+   19,
+   7.79
   ],
   "reversal": [
-   16,
-   7.188
+   20,
+   6.9
   ],
   "combo: pro: C>214C>623C>236C": [
-   4,
-   11.0
+   12,
+   6.25
   ]
  },
  "presion del rival|d0": {
   "guardia": [
-   88,
-   0.728
+   220,
+   -0.001
   ],
   "roll atras": [
-   4,
-   0.5
+   10,
+   -2.2
   ],
   "backdash": [
-   4,
+   10,
    0.0
   ],
   "roll adelante (salir de la esquina)": [
-   2,
-   -6.0
+   7,
+   -0.285
   ],
   "salto adelante": [
-   1,
+   2,
    0.0
   ]
  },
  "presion del rival|d1": {
   "guardia": [
-   236,
-   1.004
+   670,
+   1.673
   ],
   "roll adelante (salir de la esquina)": [
-   12,
-   2.0
+   30,
+   1.434
   ],
   "backdash": [
-   22,
-   1.683
+   45,
+   2.002
   ],
   "roll atras": [
-   9,
-   -1.0
+   30,
+   2.033
+  ],
+  "salto adelante": [
+   4,
+   2.0
   ]
  },
  "presion del rival|d2": {
   "guardia": [
-   661,
-   -0.612
+   1804,
+   -0.335
   ],
   "roll atras": [
-   33,
-   -1.818
+   77,
+   -1.106
   ],
   "backdash": [
-   28,
-   -1.464
+   71,
+   -1.576
   ],
   "roll adelante (salir de la esquina)": [
-   20,
-   -1.9
+   47,
+   -3.149
   ],
   "salto adelante": [
-   3,
-   0.0
+   8,
+   -5.0
   ]
  },
  "presion del rival|d3": {
   "guardia": [
-   931,
-   -1.325
+   2188,
+   -0.717
   ],
   "backdash": [
-   43,
-   -3.674
+   110,
+   -1.39
   ],
   "roll atras": [
-   79,
-   -0.43
+   172,
+   -0.244
   ],
   "roll adelante (salir de la esquina)": [
-   35,
-   -1.087
+   89,
+   -1.236
   ],
   "salto adelante": [
-   13,
-   -0.154
+   27,
+   -2.223
   ]
  },
  "presion del rival|d4": {
   "guardia": [
-   497,
-   -0.281
+   801,
+   -0.262
   ],
   "roll atras": [
-   37,
-   -1.135
+   57,
+   -0.738
   ],
   "backdash": [
-   59,
-   -0.916
+   83,
+   -0.651
   ],
   "roll adelante (salir de la esquina)": [
-   5,
-   -4.4
+   13,
+   -2.461
   ],
   "salto adelante": [
-   2,
-   0.0
+   6,
+   1.667
   ]
  },
  "rival ataca desde el aire|d0": {
   "guardia": [
-   63,
-   -11.713
+   91,
+   -8.954
   ],
   "retroceder": [
-   31,
-   -10.998
+   34,
+   -10.91
   ],
   "anti-aire normal": [
-   19,
-   -11.475
+   25,
+   -8.761
   ]
  },
  "rival ataca desde el aire|d1": {
   "guardia": [
-   44,
-   -2.137
+   103,
+   -2.401
   ],
   "retroceder": [
    5,
    -22.2
   ],
   "anti-aire normal": [
-   1,
-   -36.0
+   2,
+   -13.0
   ]
  },
  "rival ataca desde el aire|d2": {
   "guardia": [
-   37,
-   -3.542
+   68,
+   -4.09
   ],
   "retroceder": [
-   15,
-   -6.2
+   26,
+   -5.038
   ],
   "anti-aire normal": [
-   12,
-   -2.917
+   14,
+   -5.0
   ]
  },
  "rival ataca desde el aire|d3": {
   "retroceder": [
-   7,
-   -14.285
+   10,
+   -12.799
   ],
   "guardia": [
-   71,
-   1.833
+   175,
+   0.578
   ],
   "anti-aire normal": [
-   9,
-   -2.778
+   18,
+   -9.221
   ]
  },
  "rival ataca desde el aire|d4": {
   "anti-aire normal": [
-   2,
-   -29.0
+   3,
+   -19.333
   ],
   "guardia": [
-   17,
-   0.235
+   43,
+   2.444
   ],
   "retroceder": [
-   2,
-   -20.0
+   6,
+   -6.667
   ]
  },
  "rival ataca|d0": {
   "backdash": [
-   17,
-   -3.47
+   23,
+   -5.001
   ],
   "guardia": [
-   201,
-   -2.823
+   414,
+   -1.791
   ],
   "roll adelante": [
-   10,
-   -4.1
+   20,
+   -3.749
+  ],
+  "reversal": [
+   1,
+   -22.0
   ]
  },
  "rival ataca|d1": {
   "guardia": [
-   359,
-   -3.316
+   828,
+   -2.67
   ],
   "backdash": [
-   24,
-   -3.749
+   52,
+   -5.116
   ],
   "roll adelante": [
-   10,
-   -3.2
+   37,
+   -2.054
   ],
   "reversal": [
-   3,
-   -2.667
+   5,
+   -6.4
   ]
  },
  "rival ataca|d2": {
   "guardia": [
-   375,
-   -4.249
+   983,
+   -1.972
   ],
   "backdash": [
-   17,
-   -5.647
+   41,
+   -4.585
   ],
   "reversal": [
    3,
    -18.667
   ],
   "roll adelante": [
-   12,
-   -3.166
+   40,
+   -3.8
   ]
  },
  "rival ataca|d3": {
   "guardia": [
-   334,
-   -5.84
+   563,
+   -3.139
   ],
   "backdash": [
-   66,
-   -5.092
+   89,
+   -4.316
   ],
   "roll adelante": [
-   15,
-   -3.067
+   25,
+   -2.121
   ],
   "reversal": [
-   5,
-   -0.4
+   6,
+   1.333
   ]
  },
  "rival ataca|d4": {
   "guardia": [
-   215,
-   -4.716
+   257,
+   -4.156
   ],
   "backdash": [
-   8,
-   -7.0
+   19,
+   -2.368
   ],
   "roll adelante": [
    9,
@@ -947,44 +967,44 @@
  },
  "rival cae hacia mi|d0": {
   "anti-aire normal": [
-   12,
-   -17.833
+   13,
+   -18.307
   ],
   "anti-aire especial": [
    15,
    -13.2
   ],
   "guardia": [
-   68,
-   -4.161
+   172,
+   -3.829
   ]
  },
  "rival cae hacia mi|d1": {
   "guardia": [
-   123,
-   0.611
+   264,
+   -1.387
   ],
   "anti-aire especial": [
-   15,
-   -3.6
+   23,
+   -5.087
   ],
   "anti-aire normal": [
-   11,
-   -7.364
+   15,
+   -8.467
   ]
  },
  "rival cae hacia mi|d2": {
   "guardia": [
-   141,
-   -0.43
+   320,
+   -3.058
   ],
   "anti-aire especial": [
-   24,
-   -4.875
+   32,
+   -7.468
   ],
   "anti-aire normal": [
-   27,
-   0.854
+   51,
+   -3.333
   ]
  },
  "rival cae hacia mi|d3": {
@@ -993,12 +1013,12 @@
    0.0
   ],
   "anti-aire especial": [
-   2,
-   11.5
+   6,
+   -7.833
   ],
   "anti-aire normal": [
-   3,
-   3.333
+   5,
+   -8.0
   ]
  },
  "rival en el aire, esperando|d0": {
@@ -1007,134 +1027,134 @@
    -7.181
   ],
   "retroceder un paso": [
-   51,
-   -9.864
+   52,
+   -9.674
   ],
   "guardia": [
-   130,
-   -7.628
+   132,
+   -7.513
   ]
  },
  "rival en el aire, esperando|d1": {
   "guardia": [
-   73,
-   -1.727
+   139,
+   -1.238
   ],
   "esperar": [
-   85,
-   -1.119
+   95,
+   -1.001
   ],
   "retroceder un paso": [
-   41,
-   -0.074
+   61,
+   -0.05
   ]
  },
  "rival en el aire, esperando|d2": {
   "retroceder un paso": [
-   47,
-   -1.405
+   70,
+   -1.259
   ],
   "guardia": [
-   85,
-   -0.636
+   191,
+   -0.19
   ],
   "esperar": [
-   85,
-   -1.458
+   102,
+   -1.108
   ]
  },
  "rival en el aire, esperando|d3": {
   "esperar": [
-   132,
-   0.139
+   156,
+   0.115
   ],
   "retroceder un paso": [
-   58,
-   -1.518
+   109,
+   -0.807
   ],
   "guardia": [
-   94,
-   -0.639
+   225,
+   -0.301
   ]
  },
  "rival en el aire, esperando|d4": {
   "retroceder un paso": [
-   34,
+   54,
    0.0
   ],
   "esperar": [
-   49,
-   0.345
+   55,
+   0.325
   ],
   "guardia": [
-   47,
-   -0.511
+   97,
+   -0.235
   ]
  },
  "rival lejos|d4": {
   "correr": [
-   273,
-   -2.183
+   602,
+   -1.192
   ],
   "caminar adelante": [
-   262,
-   -2.565
+   568,
+   -1.322
   ],
   "esperar": [
-   92,
-   -0.977
+   216,
+   -0.191
   ],
   "proyectil / especial de lejos": [
-   68,
-   0.443
+   128,
+   1.084
   ],
   "hop adelante": [
-   44,
-   -2.91
+   104,
+   -1.318
   ]
  },
  "rival lejos|d5": {
   "correr": [
-   328,
-   -1.749
+   705,
+   -0.968
   ],
   "hop adelante": [
-   84,
-   -1.06
+   169,
+   -0.627
   ],
   "caminar adelante": [
-   342,
-   -1.252
+   790,
+   -0.722
   ],
   "esperar": [
-   86,
-   -1.991
+   204,
+   -0.977
   ],
   "proyectil / especial de lejos": [
-   58,
-   0.723
+   110,
+   0.751
   ]
  },
  "rival lejos|d6": {
   "correr": [
-   161,
-   -0.396
+   345,
+   -0.17
   ],
   "esperar": [
-   40,
-   -0.649
+   76,
+   -0.329
   ],
   "caminar adelante": [
-   180,
-   -0.756
+   348,
+   -0.415
   ],
   "hop adelante": [
-   40,
-   -0.775
+   70,
+   -0.444
   ],
   "proyectil / especial de lejos": [
-   25,
-   0.08
+   45,
+   0.402
   ]
  }
 }

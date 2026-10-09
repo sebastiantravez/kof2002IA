@@ -16,6 +16,8 @@ PUNISH_WINDOW = 60        # frames para ver si un castigo hizo danio
 NEAR = 180                # ataques mas lejos no se cuentan como amenaza
 LOW_WINDOW = 4
 MAX_DAMAGE = 60
+CHIP_DAMAGE = 2           # perdida de vida con guardia puesta que es raspado de un especial bloqueado
+                          # (medido: 1 punto casi siempre con guardia; los golpes reales quitan >= 4)
 COUNTER_WINDOW = 120      # ofensiva tras defensa: danio hecho hasta N frames despues de evitar un ataque
 ATTACK_RESULT_FRAMES = 40 # un ataque nuestro "fallo" si no hizo danio en N frames
 
@@ -46,7 +48,11 @@ class DefenseLogger:
         self._file = open(self.path, "w", newline="", encoding="utf-8")
         self._csv = csv.writer(self._file)
         self._csv.writerow(["frame", "evento", "amenaza", "rival", "distancia", "acorralado",
-                            "situacion_bot", "accion_bot", "guardia", "resultado", "danio", "motivo"])
+                            "situacion_bot", "accion_bot", "guardia", "resultado", "danio", "motivo",
+                            "situacion_impacto", "accion_impacto", "teclas_frame_previo",
+                            "rival_cambio_de_lado", "altura_rival"])
+        self._impact = ("", "", "", "", "")
+        self._prev_keys = set()
         self._prev = None
         self._crouch_frame = -999
         self._events = []          # ataques rivales abiertos
@@ -60,6 +66,7 @@ class DefenseLogger:
         self.idle_guard_frames = 0 # neutral sin amenaza: cubriendose
         self.neutral_frames = 0
         self.dealt = self.taken = 0
+        self.chip = self.chip_blocks = 0   # raspado de especiales bloqueados (no son golpes)
         self.rounds = 1
         self._last_taken_frame = -10_000
         self._rival_end = None     # fin del ultimo ataque rival cercano
@@ -73,6 +80,7 @@ class DefenseLogger:
     def observe(self, state, keys):
         prev = self._prev
         self._prev = state
+        prev_keys, self._prev_keys = self._prev_keys, set(keys)
         if prev is None:
             return
         f = state.frame
@@ -106,15 +114,27 @@ class DefenseLogger:
                     "bajo" if f - self._crouch_frame <= LOW_WINDOW else "de pie/overhead")
             self._events.append({"start": f, "kind": kind, "dist": state.distance,
                                  "corner": state.back_to_wall, "situation": situation,
-                                 "option": option, "rival": rival.character, "guards": []})
+                                 "option": option, "rival": rival.character, "guards": [],
+                                 "rival_right": rival.x > me.x})
         for event in self._events:
             event["guards"].append(guard)
 
         # Golpe recibido
         taken = prev.me.life - me.life
-        if 0 < taken <= MAX_DAMAGE:
+        guard_before = self._guard(prev_keys, prev.facing_right)
+        if 0 < taken <= CHIP_DAMAGE and guard_before in ("de pie", "abajo"):
+            # Medido: perder 1 punto con la guardia puesta es el raspado de un especial
+            # BLOQUEADO (docs/DEFENSE_AUDIT_V4.md): no es un golpe; el ataque sigue abierto.
+            self.taken += taken
+            self.chip += taken
+            self.chip_blocks += 1
+        elif 0 < taken <= MAX_DAMAGE:
             self.taken += taken
             event = self._events[-1] if self._events else None
+            # Teclas que estaban aplicadas en el frame anterior (las de este intercambio se
+            # aplican desde ahora) y si el rival paso al otro lado desde que empezo su ataque.
+            crossed = "" if not event else ("si" if (rival.x > me.x) != event["rival_right"] else "no")
+            self._impact = (situation, option, "+".join(sorted(prev_keys)) or "nada", crossed, rival.height)
             if event:
                 reason = self._reason(event["kind"], guard)
                 self._close(event, f, "golpeado", taken, reason, guard)
@@ -217,7 +237,9 @@ class DefenseLogger:
                     event["situation"], event["option"], guard, result, damage, reason)
 
     def _write(self, *row):
-        self._csv.writerow(row)
+        # Columnas de impacto (solo en golpes recibidos): lo que pasaba en el frame del golpe.
+        impact = self._impact if row[9] == "golpeado" else ("", "", "", "", "")
+        self._csv.writerow(row + tuple(impact))
         self._file.flush()   # que un corte brusco no pierda el registro
 
     def close(self):
@@ -232,6 +254,9 @@ class DefenseLogger:
             total = hit + ok
             pct = f"{100 * ok / total:.0f}% evitados" if ok or "visible" not in kind else ""
             lines.append(f"  {kind:40s} {total:4d}  golpeado {hit:3d}  {pct}")
+        if self.chip_blocks:
+            lines.append(f"  Bloqueos con raspado (especial bloqueado, no es golpe): {self.chip_blocks}, "
+                         f"{self.chip} de vida")
         if self.reasons:
             lines.append("  Motivos de los golpes recibidos:")
             for reason, n in self.reasons.most_common():
@@ -269,6 +294,7 @@ class DefenseLogger:
         return {
             "rondas": rounds or self.rounds,
             "danio_hecho": self.dealt, "danio_recibido": self.taken,
+            "bloqueos_con_raspado": self.chip_blocks, "danio_raspado": self.chip,
             "pausas_entre_ataques": dict(sorted(self.attack_gaps.items())),
             "danio_hecho_por_ronda": self.dealt / (rounds or self.rounds),
             "danio_recibido_por_ronda": self.taken / (rounds or self.rounds),

@@ -204,6 +204,21 @@ class DefenseLoggerRegression(unittest.TestCase):
         self.assertEqual(log.threats[("aereo", "evitado")], 1)
         self.assertEqual(log.reasons["guardia alta contra ataque bajo"], 1)
 
+    def test_chip_damage_with_guard_is_a_block(self):
+        path = tempfile.mktemp(suffix=".csv")
+        log = DefenseLogger(path, lambda: ("rival ataca", "guardia", 1))
+        # rival a la derecha: atras = left. Ataque largo; pierde 1 de vida con guardia (raspado)
+        for f in range(0, 60):
+            log.observe(st(f, ml=102 if f < 15 else 101, ratk=(5 <= f < 30)), {"left"})
+        # otro ataque: pierde 1 SIN guardia -> golpe
+        for f in range(60, 120):
+            log.observe(st(f, ml=101 if f < 75 else 100, ratk=(65 <= f < 90)), set())
+        log.close()
+        self.assertEqual(log.chip_blocks, 1)
+        self.assertEqual(log.threats[("de pie/overhead", "evitado")], 1)
+        self.assertEqual(log.threats[("de pie/overhead", "golpeado")], 1)
+        self.assertEqual(log.taken, 2)
+
     def test_offense_metrics(self):
         path = tempfile.mktemp(suffix=".csv")
         info = {"v": ("NEUTRAL:POKE", "poke", 1)}
