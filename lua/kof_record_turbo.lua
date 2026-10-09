@@ -1,19 +1,22 @@
--- Igual que kof_record.lua pero con el juego SIN LIMITE de velocidad: para grabar
--- repeticiones mas rapido (la grabacion es frame a frame, no le importa la velocidad).
--- Si Fightcade manda la repeticion al ritmo normal, el emulador espera los datos y
--- simplemente no gana velocidad.
--- SOLO para repeticiones: nunca en una partida en vivo ni en practica.
--- AVISO (reportado por el usuario, 2026-10-08): en repeticiones largas de Fightcade (retas a 5)
--- acelerar DESFASA la repeticion y los datos quedan mal. Para eso usar kof_record.lua a
--- velocidad normal. Solo sirve en repeticiones cortas, revisando que no se desfase.
+-- Igual que kof_record.lua pero mas rapido, para grabar repeticiones sin esperar toda la reta.
+-- La grabacion es frame a frame: a cualquier velocidad se guardan los mismos datos.
 -- Cargar en el emulador de la REPETICION: Game -> Lua Scripting -> ... -> Run.
+-- Nunca en una partida en vivo ni en practica.
 --
+-- VELOCIDAD: el turbo sin limite (~9x) DESFASA las repeticiones largas de Fightcade (reportado
+-- por el usuario, 2026-10-08, retas a 5). Por eso aqui se limita. Cambia este numero:
+--   1 = normal, 2 = el doble (una reta de 30 min en 15), 3 = el triple...
+-- Si la repeticion se desfasa (los personajes hacen cosas raras o no coincide con el video),
+-- baja el numero y vuelve a grabar esa repeticion.
+local VELOCIDAD = 2
+
 -- Si la consola dice que no encontro kof_record.lua, escribe aqui la ruta de tu carpeta
 -- KOF_Grabador (con / y terminando en /), por ejemplo "C:/Users/TuUsuario/Desktop/KOF_Grabador/":
 local CARPETA = nil
 
 KOF_RECORD_TURBO = true
-print("AVISO: el turbo puede desfasar repeticiones largas de Fightcade. Para retas largas usa kof_record.lua.")
+KOF_RECORD_SPEED = VELOCIDAD
+print(string.format("Grabando a %gx como maximo (cambia VELOCIDAD al inicio de este archivo).", VELOCIDAD))
 
 local function exists(path)
   local f = io.open(path, "r")

@@ -134,7 +134,20 @@ end
 local frames = 0
 local last_time, last_frames = os.time(), 0
 
+-- Velocidad limitada (kof_record_turbo.lua pone KOF_RECORD_SPEED, p. ej. 2 = el doble): el
+-- emulador corre en turbo y aqui se espera lo justo en cada frame para no pasar de esa
+-- velocidad. En Windows os.clock() mide tiempo real.
+local frame_time = KOF_RECORD_SPEED and 1 / (59.19 * KOF_RECORD_SPEED) or nil
+local next_frame = os.clock()
+local function throttle()
+  local now = os.clock()
+  if now > next_frame + 0.25 then next_frame = now end   -- tras una pausa, no correr para alcanzar
+  while os.clock() < next_frame do end
+  next_frame = next_frame + frame_time
+end
+
 local function on_frame()
+  if frame_time then throttle() end
   local f = emu.framecount()
   rec:write(f, ",", fields(P1), ",", fields(P2), ",", pressed(), "\n")
   if bin then bin:write(dump(P1), dump(P2)) end
