@@ -83,8 +83,9 @@ Pruebas sin el juego: `python -m unittest discover tests`.
 
 ## Imitación de jugadores top
 
-1. En Fightcade abre una repetición de un buen jugador y carga `lua\kof_record_turbo.lua`
-   (graba ~9x más rápido; `kof_record.lua` a velocidad normal). Cada una va a `recordings\`.
+1. En Fightcade abre una repetición de un buen jugador y carga `lua\kof_record.lua` (velocidad
+   normal). `kof_record_turbo.lua` graba más rápido, pero desfasa las repeticiones largas (retas a
+   5): no usarlo en esas. Cada una va a `recordings\`.
 2. `python tools\learn_from_replays.py` → combos reales por personaje, defensa y qué hacen en
    cada situación → `recordings\imitation.json`, que el cerebro usa automáticamente.
 3. Verificar combos en práctica con `python tools\combo_lab.py <personaje>` (con `kof_state.lua`).

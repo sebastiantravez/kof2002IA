@@ -3,6 +3,9 @@
 -- Si Fightcade manda la repeticion al ritmo normal, el emulador espera los datos y
 -- simplemente no gana velocidad.
 -- SOLO para repeticiones: nunca en una partida en vivo ni en practica.
+-- AVISO (reportado por el usuario, 2026-10-08): en repeticiones largas de Fightcade (retas a 5)
+-- acelerar DESFASA la repeticion y los datos quedan mal. Para eso usar kof_record.lua a
+-- velocidad normal. Solo sirve en repeticiones cortas, revisando que no se desfase.
 -- Cargar en el emulador de la REPETICION: Game -> Lua Scripting -> ... -> Run.
 --
 -- Si la consola dice que no encontro kof_record.lua, escribe aqui la ruta de tu carpeta
@@ -10,6 +13,7 @@
 local CARPETA = nil
 
 KOF_RECORD_TURBO = true
+print("AVISO: el turbo puede desfasar repeticiones largas de Fightcade. Para retas largas usa kof_record.lua.")
 
 local function exists(path)
   local f = io.open(path, "r")
