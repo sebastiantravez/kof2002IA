@@ -6,7 +6,7 @@
 -- teclas se pulsan con joypad.set (no hace falta foco ni teclado). Cada lote de
 -- ordenes tiene un id: Python lo repite hasta que "ack" (el ultimo id ejecutado)
 -- lo confirma, y aqui se ejecuta una sola vez. Las ordenes son:
---   SAVE   guardar partida en la ranura 1 (inicio de ronda)
+--   SAVE   guardar partida en la ranura 1 (inicio de ronda); SAVE2/LOAD2: ranura 2 (laboratorio)
 --   LOAD   cargar la ranura 1 (reiniciar la ronda al instante)
 --   TURBO  quitar el limite de velocidad;  NORMAL  volver a velocidad normal
 -- Si Python no responde, el juego sigue normal sin el bot.
@@ -71,6 +71,9 @@ local function apply(keys, cmds)
     for c in string.gmatch(list, "%S+") do
       if c == "LOAD" then savestate.load(savestate.create(1))
       elseif c == "SAVE" then savestate.save(savestate.create(1))
+      -- ranura 2: laboratorio de combos (no pisa el punto de reinicio del entrenamiento)
+      elseif c == "LOAD2" then savestate.load(savestate.create(2))
+      elseif c == "SAVE2" then savestate.save(savestate.create(2))
       elseif c == "TURBO" then emu.speedmode("turbo")
       elseif c == "NORMAL" then emu.speedmode("normal")
       end

@@ -36,7 +36,8 @@ class Step:
 def parse(notation, step_frames=2, button_frames=3):
     """Convierte '236A', '214B', '2[40]8A' (carga) o '6C' en pasos.
 
-    '[N]' tras una direccion la mantiene N frames (para cargas).
+    '[N]' tras una direccion la mantiene N frames (para cargas); tras botones ('6C[4]', 'B[2]')
+    los mantiene N frames en vez de button_frames (inputs grabados al frame).
     """
     steps = []
     i = 0
@@ -53,18 +54,32 @@ def parse(notation, step_frames=2, button_frames=3):
             while i + 1 < len(notation) and notation[i + 1] in BUTTONS:
                 buttons += notation[i + 1]
                 i += 1
-            steps.append(Step(direction, buttons, button_frames if buttons else frames))
+            if buttons:
+                held, i = _held(notation, i, button_frames)
+                steps.append(Step(direction, buttons, held))
+            else:
+                steps.append(Step(direction, buttons, frames))
         elif ch in BUTTONS:
             buttons = ch
             while i + 1 < len(notation) and notation[i + 1] in BUTTONS:
                 buttons += notation[i + 1]
                 i += 1
-            steps.append(Step(5, buttons, button_frames))
+            held, i = _held(notation, i, button_frames)
+            steps.append(Step(5, buttons, held))
         elif ch != " ":
             raise ValueError(f"Caracter invalido en {notation!r}: {ch!r}")
         i += 1
     steps.append(Step(5, "", 1))
     return steps
+
+
+def _held(notation, i, default):
+    """'6C[4]': boton(es) mantenidos N frames (para reproducir inputs grabados al frame).
+    Devuelve (frames, indice del ultimo caracter usado)."""
+    if i + 1 < len(notation) and notation[i + 1] == "[":
+        end = notation.index("]", i + 1)
+        return int(notation[i + 2:end]), end
+    return default, i
 
 
 def keys_for(direction, buttons, facing_right=True):

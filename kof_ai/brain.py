@@ -522,10 +522,20 @@ class RuleBrain:
         return [Option(total_weight / len(dm), f"{prefix}: {name}", notation)
                 for name, notation in dm.items()]
 
-    @staticmethod
-    def _in_range(combos, d):
+    def _in_range(self, combos, d):
         """Combos cuyo primer golpe alcanza a esta distancia. Los que empiezan con C
         (close C) solo salen pegado; mas lejos sale el C lejano, que no se cancela.
-        Los que empiezan con un ligero (2B) alcanzan un poco mas."""
-        return {name: notation for name, notation in combos.items()
-                if d <= (CLOSE_C_RANGE if HEAVY_START.match(notation) else LIGHT_RANGE)}
+        Los que empiezan con un ligero (2B) alcanzan un poco mas. Los combos con rango
+        medido (perfil "combo_ranges": los tuyos, validados en tools/combo_lab_fast.py)
+        solo salen dentro de ese rango."""
+        ranges = self._moves.get("combo_ranges", {})
+        result = {}
+        for name, notation in combos.items():
+            if name in ranges:
+                lo, hi = ranges[name]
+                ok = lo <= d <= hi
+            else:
+                ok = d <= (CLOSE_C_RANGE if HEAVY_START.match(notation) else LIGHT_RANGE)
+            if ok:
+                result[name] = notation
+        return result
