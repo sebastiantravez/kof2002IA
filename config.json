@@ -96,7 +96,10 @@
         "2B 2A Sankuu Kyaku": "2B>2A>214C5[8]9D5[8]2D",
         "C Hangetsu Zan": "C>214D",
         "2A Sankuu": "2A>214C",
-        "6C 1A 63214A (de repeticiones)": "6C>1A>63214A"
+        "6C 1A 63214A (de repeticiones)": "6C>1A>63214A",
+        "tuyo 24 dmg (rec_20261008_160729.csv frame 16081)": "6[3] 5[3] 6[8] 6C[6] 6[2] 3[2] 2[2] 1[3] 4B[4] 4[4] 1[2] 2[2] 3[1] 6[2] 9[2] 8[2] 7[3] 4[2] 1[2] 2[2] 3[1]",
+        "tuyo 25 dmg (rec_20261008_161341.csv frame 37585)": "6[1] 5[3] 6[10] 6C[5] 6[3] 3[1] 2[2] 1[3] 1B[1] 4B[3] 4[2] 1[3] 2[3] 3[1] 6[2] 9[2] 8[2] 7[1] 4[3] 1[1] 2[3] 3[1] 6[1] 6D[1]",
+        "tuyo 24 dmg (rec_20261008_161341.csv frame 65184)": "6[3] 5[4] 6[7] 6C[5] 6[18] 6B[5] 6[17] 6B[1] 6BC[2] 5B[1] 5[2] 6[12] 6C[3] 6[1] 3[1] 2[1] 4[4] 5[1] 6[3] 6ABCD[2]"
       },
       "punish": {
         "C Sankuu Kyaku (BnB)": "C>214C5[8]9D5[8]2D",
@@ -108,7 +111,21 @@
         "2B 2A Hou'ou Kyaku (DM)": "2B>2A>21441236D"
       },
       "anti_air_dm": "236236D",
-      "_dm": "dm_combos: solo con 1+ barra (RAM +0x1E3); inputs de las guias, sin verificar en laboratorio"
+      "_dm": "dm_combos: solo con 1+ barra (RAM +0x1E3); inputs de las guias, sin verificar en laboratorio",
+      "combo_ranges": {
+        "tuyo 24 dmg (rec_20261008_160729.csv frame 16081)": [
+          14,
+          44
+        ],
+        "tuyo 25 dmg (rec_20261008_161341.csv frame 37585)": [
+          17,
+          47
+        ],
+        "tuyo 24 dmg (rec_20261008_161341.csv frame 65184)": [
+          17,
+          47
+        ]
+      }
     },
     "Choi": {
       "_fuente": "dreamcancel.com/wiki/The_King_of_Fighters_2002/Choi_Bounge (sin buen anti-aire ni reversal sin barra)",
