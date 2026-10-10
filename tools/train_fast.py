@@ -17,6 +17,7 @@ Uso:
                  (mismo rival y escenario, para comparar modos en igualdad de condiciones).
      --rival=Chin: detener si P2 no es ese personaje.
      --preventive=on|off: guardia preventiva (sin acciones largas cerca del rival).
+     --speed=N: como maximo N veces la velocidad normal (tambien con --play).
   Se detiene solo si P1 no es el personaje pedido (p. ej. la demo del arcade).
 """
 import json
@@ -40,7 +41,9 @@ args = [a for a in sys.argv[1:] if not a.startswith("--")]
 character = args[0] if args else "Kim"
 minutes = float(args[1]) if len(args) > 1 else 10
 play = "--play" in sys.argv
-turbo = "--normal" not in sys.argv and not play
+# --speed=N: N veces la velocidad normal como maximo (tambien en --play, para mirarlo mas rapido)
+speed = next((float(a.split("=", 1)[1]) for a in sys.argv[1:] if a.startswith("--speed=")), None)
+turbo = ("--normal" not in sys.argv and not play) or speed is not None
 reset = "--no-reset" not in sys.argv
 reuse_save = "--reuse-save" in sys.argv
 wanted_rival = next((a.split("=", 1)[1] for a in sys.argv[1:] if a.startswith("--rival=")), None)
@@ -55,6 +58,8 @@ for a in sys.argv[1:]:
         moves["combat_mode"] = {"strategic": "BALANCED_EXPERIMENTAL"}.get(a.split("=", 1)[1], "DEFENSE_ONLY")
 
 link = Lockstep(ROOT)
+if speed:
+    link.max_fps = 59.19 * speed
 print("Esperando a lua/kof_train.lua en el emulador...")
 first = link.step()
 print(f"Conectado. P1 = {first.me.character}, P2 = {first.rival.character}, "

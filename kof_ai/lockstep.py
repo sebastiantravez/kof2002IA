@@ -56,6 +56,22 @@ class Lockstep:
         self._ack = 0
         self._resetting = False
         self._round_start = 0
+        # Velocidad maxima (frames de juego por segundo real) con el juego en turbo.
+        # None = sin limite. Sirve para mirar al bot mas rapido que a velocidad normal.
+        self.max_fps = None
+        self._pace = None        # (tiempo, frames) de referencia para el limite
+
+    def _throttle(self):
+        now = time.perf_counter()
+        if self._pace is None:
+            self._pace = (now, self.frames)
+            return
+        t0, f0 = self._pace
+        delay = t0 + (self.frames - f0) / self.max_fps - now
+        if delay > 0:
+            time.sleep(delay)
+        elif delay < -0.5:          # se atraso (p. ej. guardando la tabla): no correr para alcanzar
+            self._pace = (now, self.frames)
 
     def send(self, *commands):
         """Ordenes para el script Lua: SAVE, LOAD, TURBO, NORMAL."""
@@ -97,6 +113,8 @@ class Lockstep:
             self.on_step(self.state, self.keys)
         self._respond(seq, hold)
         self.frames += hold
+        if self.max_fps:
+            self._throttle()
         return self.state
 
     def _wait_request(self):
