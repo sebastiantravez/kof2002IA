@@ -230,6 +230,8 @@ class RuleBot(_BaseBot):
         # Con ofensiva estrategica solo se guarda ante una amenaza real (y la pausa es mas
         # corta) para no quedarse quieto cubriendose sin motivo.
         state = self._brain.state()
+        if getattr(self._brain, "combat_mode", None) == "GUARD_ONLY_TEST":
+            return self._guard(random.randint(2, 6))   # diagnostico: nunca soltar la guardia
         if getattr(self._brain, "strategy", None):
             if self._brain.threat_now():
                 return self._guard(random.randint(2, 6))

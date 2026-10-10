@@ -9,7 +9,8 @@ import time
 from collections import deque
 from dataclasses import dataclass, replace
 
-from .arbiter import BALANCED_EXPERIMENTAL, DEFENSE_ONLY, CombatActionArbiter, Proposal, mode_from_profile
+from .arbiter import (BALANCED_EXPERIMENTAL, DEFENSE_ONLY, GUARD_ONLY_TEST, CombatActionArbiter, Proposal,
+                      mode_from_profile)
 from .strategy import Strategy, is_useful
 
 # Distancias en unidades del escenario (la pantalla mide ~304).
@@ -282,6 +283,8 @@ class RuleBrain:
         state = self.state()
         if state is None:
             return False
+        if self.combat_mode == GUARD_ONLY_TEST:
+            return False
         if self.combat_mode == DEFENSE_ONLY:
             return self._can_punish(state)
         return self._confirmed_punish(state) or (self.strategy is not None and self._whiff_punishable(state))
@@ -320,6 +323,11 @@ class RuleBrain:
 
     def _options_for(self, state):
         """La defensa original y el ataque proponen por separado; el arbitro elige."""
+        if self.combat_mode == GUARD_ONLY_TEST:
+            # Diagnostico: la situacion se calcula igual (para el registro), pero la unica
+            # accion es la guardia dinamica (alta/baja segun guard_low()).
+            situation, _ = self._defense_options(state, allow_punish=False)
+            return situation, [Option(1, "guardia", "G[8]")]
         if self.combat_mode == DEFENSE_ONLY:
             situation, options = self.arbiter.select(Proposal(*self._defense_options(state, allow_punish=True)))
         else:

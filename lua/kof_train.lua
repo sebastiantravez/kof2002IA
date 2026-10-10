@@ -69,11 +69,13 @@ local function apply(keys, cmds)
     last_cmd_id = id
     print("orden " .. id .. ": " .. list .. " (frame " .. emu.framecount() .. ")")
     for c in string.gmatch(list, "%S+") do
-      if c == "LOAD" then savestate.load(savestate.create(1))
-      elseif c == "SAVE" then savestate.save(savestate.create(1))
-      -- ranura 2: laboratorio de combos (no pisa el punto de reinicio del entrenamiento)
-      elseif c == "LOAD2" then savestate.load(savestate.create(2))
-      elseif c == "SAVE2" then savestate.save(savestate.create(2))
+      -- SAVE/LOAD = ranura 1 (punto de reinicio del entrenamiento); SAVE2..SAVE9 y
+      -- LOAD2..LOAD9 = otras ranuras (laboratorio de combos, pruebas de guardia)
+      local op, slot = c:match("^(SAVE)(%d?)$")
+      if not op then op, slot = c:match("^(LOAD)(%d?)$") end
+      slot = tonumber(slot) or 1
+      if op == "SAVE" then savestate.save(savestate.create(slot))
+      elseif op == "LOAD" then savestate.load(savestate.create(slot))
       elseif c == "TURBO" then emu.speedmode("turbo")
       elseif c == "NORMAL" then emu.speedmode("normal")
       end
@@ -81,7 +83,12 @@ local function apply(keys, cmds)
   end
   local pad = {}
   for k in string.gmatch(keys, "[^,]+") do
-    if KEYMAP[k] then pad[KEYMAP[k]] = true end
+    if KEYMAP[k] then
+      pad[KEYMAP[k]] = true
+    elseif k:sub(1, 1) == "2" and KEYMAP[k:sub(2)] then
+      -- "2down", "2B"...: teclas de P2 (pruebas de guardia con ataques etiquetados)
+      pad[KEYMAP[k:sub(2)]:gsub("^P1", "P2")] = true
+    end
   end
   current_pad = pad
   joypad.set(pad)

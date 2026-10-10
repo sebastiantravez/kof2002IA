@@ -44,6 +44,7 @@ class Lockstep:
             self._stale_seq = None
         self.state = None
         self.keys = set()
+        self.p2_keys = set()     # teclas de P2 (solo pruebas de guardia en modo versus)
         self.frames = 0
         self.on_round_end = None   # callback(estado) al terminar una ronda (vida 0)
         # Recargar al terminar la ronda solo despues de guardar el punto de reinicio de
@@ -154,7 +155,8 @@ class Lockstep:
         """Linea "seq|teclas|ordenes|hold|seq" reescrita en el mismo lugar (el seq
         repetido al final permite a Lua descartar una lectura a medio escribir)."""
         commands = f"{self._batch_id}:{' '.join(self._batch)}" if self.commands_pending else ""
-        line = f"{seq}|{','.join(sorted(self.keys))}|{commands}|{hold}|{seq}\n"
+        keys = sorted(self.keys) + sorted("2" + k for k in self.p2_keys)
+        line = f"{seq}|{','.join(keys)}|{commands}|{hold}|{seq}\n"
         for _ in range(50):
             try:
                 with open(self.resp, "w") as f:

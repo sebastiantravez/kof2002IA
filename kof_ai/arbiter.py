@@ -18,7 +18,10 @@ from dataclasses import dataclass
 DEFENSE_ONLY = "DEFENSE_ONLY"
 DEFENSE_WITH_PUNISH = "DEFENSE_WITH_PUNISH"
 BALANCED_EXPERIMENTAL = "BALANCED_EXPERIMENTAL"
-MODES = (DEFENSE_ONLY, DEFENSE_WITH_PUNISH, BALANCED_EXPERIMENTAL)
+# Diagnostico: solo guardia (sin castigos, combos, reversals, rodadas ni saltos) para medir
+# si Iori bloquea bien en pruebas controladas (tools/guard_test.py).
+GUARD_ONLY_TEST = "GUARD_ONLY_TEST"
+MODES = (DEFENSE_ONLY, DEFENSE_WITH_PUNISH, BALANCED_EXPERIMENTAL, GUARD_ONLY_TEST)
 
 # Situaciones defensivas que el ataque no puede interrumpir nunca.
 HARD_THREATS = {"ronda terminada", "me agarran", "en el aire (esperando aterrizar)", "estoy en el aire",
