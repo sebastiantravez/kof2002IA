@@ -69,7 +69,8 @@ class SpeedLabTests(unittest.TestCase):
               joypad={get=function() return {['P1 Right']=true} end,
                       set=function() error('unexpected input injection') end}
               local before, after, exit
-              emu={romname=function() return 'kf2k2pls' end, framecount=function() return 1 end,
+              emu={isonline=function() end,
+                   romname=function() return 'kf2k2pls' end, framecount=function() return 1 end,
                    registerbefore=function(f) before=f end, registerafter=function(f) after=f end,
                    registerexit=function(f) exit=f end}
             '''

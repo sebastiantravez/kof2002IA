@@ -14,7 +14,11 @@ Eso permite investigar RAM; **no verifica el significado ni la reversibilidad de
 un parámetro de KOF**. El script registra disponibilidad de escritura sin invocarla.
 Si existe `emu.isonline`, rechaza su ejecución cuando indica modo online. En versiones
 sin esa API, el usuario debe garantizar el entorno offline; no se afirma detección
-automática universal del modo de partida.
+automática universal del modo de partida. Algunas implementaciones de
+`emu.isonline()` retornan cero resultados Lua cuando el estado es falso: Lua recibe
+`nil`. Ese caso se informa como desconocido y no bloquea la captura de solo lectura;
+el usuario debe ejecutar Test Game offline. Un retorno online explícito sigue
+bloqueándose. No se usa esta API para autorizar escrituras: no existe modificador.
 
 Offsets ya usados para lectura en el proyecto, respecto a P1 `0x108100` y
 P2 `0x108300`: X `+0x18`, altura `+0x20`, coordenadas de pantalla `+0x24/+0x26`,

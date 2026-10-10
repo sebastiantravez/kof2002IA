@@ -8,7 +8,14 @@ assert(type(memory.readbyte) == "function" and type(memory.readword) == "functio
 assert(type(emu.registerafter) == "function", "Missing frame callback")
 if type(emu.isonline) == "function" then
   local ok, online = pcall(emu.isonline)
-  assert(ok and (online == false or online == 0), "Offline experiments only")
+  assert(ok, "Could not query session mode: " .. tostring(online))
+  if online == nil then
+    -- Some Fightcade builds return no Lua value (C function returns 0 results).
+    -- nil is unknown, not evidence of an online session.
+    print("Session mode unavailable (isonline returned nil). Use only an offline test.")
+  else
+    assert(online == false or online == 0, "Offline experiments only: close netplay and open Test Game")
+  end
 end
 local game = type(emu.romname) == "function" and emu.romname() or "unknown"
 assert(game == "kf2k2pls", "Unverified ROM driver: " .. game)
