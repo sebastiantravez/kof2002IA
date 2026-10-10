@@ -3,3 +3,5 @@ status.txt
 control.txt
 *.tmp
 __pycache__/
+trial_arm.txt
+trial_stop.txt

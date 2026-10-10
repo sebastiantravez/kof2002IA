@@ -1,7 +1,9 @@
-# Iori Speed Lab — fase 1, medición manual de solo lectura
+# Iori Speed Lab — medición manual y ensayo de movimiento
 
-Estado: preparado para medir; **ningún aumento de velocidad está implementado**.
-No se ha confirmado un parámetro de velocidad seguro para escritura en esta ROM.
+Estado: observadores de lectura y **ensayo experimental de movimiento**.
+El ensayo cambia temporalmente D0 durante una suma de movimiento verificada,
+con restauración inmediata; su estabilidad real requiere validación manual.
+No hay modificador directo de RAM/ROM ni mejoras de inicio/recuperación.
 El joystick y los botones siguen bajo control del jugador. Este laboratorio no
 importa el bot, no manda entradas, no cambia la velocidad global, no carga partidas
 guardadas, no modifica RAM y no toca ROM/configuración de Fightcade.
@@ -36,8 +38,9 @@ sin verificar hitboxes, cancelaciones y sincronización de estado.
 `settings.lua` registra objetivos +5% caminar, +8% correr y -1 frame de arranque/
 recuperación. Son objetivos, **no parámetros activos**. Activar
 `modifications_enabled` provoca un error; no existe un modificador aprobado.
-Activar/desactivar captura sí está disponible. Al no escribir RAM, no hay valores
-del juego que restaurar. Una futura implementación debe respaldar el valor real,
+Activar/desactivar captura sí está disponible. Los observadores no escriben RAM
+ni registros. El ensayo separado al final de esta guía respalda/restaura D0;
+`modifications_enabled` no lo activa. Una modificación directa de RAM necesitaría respaldar el valor real,
 verificar su restauración y abortar ante cambios de personaje/ROM/estado.
 
 ## Cómo medir en Windows
@@ -198,3 +201,61 @@ Los tests simulan ese orden: no demuestran el orden del ejecutable local.
 Todavía no existe una prueba real de modificación/restauración. Esta sonda
 prepara esa decisión, no activa +5%/+8%. No repetir capturas generales si esta
 sonda ya cubre los puntos: analizar el archivo de ejecución.
+
+## Ensayo de mejora de movimiento (experimental)
+
+`speed_trial.lua` cambia D0 solo en tres sumas de P1 verificadas y lo restaura
+en el hook de la instrucción siguiente. No escribe +0x50 ni tablas compartidas:
+la referencia de velocidad permanece original. Filtra personaje Iori, vida,
+suelo, flags de ataque, firmas observadas, PC, A4, D0 y velocidad. Conserva
+las correcciones de posición posteriores. La caminata en ambos sentidos y
+la carrera hacia izquierda están cubiertas; la carrera positiva sigue sin
+validarse y queda excluida de este ensayo.
+
+Primera ejecución, +1% para comprobar modificación/desactivación:
+
+1. Abrir Test Game offline, Iori P1 a la derecha de un rival quieto y alejado.
+   Detener todos los otros scripts Lua y cualquier runner del bot.
+2. En PowerShell, desde la raíz del proyecto:
+
+```powershell
+python experiments\iori_speed_lab\trial.py arm --offline
+```
+
+3. Dentro de los siguientes 120 segundos, cargar
+   `experiments\iori_speed_lab\speed_trial.lua` y Run. La declaración offline
+   se consume: cada ejecución necesita armarse de nuevo. Esta declaración
+   confirma el entorno elegido por el usuario; no es detección infalible de red.
+   Un resultado online explícito de la API bloquea el ensayo.
+4. Volver al juego, caminar y correr hacia delante a la izquierda durante
+   unos 45 segundos. Repetir movimientos similares en las tres fases:
+   REFERENCIA (15 s), MEJORA ACTIVA (15 s), DESACTIVADO/COMPARACIÓN (15 s).
+   Si la API gráfica está disponible, la fase aparece sobre el juego.
+5. Esperar `TRIAL FINISHED`. El CSV `captures/trial_FECHA_HORA.csv` contiene
+   original/aplicado, X antes/después de cada suma, +0x50 y D0 restaurado.
+
+El 1% inicial puede ser apenas perceptible: se comprueba numéricamente antes
+de aumentar factores. Objetivos posteriores, solo después de validar el ensayo:
+
+```powershell
+python experiments\iori_speed_lab\trial.py arm --offline --walk 1.05 --run 1.08
+```
+
+Para desactivar antes de finalizar, pulsar Stop en Lua o ejecutar:
+
+```powershell
+python experiments\iori_speed_lab\trial.py off
+```
+
+Stop retira los hooks; el comando se procesa al final del siguiente frame.
+La desactivación devuelve futuros movimientos a su operando original, no a
+la posición donde empezó Iori. No se guardan/cargan estados ni se restauran
+posiciones por escritura. Si aparece `FAILED` o `UNRESOLVED ADD`, el ensayo
+no está validado; detenerlo y reiniciar el test offline para no continuar con
+un estado CPU incierto. No intentar restaurar registros antiguos fuera de
+la instrucción a la que pertenecían.
+
+La suma exacta y restauración se verifican en cada intervención. Eso no prueba
+por sí solo animaciones, colisiones, cámara, combos, P2 o estabilidad de FPS.
+Requieren observación y capturas de contexto adicionales. No cambiar ataques,
+saltos ni recuperación en este ensayo. No ejecutar en partidas online.
