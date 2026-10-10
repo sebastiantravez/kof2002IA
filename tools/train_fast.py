@@ -122,6 +122,7 @@ if play:
 
 stats = Counter()
 combo_stats = Counter()
+chosen = Counter()        # acciones elegidas por el bot (nombre -> veces)
 
 
 def on_round_end(state):
@@ -135,7 +136,9 @@ def on_round_end(state):
 
 
 def on_log(message):
-    if message.strip().startswith("combo:"):
+    if message.startswith("  -> "):   # accion elegida: "  -> nombre (notacion) d=..."
+        chosen[message[5:].split(" (")[0]] += 1
+    elif message.strip().startswith("combo:"):
         done, total = message.split(":")[1].split("partes")[0].strip().split("/")
         combo_stats["intentos"] += 1
         combo_stats["completos"] += int(done) == int(total)
@@ -232,6 +235,9 @@ print(f"Danio hecho {brain.dealt_total}, recibido {brain.taken_total} en golpes 
       f"+ {brain.chip_total} de raspado bloqueando especiales")
 print(f"Combos: {combo_stats['intentos']} intentos, {combo_stats['con 2+ golpes']} con 2+ golpes, "
       f"{combo_stats['completos']} completos")
+combo_choices = [(n, c) for n, c in chosen.most_common() if "combo" in n or "castigo" in n]
+if combo_choices:
+    print("Combos y castigos elegidos: " + ", ".join(f"{n} x{c}" for n, c in combo_choices[:10]))
 print(f"Aprendizaje: +{brain.updates} experiencias (antes {known_before}), "
       f"recompensa media {brain.reward_sum / max(brain.updates, 1):+.2f}")
 defense.close()
