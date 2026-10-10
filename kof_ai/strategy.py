@@ -13,6 +13,7 @@ WINDOW_FRAMES = 30 * 60          # el modelo del rival mira los ultimos 30 s de 
 MIN_DWELL_FRAMES = 20            # histeresis: minimo en un modo antes de cambiar
 POKE_MIN, POKE_MAX = 60, 130     # distancias donde llegan los pokes (2C/2D/D de Iori)
 PASSIVE_RIVAL_FRAMES = 90        # rival sin atacar este tiempo: esta pasivo
+BAIT_COOLDOWN_FRAMES = 300       # tras un amague, no volver a amagar en 5 s (medido: 24% del tiempo en BAIT sin pegar)
 
 # Riesgo si la accion falla o la bloquean (heuristico, por tipo de accion):
 # 0 = seguro, 1 = algo de recuperacion, 2 = muy castigable.
@@ -99,6 +100,7 @@ class Strategy:
         self.model = OpponentModel()
         self.mode = Mode("NEUTRAL", "inicio")
         self.mode_since = 0
+        self.last_bait_end = -10_000
         self.last_useful_frame = 0
 
     # ---- pasividad ----
@@ -126,7 +128,7 @@ class Strategy:
                 new = Mode("APPROACH", "acorralado: ganar espacio")
             elif my_life_lead > 25 and m.aggression > 20 and passive < 3:
                 new = Mode("RETREAT", "voy ganando y el rival presiona: recuperar distancia")
-            elif m.whiff_rate > 3 and passive < 3:
+            elif m.whiff_rate > 3 and passive < 3 and f - self.last_bait_end > BAIT_COOLDOWN_FRAMES:
                 new = Mode("BAIT", "el rival falla golpes: provocarlo")
             elif POKE_MIN <= d <= POKE_MAX:
                 new = Mode("POKE", "distancia de poke")
@@ -141,12 +143,14 @@ class Strategy:
         if new.name != self.mode.name and f - self.mode_since < MIN_DWELL_FRAMES:
             return self.mode
         if new.name != self.mode.name:
+            if self.mode.name == "BAIT":
+                self.last_bait_end = f
             self.mode, self.mode_since = new, f
         return self.mode
 
     # ---- opciones por modo ----
 
-    def options(self, state, moves, option_cls, combos_in_range, my_life_lead):
+    def options(self, state, moves, option_cls, combos_in_range, my_life_lead, attacks_ready=True):
         mode = self.choose_mode(state, my_life_lead)
         d = state.distance
         m = self.model
@@ -169,6 +173,9 @@ class Strategy:
                     O(15, "acercarse (pasos cortos)", "6[8]", interruptible=True),
                     O(10, "retroceder (pasos cortos)", "4[8]", interruptible=True),
                     O(12, "guardia corta", "G[6]")]
+        elif mode.name == "PRESSURE" and not attacks_ready:
+            # El rival sigue derribado por el ultimo golpe: esperar cubierto, no pegar al aire.
+            opts = [O(1, "esperar que el rival se levante", "G[8]")]
         elif mode.name == "PRESSURE":
             opts = [O(20 * push * cornered_rival, "golpe bajo 2B", "2B"),
                     O(15 * push * cornered_rival, "combo corto 2B", "2B>2A") ]

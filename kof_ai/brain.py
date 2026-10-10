@@ -390,9 +390,12 @@ class RuleBrain:
         if self.strategy is None:
             return None
         d = state.distance
+        # Sin combos ni golpes de presion mientras el rival sigue derribado por el ultimo
+        # golpe (combo_rearm_frames): medido, el primer golpe falla en ese lapso.
+        ready = self._combos_ready(state)
         return Proposal(*self.strategy.options(state, self._moves, Option,
-                                               self._in_range(self._moves["combos"], d),
-                                               state.me.life - state.rival.life))
+                                               self._in_range(self._moves["combos"], d) if ready else {},
+                                               state.me.life - state.rival.life, attacks_ready=ready))
 
     def _defense_options(self, state, allow_punish):
         """Sistema defensivo original (sin cambios de reglas ni tiempos). Con

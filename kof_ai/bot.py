@@ -233,9 +233,10 @@ class RuleBot(_BaseBot):
         if getattr(self._brain, "combat_mode", None) == "GUARD_ONLY_TEST":
             return self._guard(random.randint(2, 6))   # diagnostico: nunca soltar la guardia
         if getattr(self._brain, "strategy", None):
-            if self._brain.threat_now():
-                return self._guard(random.randint(2, 6))
-            pause = random.randint(1, 3)
+            # Medido (sesion D): la pausa neutra de 1-3 frames cerca del rival costaba 54 golpes
+            # "rival ataca | guardia" (23 sin ofensiva): el golpe llega en 3-5 frames y la
+            # reaccion no alcanza. La pausa va siempre en guardia (agachada si no ataca).
+            return self._guard(random.randint(2, 6) if self._brain.threat_now() else random.randint(1, 3))
         else:
             pause = random.randint(2, 6)
             if state and state.distance <= GUARD_PAUSE_DISTANCE:
