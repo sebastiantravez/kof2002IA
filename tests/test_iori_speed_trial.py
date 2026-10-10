@@ -82,6 +82,14 @@ class SpeedTrialTests(unittest.TestCase):
                 assert(next(hooks)==nil and writes==6)
               end
             ''')
+            # Reproduce Lua 5.1 on a Windows locale rejecting dot-decimal strtod.
+            lua.execute('''
+              local original_tonumber = tonumber
+              tonumber=function(value, base)
+                if type(value)=='string' and value:find('.',1,true) then return nil end
+                return original_tonumber(value, base)
+              end
+            ''')
             lua.execute((LAB / 'speed_trial.lua').read_text(encoding='utf-8'))
             lua.globals().simulate()
             self.assertFalse((root / 'trial_arm.txt').exists())

@@ -12,7 +12,15 @@ if type(emu.isonline) == "function" then
 end
 local arm = assert(io.open(ROOT .. "trial_arm.txt", "r"), "First run trial.py arm --offline")
 local declaration, timestamp = arm:read("*l"), tonumber(arm:read("*l"))
-local walk, run = tonumber(arm:read("*l")), tonumber(arm:read("*l"))
+-- Lua 5.1 strtod can follow Windows decimal locale. Parse dot decimals explicitly.
+local function read_factor()
+  local line = arm:read("*l") or ""
+  local whole, fraction = line:match("^%s*(%d+)%.(%d+)%s*$")
+  if not whole or #whole > 2 or #fraction > 8 then return nil end
+  return tonumber(whole) + tonumber(fraction) / 10 ^ #fraction
+end
+local walk = read_factor()
+local run = read_factor()
 arm:close()
 assert(declaration == "offline" and timestamp and os.time() >= timestamp and os.time() - timestamp <= 120,
   "Expired offline declaration; arm again")
