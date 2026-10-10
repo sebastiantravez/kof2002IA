@@ -81,6 +81,13 @@ Comparar versiones: `python tools\train_fast.py Iori 15 --offense=off`, luego
 castigos, ataques fallidos, ofensiva tras defensa, tiempo quieto y tiempo por estado).
 Pruebas sin el juego: `python -m unittest discover tests`.
 
+Para comparar pruebas sin guardar aprendizaje, usar
+`python tools\compare_sessions.py Iori id30 --play --by-session`.
+`--play` selecciona solo pruebas y `--by-session` muestra cada sesión por separado;
+sin `--play` se comparan entrenamientos. Los rivales se mantienen separados.
+El daño recibido incluye raspado: los nuevos resúmenes de terminal y JSON
+usan el mismo contador del logger, con desglose y diagnóstico del cerebro.
+
 ## Imitación de jugadores top
 
 1. En Fightcade abre una repetición de un buen jugador y carga `lua\kof_record_turbo.lua`: graba

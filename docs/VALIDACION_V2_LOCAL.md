@@ -56,7 +56,31 @@ recorren el estado en puntos distintos: el logger recibe cada paso del enlace,
 y el cerebro contabiliza al consultar su estado. Falta una reproducción con
 traza por frame para atribuir y corregir las diferencias restantes.
 
-Además, `tools/compare_sessions.py` excluye actualmente los JSON con
+En la validación inicial, `tools/compare_sessions.py` excluía los JSON con
 `modo_prueba: true`, incluido el de referencia. No usar ese comando para
-afirmar una comparación de las sesiones `--play` sin corregir primero el filtro.
+afirmar una comparación de las sesiones `--play` con aquella versión.
 Las métricas históricas se conservan tal como fueron generadas.
+
+## Corrección del resumen y el comparador
+
+Ahora terminal y JSON usan una única instantánea de `DefenseLogger.metrics()`.
+`danio_recibido` sigue incluyendo raspado, conservando el significado histórico;
+`danio_recibido_golpes` lo excluye. El JSON añade `fuente_danio`,
+`diagnostico_cerebro` y `diferencia_logger_cerebro`, con signo logger menos cerebro.
+No se cambian las decisiones defensivas ni las recompensas del aprendizaje.
+La identidad del rival se toma después de cargar el savestate.
+
+El comparador mantiene entrenamiento por defecto. `--play` selecciona solo
+pruebas y `--by-session` separa sesiones de un mismo modo para comparar versiones.
+Siempre separa rivales y no admite un rival desconocido al solicitar uno concreto.
+
+```bat
+python tools\compare_sessions.py Iori id30 --play --by-session
+```
+
+Validación: 86 pruebas, 84 aprobadas y 2 omitidas; compilación Python de los
+módulos modificados y lectura correcta del JSON histórico. Las regresiones
+cubren golpes/raspado, recarga de ronda, selección de pruebas, separación de
+sesiones/rivales y conservación de rondas `otras`. La diferencia histórica
+no puede reconstruirse por completo con el CSV de eventos disponible; los nuevos
+diagnósticos permiten detectarla sin ocultarla. Sigue pendiente la prueba real.

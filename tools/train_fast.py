@@ -35,6 +35,7 @@ from kof_ai.defense_log import DefenseLogger  # noqa: E402
 from kof_ai.game_state import MAX_LIFE  # noqa: E402
 from kof_ai.imitation import Imitation  # noqa: E402
 from kof_ai.learning import LearningBrain  # noqa: E402
+from kof_ai.session_metrics import snapshot, damage_line  # noqa: E402
 from kof_ai.lockstep import Lockstep, LockstepClock, LockstepKeyboard, LockstepReader  # noqa: E402
 
 args = [a for a in sys.argv[1:] if not a.startswith("--")]
@@ -183,6 +184,7 @@ defense = DefenseLogger(ROOT / "logs" / f"defensa_{character}_{time.strftime('%Y
                         lambda: bot.current)
 link.on_step = defense.observe
 offense = brain.combat_mode
+session_rival = link.state.rival.character  # rival real tras cargar el savestate
 print(f"Estilo: {brain.style}, modo: {offense}, guardia preventiva: {'si' if brain.preventive_guard else 'no'}, "
       f"tiempo de reaccion extra: {brain.reaction_frames} frames")
 
@@ -236,13 +238,16 @@ else:
 elapsed = time.time() - start
 frames = link.frames - frames0
 rounds = stats["ganadas"] + stats["perdidas"] + stats["empates"]
+metrics = snapshot(defense, brain, rounds)
 print("\n== Resumen del entrenamiento acelerado ==")
 print(f"Tiempo real {elapsed / 60:.1f} min, frames de juego {frames} "
       f"({frames / 59.19 / 60:.1f} min de juego, {frames / max(elapsed, 1) / 59.19:.1f}x)")
 print(f"Rondas {rounds}: {stats['ganadas']} ganadas, {stats['perdidas']} perdidas, {stats['empates']} otras "
       f"({100 * stats['ganadas'] / max(rounds, 1):.0f}% ganadas)")
-print(f"Danio hecho {brain.dealt_total}, recibido {brain.taken_total} en golpes "
-      f"+ {brain.chip_total} de raspado bloqueando especiales")
+print(damage_line(metrics))
+if any(metrics["diferencia_logger_cerebro"].values()):
+    print(f"Diagnostico: diferencias logger - cerebro {metrics['diferencia_logger_cerebro']}; "
+          "resumen y JSON usan el logger.")
 print(f"Combos: {combo_stats['intentos']} intentos, {combo_stats['con 2+ golpes']} con 2+ golpes, "
       f"{combo_stats['completos']} completos")
 combo_choices = [(n, c) for n, c in chosen.most_common() if "combo" in n or "castigo" in n]
@@ -261,9 +266,9 @@ if brain.strategy:
 # Resumen de la sesion para comparar versiones (tools/compare_sessions.py)
 summary = {"personaje": character, "modo": offense, "estilo": brain.style, "modo_prueba": play,
            "minutos_juego": frames / 59.19 / 60, "ganadas": stats["ganadas"], "perdidas": stats["perdidas"],
-           "otras": stats["empates"], "combos": dict(combo_stats), "rival": first.rival.character,
+           "otras": stats["empates"], "combos": dict(combo_stats), "rival": session_rival,
            "decisiones": dict(brain.arbiter.decisions), "preventiva": brain.preventive_guard,
-           **defense.metrics(rounds)}
+           **metrics}
 session_path = defense.path.with_name(defense.path.stem.replace("defensa_", "sesion_") + ".json")
 session_path.write_text(json.dumps(summary, indent=1, ensure_ascii=False), encoding="utf-8")
 print(f"Resumen de sesion: {session_path}")
