@@ -126,14 +126,18 @@ class Strategy:
                 new = Mode("APPROACH", "acorralado: ganar espacio")
             elif my_life_lead > 25 and m.aggression > 20 and passive < 3:
                 new = Mode("RETREAT", "voy ganando y el rival presiona: recuperar distancia")
-            elif m.whiff_rate > 3 and passive < 3:
-                new = Mode("BAIT", "el rival falla golpes: provocarlo")
+            elif m.whiff_rate > 8 and passive < 1 and my_life_lead > 20:
+                new = Mode("BAIT", "con ventaja: provocar un fallo sin perseguirlo")
             elif POKE_MIN <= d <= POKE_MAX:
                 new = Mode("POKE", "distancia de poke")
             else:
                 new = Mode("APPROACH", "ajustar distancia al alcance de los normales")
         else:
-            if m.aggression > 30 and my_life_lead < -25 and not rival_passive:
+            if d > 55:
+                new = Mode("APPROACH", "aun fuera del alcance del golpe corto")
+            elif state.back_to_wall:
+                new = Mode("PRESSURE", "acorralado: disputar espacio sin retroceder")
+            elif m.aggression > 30 and my_life_lead < -25 and not rival_passive:
                 new = Mode("RETREAT", "rival agresivo y voy perdiendo: reposicionar")
             else:
                 new = Mode("PRESSURE", "cerca y sin amenaza: presion controlada")
@@ -158,11 +162,10 @@ class Strategy:
         lows = m.low_ratio > 0.4          # el rival ataca mucho por abajo
 
         if mode.name == "APPROACH":
-            opts = [O(30 * push, "acercarse (pasos cortos)", "6[10]", interruptible=True),
-                    O(12 * push if d > 180 else 4, "correr", "6 5 6[18]", interruptible=True),
-                    O(12, "guardia corta", "G[6]"),
-                    O(6, "especial de lejos", moves["far_special"]) if d > 120 else None,
-                    O(3, "hop adelante", "9[3]") if m.jump_rate < 3 else None]
+            opts = [O(42 * push, "acercarse (pasos cortos)", "6[8]", interruptible=True),
+                    O(12 * push, "correr", "6 5 6[12]", interruptible=True) if d > 180 else None,
+                    O(10, "guardia corta", "G[6]"),
+                    O(4, "especial de lejos", moves["far_special"]) if d > 150 and not state.back_to_wall else None]
         elif mode.name == "POKE":
             opts = [O(30 * push, "poke", moves["poke"]),
                     O(15 * push, "barrida 2D", "2D") if d <= 110 else None,
@@ -170,13 +173,13 @@ class Strategy:
                     O(10, "retroceder (pasos cortos)", "4[8]", interruptible=True),
                     O(12, "guardia corta", "G[6]")]
         elif mode.name == "PRESSURE":
-            opts = [O(20 * push * cornered_rival, "golpe bajo 2B", "2B"),
-                    O(15 * push * cornered_rival, "combo corto 2B", "2B>2A") ]
-            opts += [O(25 * push / max(len(combos_in_range), 1), f"combo: {name}", notation)
-                     for name, notation in combos_in_range.items()]
-            if d <= 45:
+            # La RAM no confirma hitstun: no iniciar combos largos a ciegas.
+            opts = [O(42 * push * cornered_rival, "golpe bajo 2B", "2B") if d <= 55 else None,
+                    O(12 * push * cornered_rival, "combo corto 2B", "2B>2A") if d <= 40 else None,
+                    O(24, "acercarse (pasos cortos)", "6[5]", interruptible=True) if d > 40 else None]
+            if d <= 40:
                 opts += [O(8 * blocks, "agarre C", "6C"), O(6 * blocks, "agarre D", "6D")]
-            opts += [O(6 * blocks * (1.5 if not lows else 1), "overhead", moves["overhead"]),
+            opts += [O(5 * blocks * (1.5 if not lows else 1), "overhead", moves["overhead"]) if d <= 40 else None,
                      O(12, "backdash", "4 5 4") if not state.back_to_wall else None,
                      O(10, "guardia corta", "G[8]")]
         elif mode.name == "BAIT":
@@ -193,8 +196,13 @@ class Strategy:
         else:
             opts = [O(20, "guardia corta", "G[8]"), O(20, "acercarse (pasos cortos)", "6[8]", interruptible=True)]
 
-        # riesgo: lo muy castigable pesa menos fuera de una oportunidad confirmada
-        opts = [o for o in opts if o is not None]
+        # Nunca retroceder contra la pared; conservar la prioridad defensiva.
+        opts = [o for o in opts if o is not None
+                and not (state.back_to_wall and
+                         (o.name.startswith("retroceder") or o.name == "backdash"
+                          or o.name == "amague: entrar y salir"))]
+        if not opts:
+            opts = [O(1, "guardia corta", "G[6]")]
         return f"NEUTRAL:{mode.name}", [_with_risk(o, option_cls) for o in opts]
 
 
