@@ -13,7 +13,7 @@ import time
 from . import emulator
 from .brain import RuleBrain
 from .capture import WindowCapture
-from .combo import is_combo, play_combo
+from .combo import count_parts, is_combo, play_combo
 from .hud import fight_hud_visible
 from .motions import keys_for, parse, play
 
@@ -248,7 +248,7 @@ class RuleBot(_BaseBot):
             state = self._brain.state()
             return state.rival.life if state else None
 
-        parts = notation.count(">") + 1
+        parts = count_parts(notation)
         connected, damage, _ = play_combo(self._keyboard, self._clock, notation, self._facing_right(),
                                           rival_life, self._config["motion_step_frames"],
                                           self._config["button_hold_frames"],

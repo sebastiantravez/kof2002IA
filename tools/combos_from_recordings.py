@@ -79,7 +79,11 @@ def combos_in(path, character, me):
         if any(player(rows[j - 1], me)["life"] > player(rows[j], me)["life"] for j in range(start, last + 1)):
             continue
         frames = [frame_inputs(rows[j], me, facing(rows[j], me, other)) for j in range(start, last + 1)]
-        found.append({"notacion": to_notation(frames), "danio": sum(d for _, d in g), "golpes": len(g),
+        # Punto de control '|' justo despues del frame del primer impacto: si al reproducirlo
+        # el primer golpe no conecta (bloqueado o fallado), el combo se corta ahi.
+        k = first - start + 1
+        notation = to_notation(frames[:k]) + (" | " + to_notation(frames[k:]) if frames[k:] else "")
+        found.append({"notacion": notation, "danio": sum(d for _, d in g), "golpes": len(g),
                       "distancia": abs(player(rows[start], me)["x"] - player(rows[start], other)["x"]),
                       "origen": f"{path.name} frame {rows[start]['frame']}"})
     return found

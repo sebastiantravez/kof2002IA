@@ -11,6 +11,8 @@ vida de antes del combo porque en modo practica la vida del dummy se regenera.
 from .motions import parse, play
 
 SEPARATOR = ">"
+CHECKPOINT = "|"       # punto de control sin pausa (combos grabados al frame)
+CHECKPOINT_GRACE = 4   # frames de tolerancia si el impacto llega un poco mas tarde que en la grabacion
 CONFIRM_TIMEOUT = 24   # frames maximos esperando a que conecte cada parte
 # Los DM (supers) golpean despues de la pausa de "super" y su recorrido: el danio
 # llega mucho mas tarde que en un golpe normal.
@@ -24,28 +26,56 @@ def is_dm(notation):
 
 
 def is_combo(notation):
-    return SEPARATOR in notation
+    return SEPARATOR in notation or CHECKPOINT in notation
+
+
+def count_parts(notation):
+    return notation.count(SEPARATOR) + notation.count(CHECKPOINT) + 1
+
+
+def _split(notation):
+    """'A>B|C' -> [('A', '>'), ('B', '|'), ('C', None)]: cada parte con el separador que la sigue."""
+    parts, current = [], ""
+    for ch in notation:
+        if ch in (SEPARATOR, CHECKPOINT):
+            parts.append((current, ch))
+            current = ""
+        else:
+            current += ch
+    parts.append((current, None))
+    return parts
 
 
 def play_combo(keyboard, clock, notation, facing_right, rival_life, step_frames, button_frames,
                should_stop=None, after_hit_delay=2):
     """Ejecuta el combo. rival_life() devuelve la vida actual del rival.
-    Devuelve (partes_que_conectaron, danio, completado). Si should_stop corta, completado=False."""
+    Devuelve (partes_que_conectaron, danio, completado). Si should_stop corta, completado=False.
+
+    '>' confirma esperando el impacto y deja una pausa corta (combos escritos a mano).
+    '|' es un punto de control para combos grabados con el timing exacto: si la parte ya
+    conecto se sigue SIN esperar ni pausar (no se desfasa); si no, se espera a lo sumo
+    CHECKPOINT_GRACE frames y, si no conecto, se corta."""
     watch = _HitWatcher(rival_life, should_stop)
-    parts = notation.split(SEPARATOR)
+    parts = _split(notation)
     connected = 0
-    for i, part in enumerate(parts):
+    for i, (part, sep) in enumerate(parts):
         watch.hit = False
-        if not play(keyboard, clock, parse(part, step_frames, button_frames), facing_right, watch):
+        steps = parse(part, step_frames, button_frames)
+        if sep == CHECKPOINT:
+            steps = steps[:-1]   # sin el frame neutro final: el resto sigue en el frame exacto
+        if not play(keyboard, clock, steps, facing_right, watch):
             return connected, watch.damage, False
-        timeout = DM_CONFIRM_TIMEOUT if is_dm(part) else CONFIRM_TIMEOUT
+        if sep == CHECKPOINT:
+            timeout = CHECKPOINT_GRACE
+        else:
+            timeout = DM_CONFIRM_TIMEOUT if is_dm(part) else CONFIRM_TIMEOUT
         if not watch.hit and not _wait_hit(clock, watch, timeout):
             return connected, watch.damage, i == len(parts) - 1   # no conecto: cortar el combo
         connected += 1
-        if after_hit_delay and i < len(parts) - 1:
+        if after_hit_delay and sep == SEPARATOR:
             clock.wait_frames(after_hit_delay, watch)
     # recoger el danio de los ultimos golpes (un DM sigue pegando mucho tiempo)
-    clock.wait_frames(DM_CONFIRM_TIMEOUT if is_dm(parts[-1]) else 20, watch)
+    clock.wait_frames(DM_CONFIRM_TIMEOUT if is_dm(parts[-1][0]) else 20, watch)
     return connected, watch.damage, True
 
 
