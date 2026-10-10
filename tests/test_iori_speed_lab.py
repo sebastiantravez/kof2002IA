@@ -8,6 +8,9 @@ LAB = Path(__file__).resolve().parents[1] / 'experiments' / 'iori_speed_lab'
 spec = importlib.util.spec_from_file_location('speed_analysis', LAB / 'analyze.py')
 analysis = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(analysis)
+scan_spec = importlib.util.spec_from_file_location('speed_scan', LAB / 'scan_candidates.py')
+scanner = importlib.util.module_from_spec(scan_spec)
+scan_spec.loader.exec_module(scanner)
 
 
 def row(frame, x=200, height=0, life=102, flag=0, label='walk', inputs=''):
@@ -20,6 +23,25 @@ def row(frame, x=200, height=0, life=102, flag=0, label='walk', inputs=''):
 
 
 class SpeedLabTests(unittest.TestCase):
+    def test_scanner_finds_synthetic_signed_velocity_and_excludes_position(self):
+        rows = []
+        for base, step in [(0, 2), (100, 6), (200, -2)]:
+            for f in range(25):
+                item = row(base + f, x=350 + step * f, inputs='P1 Right' if step > 0 else 'P1 Left')
+                raw, rival = bytearray.fromhex(item['p1raw']), bytearray.fromhex(item['p2raw'])
+                raw[0x44:0x48] = (step * 65536).to_bytes(4, 'big', signed=True)
+                rival[0x18:0x1a] = (900).to_bytes(2, 'big')
+                item['p1raw'], item['p2raw'] = raw.hex(), rival.hex()
+                rows.append(item)
+        result = scanner.scan(rows)
+        self.assertGreater(result['filtered_samples'], 40)
+        candidate = next(c for c in result['candidates'] if c['offset'] == '0x044' and c['signed_bits'] == 32)
+        self.assertAlmostEqual(candidate['correlation_with_signed_dx'], 1)
+        self.assertFalse(any(c['offset'] in {'0x018', '0x01a', '0x024'} for c in result['candidates']))
+
+    def test_scanner_does_not_use_short_discontinuous_segments(self):
+        self.assertEqual(scanner.scan([row(0), row(20, x=202)])['filtered_samples'], 0)
+
     def test_baseline_velocity_and_travel_frames(self):
         result = analysis.summarize([row(f, 200 + 2 * f) for f in range(61)], 100)
         self.assertEqual(result['speed_units_per_frame'], 2)
