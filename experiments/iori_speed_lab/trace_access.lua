@@ -1,5 +1,5 @@
 -- READ ONLY: observes CPU accesses; never writes game RAM or injects inputs.
--- Run ALONE, offline, Iori P1. Finishes after 600 frames or 30000 events.
+-- Run ALONE, offline, Iori P1. Finishes after 1800 frames or 60000 events.
 local ROOT = "C:/Users/Sebas PC/Documents/kof2002IA-mis-cambios-chatgpt/experiments/iori_speed_lab/"
 local cfg = dofile(ROOT .. "settings.lua")
 ROOT = cfg.root
@@ -22,7 +22,7 @@ local path = ROOT .. "captures/access_" .. os.date("%Y%m%d_%H%M%S") .. ".csv"
 local old = io.open(path, "r")
 if old then old:close(); error("Trace exists; wait a second before Run") end
 local out = assert(io.open(path, "w"), "Captures directory missing")
-out:write("event,frame,kind,address,size,hook_value,pc,ppc,d0,d1,a0,a1,ppc_words\n")
+out:write("event,frame,kind,address,size,hook_value,pc,ppc,d0,d1,a0,a1,a3,a4,ppc_words\n")
 local targets = {0x108118, 0x108144, 0x108150}
 local active, internal, frames, count = true, false, 0, 0
 local pending = {}
@@ -32,11 +32,12 @@ local function reg(name)
 end
 local function observe(kind)
   return function(address, size, value)
-    if not active or internal or count >= 30000 then return end
+    if not active or internal or count >= 60000 then return end
     count = count + 1
     -- No memory reads inside a memory hook: avoid recursive emulator callbacks.
     pending[#pending + 1] = {count, emu.framecount(), kind, address, size, value,
-      reg("pc"), reg("ppc"), reg("d0"), reg("d1"), reg("a0"), reg("a1")}
+      reg("pc"), reg("ppc"), reg("d0"), reg("d1"), reg("a0"), reg("a1"),
+      reg("a3"), reg("a4")}
   end
 end
 local function flush()
@@ -82,7 +83,7 @@ emu.registerafter(function()
   internal = false
   flush()
   if not iori then finish("P1 changed")
-  elseif count >= 30000 then finish("event limit; trace may be partial")
-  elseif frames >= 600 then finish("frame limit") end
+  elseif count >= 60000 then finish("event limit; trace may be partial")
+  elseif frames >= 1800 then finish("frame limit") end
 end)
-print("TRACE READ ONLY: move Iori manually for about 10 seconds. " .. path)
+print("TRACE READ ONLY: return to game, walk then run forward for about 30 seconds. " .. path)

@@ -42,7 +42,7 @@ class AccessTraceTests(unittest.TestCase):
                   hooks.read[0x108144](0x108144,4,0)
                   hooks.write[0x108150](0x108150,4,425984)
                   inside=false
-                  for i=1,600 do frame=i; after() end
+                  for i=1,1800 do frame=i; after() end
                   assert(next(hooks.read)==nil and next(hooks.write)==nil)
                   after(); exit()
                 end

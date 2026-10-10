@@ -151,7 +151,7 @@ validación manual. Las capturas manuales y sus resultados están documentados e
 ## Traza de accesos del 68000: siguiente fase de solo lectura
 
 `trace_access.lua` registra accesos a X y los candidatos +0x44/+0x50, con PC,
-PPC, D0/D1, A0/A1 y seis palabras de código a partir de PPC. Usa las APIs de
+PPC, D0/D1, A0/A1/A3/A4 y seis palabras de código a partir de PPC. Usa las APIs de
 observación documentadas en el código de Fightcade FBNeo; su funcionamiento en
 el ejecutable local requiere una ejecución manual. No interpreta automáticamente
 instrucciones ni demuestra causalidad antes de examinar el resultado.
@@ -159,9 +159,9 @@ instrucciones ni demuestra causalidad antes de examinar el resultado.
 1. En Test Game offline, tener a Iori como P1 en la pelea. Detener todas las otras
    ventanas Lua y el runner del bot.
 2. Cargar `experiments\iori_speed_lab\trace_access.lua` en la ventana Lua y Run.
-3. Durante unos 10 segundos, caminar brevemente y luego correr hacia delante,
+3. Volver a la ventana del juego. Durante unos 30 segundos, caminar brevemente y luego correr hacia delante,
    con el rival lejos. Iori conserva tus controles y su velocidad original.
-4. Esperar `TRACE FINISHED`. La captura termina a los 600 frames o 30.000 eventos;
+4. Esperar `TRACE FINISHED`. La captura termina a los 1.800 frames o 60.000 eventos;
    el límite de eventos puede producir una traza parcial. Stop también cierra el CSV.
 5. El resultado está en `captures/access_FECHA_HORA.csv`. Cero eventos significa
    que no se ha confirmado soporte de hooks, no ausencia de accesos del juego.
