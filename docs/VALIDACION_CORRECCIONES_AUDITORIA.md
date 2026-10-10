@@ -35,3 +35,26 @@ Limitaciones:
   terminó", no un castigo garantizado.
 - No mide el bloqueo alto/bajo de forma controlada ni los agarres: eso requiere
   `tools/guard_test.py` en modo versus (pendiente).
+
+## Ofensiva estratégica (sesiones D y E, mismo id34, mismo punto de reinicio)
+
+| | C: solo defensa | D: + ofensiva estratégica | E: ofensiva con 3 correcciones |
+|---|---|---|---|
+| Rondas KO / perdidas / por tiempo | 12 / 0 / 23 | 19 / 0 / 12 | **21 / 0 / 14** |
+| Daño hecho por minuto | **110** | 84 | 101 |
+| Daño recibido por minuto | **49** | 54 | 61 |
+| Ataques rivales evitados | **87%** | 77% | 76% |
+| Castigos con daño | 81% | 56% | 55% |
+| Golpes "rival ataca \| guardia" | 23 | 54 | 65 |
+
+Las 3 correcciones de E (pausa siempre en guardia, no pegar con el rival derribado, amague con
+enfriamiento) subieron el daño hecho (84 → 101) y los KO, pero NO bajaron el daño recibido.
+Los 65 golpes "rival ataca | guardia" de E: 53 "de pie", daño medio 9,6, 30 de ellos a distancia
+~100, con Iori agachado en guardia el frame anterior. Es un ataque de pie de media distancia de
+id34 que entra antes de que la guardia pase de agachada a de pie (3-5 frames). La ofensiva pasa
+más tiempo a esa distancia (modo POKE 60-130) y por eso recibe más de esos golpes.
+Sin saber qué movimiento es (byte de animación: pendiente) no se puede elegir la altura de la
+guardia con certeza; cualquier ajuste aquí es específico de id34.
+Decisión: la versión estable sigue siendo C (DEFENSE_ONLY + preventiva); E queda disponible con
+`--mode=BALANCED_EXPERIMENTAL` como modo de ataque. El aprendizaje acumuló ~20k experiencias
+entre A y E, así que las comparaciones no están limpias.
