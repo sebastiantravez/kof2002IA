@@ -114,18 +114,20 @@
       "_dm": "dm_combos: solo con 1+ barra (RAM +0x1E3); inputs de las guias, sin verificar en laboratorio",
       "combo_ranges": {
         "tuyo 24 dmg (rec_20261008_160729.csv frame 16081)": [
-          14,
-          44
+          28,
+          96
         ],
         "tuyo 25 dmg (rec_20261008_161341.csv frame 37585)": [
-          17,
-          47
+          28,
+          96
         ],
         "tuyo 24 dmg (rec_20261008_161341.csv frame 65184)": [
-          17,
-          47
+          28,
+          96
         ]
-      }
+      },
+      "combo_rearm_frames": 120,
+      "_combo_rearm": "tras golpear, esperar 120 frames antes de otro combo: el primer golpe conecta 80% vs ~50% (medido en practica 2026-10-09)"
     },
     "Choi": {
       "_fuente": "dreamcancel.com/wiki/The_King_of_Fighters_2002/Choi_Bounge (sin buen anti-aire ni reversal sin barra)",

@@ -6,6 +6,8 @@ Uso: python tools/combo_lab_fast.py <personaje> [--top=10] [--repeats=3] [--norm
   En modo PRACTICA, con el personaje como P1 y el muneco quieto, con kof_train.lua cargado.
   --normal: sin acelerar (para mirarlo).  --apply: agrega al perfil los combos tuyos que
   conectaron en todos los intentos (con su rango de distancia).
+  --sweep: prueba los combos "tuyo" del perfil a varias distancias (--from=8 --to=72 --step=4)
+  y con --apply guarda en combo_ranges el tramo donde conectan siempre.
 """
 import json
 import sys
@@ -16,7 +18,7 @@ sys.path.insert(0, str(ROOT))
 
 from kof_ai.combo import is_combo, play_combo  # noqa: E402
 from kof_ai.lockstep import Lockstep, LockstepClock, LockstepKeyboard  # noqa: E402
-from kof_ai.motions import parse, play  # noqa: E402
+from kof_ai.motions import keys_for, parse, play  # noqa: E402
 
 args = [a for a in sys.argv[1:] if not a.startswith("--")]
 if not args:
@@ -70,13 +72,28 @@ def load_base():
     settle(20)
 
 
-def approach(target):
-    for _ in range(60):
+def approach(target, tolerance=6):
+    """Caminar SOSTENIENDO la direccion: tocar adelante-neutro-adelante es el input de
+    correr (66) y Kim se pasaba de la distancia pedida."""
+    for _ in range(400):
         d = link.state.distance
-        if abs(d - target) <= 6:
+        if abs(d - target) <= tolerance:
             break
-        play(kb, clock, parse("6[2]" if d > target else "4[2]"), link.state.facing_right)
+        kb.set_state(keys_for(6 if d > target else 4, "", link.state.facing_right))
+        clock.wait_frames(1, lambda: False)
     settle(12)
+
+
+def run_one(notation):
+    watch = Watch()
+    if is_combo(notation):
+        # watch como should_stop: se llama cada frame y cuenta impactos (siempre False)
+        play_combo(kb, clock, notation, link.state.facing_right, lambda: link.state.rival.life,
+                   step_frames, button_frames, watch)
+    else:
+        play(kb, clock, parse(notation, step_frames, button_frames), link.state.facing_right, watch)
+    clock.wait_frames(90, watch)
+    return watch.damage, watch.hits
 
 
 # Posicion base: ahora mismo, con los dos en el suelo y quietos.
@@ -84,7 +101,46 @@ settle(30)
 link.send("SAVE2", *([] if "--normal" in opt else ["TURBO"]))
 while link.commands_pending:
     link.step()
-print(f"Posicion base guardada (distancia {link.state.distance}). Probando {len(candidates)} combos x {REPEATS}...")
+print(f"Posicion base guardada (distancia {link.state.distance}).")
+
+if "--sweep" in opt:
+    # Barrido de distancia de los combos tuyos del perfil: en que distancias conectan.
+    SWEEP = range(int(opt.get("--from", 8)), int(opt.get("--to", 72)) + 1, int(opt.get("--step", 4)))
+    ranges = profile.setdefault("combo_ranges", {})
+    for name, notation in profile.get("combos", {}).items():
+        if not name.startswith("tuyo"):
+            continue
+        rows = []
+        for target in SWEEP:
+            load_base()
+            approach(target, tolerance=2)
+            dist = link.state.distance
+            dmg, hits = run_one(notation)
+            rows.append((dist, dmg, hits))
+        best = max(d for _, d, _ in rows)
+        print(f"\n{name}  (mejor {best})")
+        print("  " + "  ".join(f"{dist}:{dmg}" for dist, dmg, _ in rows))
+        # tramo continuo mas largo con >= 80% del mejor danio y al menos 2 golpes
+        good = [(dist, dmg >= 0.8 * best and hits >= 2) for dist, dmg, hits in rows]
+        run, best_run = [], []
+        for dist, ok in good:
+            run = run + [dist] if ok else []
+            if len(run) > len(best_run):
+                best_run = run
+        old = ranges.get(name)
+        if best_run and best > 0:
+            ranges[name] = [min(best_run), max(best_run)]
+            print(f"  rango fiable: {min(best_run)}-{max(best_run)} (antes {old})")
+        else:
+            print("  sin rango fiable")
+    link.send("NORMAL")
+    settle(2)
+    if "--apply" in opt:
+        (ROOT / "config.json").write_text(json.dumps(config, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        print("\nRangos guardados en config.json.")
+    sys.exit(0)
+
+print(f"Probando {len(candidates)} combos x {REPEATS}...")
 
 results = []
 for c in candidates:
@@ -92,15 +148,7 @@ for c in candidates:
     for _ in range(REPEATS):
         load_base()
         approach(c["distancia"])
-        watch = Watch()
-        if is_combo(c["notacion"]):
-            # watch como should_stop: se llama cada frame y cuenta impactos (siempre False)
-            play_combo(kb, clock, c["notacion"], link.state.facing_right, lambda: link.state.rival.life,
-                       step_frames, button_frames, watch)
-        else:
-            play(kb, clock, parse(c["notacion"], step_frames, button_frames), link.state.facing_right, watch)
-        clock.wait_frames(90, watch)
-        tries.append((watch.damage, watch.hits))
+        tries.append(run_one(c["notacion"]))
     results.append((c, tries))
     expected = f"(grabado {c['danio']})" if c["danio"] else ""
     print(f"  {c['nombre'][:60]:60s} danio {[t[0] for t in tries]} golpes {[t[1] for t in tries]} {expected}")

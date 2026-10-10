@@ -94,6 +94,7 @@ class RuleBrain:
         self._last_hit_frame = -10_000
         self._air_attacked = False   # ya ataque en este salto
         self.dealt_total = 0         # danio acumulado hecho / recibido (para recompensas)
+        self.last_dealt_frame = -10_000   # ultimo frame en que el rival perdio vida
         self.taken_total = 0
         self.chip_total = 0          # raspado de especiales bloqueados (no cuenta como golpe)
         # Teclas aplicadas ahora mismo (las pone el bot): para saber si Iori estaba cubriendose.
@@ -124,6 +125,7 @@ class RuleBrain:
                     self.taken_total += taken
                 if 0 < dealt <= MAX_DAMAGE_PER_FRAME:
                     self.dealt_total += dealt
+                    self.last_dealt_frame = state.frame
                 if self._cached.rival.crouching:
                     self._rival_crouch_frame = self._cached.frame
                 ended_clean = False
@@ -454,7 +456,7 @@ class RuleBrain:
         if state.back_to_wall and d <= MID and not rival.airborne:
             # Acorralado: no retroceder contra la pared; cubrirse, salir rodando o saltando,
             # o castigar/atacar si hay rango.
-            in_range = self._in_range(m["combos"], d)
+            in_range = self._in_range(m["combos"], d) if self._combos_ready(state) else {}
             attack = [Option(15 / max(len(in_range), 1), f"combo: {name}", notation)
                       for name, notation in in_range.items()]
             return "acorralado", attack + [
@@ -495,10 +497,15 @@ class RuleBrain:
         in_range = self._in_range(m["combos"], d)
         combos = [Option(40 / max(len(in_range), 1), f"combo: {name}", notation)
                   for name, notation in in_range.items()]
-        if not in_range:
+        if not self._combos_ready(state):
+            # El rival recibio un golpe hace poco: probablemente sigue derribado o
+            # levantandose y el primer golpe del combo fallaria (medido). Esperar cubierto.
+            combos = [Option(25, "esperar que el rival se levante", "G[8]")]
+        elif not in_range:
             # Cerca pero fuera del alcance de los combos: acercarse un paso.
             combos = [Option(25, "acercarse a rango de combo", "6[6]", interruptible=True)]
-        combos += self._dm_combos(me, d, total_weight=15, prefix="combo DM")
+        if self._combos_ready(state):
+            combos += self._dm_combos(me, d, total_weight=15, prefix="combo DM")
         # Mezclas para romper la guardia: agarre (gana a quien se cubre), golpe por
         # arriba (gana a guardia abajo) y golpe bajo (gana a guardia de pie).
         if d <= CLOSE_C_RANGE:
@@ -513,6 +520,12 @@ class RuleBrain:
             Option(6, "salto atras (evitar agarre)", "7[8]"),
             Option(3, "reversal", m["reversal"]),
         ]
+
+    def _combos_ready(self, state):
+        """Perfil "combo_rearm_frames": tras golpear al rival, esperar N frames antes de
+        empezar otro combo (0 = sin espera). Medido con Kim en practica: el primer golpe
+        conecta el 47-52% si el rival recibio un golpe hace < 120 frames y el 80% despues."""
+        return state.frame - self.last_dealt_frame >= self._moves.get("combo_rearm_frames", 0)
 
     def _dm_combos(self, me, d, total_weight, prefix):
         """Combos que terminan en DM: solo con al menos una barra llena."""

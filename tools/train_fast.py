@@ -128,6 +128,7 @@ if play:
 stats = Counter()
 combo_stats = Counter()
 chosen = Counter()        # acciones elegidas por el bot (nombre -> veces)
+combo_timing = Counter()  # (frames desde el ultimo golpe al rival, conecto el primer golpe) -> veces
 
 
 def on_round_end(state):
@@ -148,6 +149,10 @@ def on_log(message):
         combo_stats["intentos"] += 1
         combo_stats["completos"] += int(done) == int(total)
         combo_stats["con 2+ golpes"] += int(done) >= 2
+        if "desde golpe" in message:   # cuanto hacia que el rival recibio el ultimo golpe
+            since = int(message.rsplit("desde golpe", 1)[1])
+            bucket = ("<60 f" if since < 60 else "60-119 f" if since < 120 else ">=120 f")
+            combo_timing[(bucket, int(done) >= 1)] += 1
     elif message.startswith("Deteniendo") or message.startswith("IA "):
         print(message)
 
@@ -243,6 +248,10 @@ print(f"Combos: {combo_stats['intentos']} intentos, {combo_stats['con 2+ golpes'
 combo_choices = [(n, c) for n, c in chosen.most_common() if "combo" in n or "castigo" in n]
 if combo_choices:
     print("Combos y castigos elegidos: " + ", ".join(f"{n} x{c}" for n, c in combo_choices[:10]))
+if combo_timing:
+    print("Primer golpe del combo segun el tiempo desde el ultimo golpe al rival: " + ", ".join(
+        f"{b}: {combo_timing[(b, True)]} conecto / {combo_timing[(b, False)]} no"
+        for b in ("<60 f", "60-119 f", ">=120 f") if combo_timing[(b, True)] + combo_timing[(b, False)]))
 print(f"Aprendizaje: +{brain.updates} experiencias (antes {known_before}), "
       f"recompensa media {brain.reward_sum / max(brain.updates, 1):+.2f}")
 defense.close()

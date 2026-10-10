@@ -249,11 +249,15 @@ class RuleBot(_BaseBot):
             return state.rival.life if state else None
 
         parts = count_parts(notation)
+        state = self._brain.state()
+        since_hit = (state.frame - getattr(self._brain, "last_dealt_frame", -10_000)) if state else -1
         connected, damage, _ = play_combo(self._keyboard, self._clock, notation, self._facing_right(),
                                           rival_life, self._config["motion_step_frames"],
                                           self._config["button_hold_frames"],
                                           lambda: self._should_stop() or self._brain.being_thrown())
-        self._log(f"     combo: {connected}/{parts} partes conectaron, danio {damage}")
+        # "desde golpe": frames desde que el rival perdio vida por ultima vez al empezar el
+        # combo (para ver si se intenta mientras el rival sigue derribado)
+        self._log(f"     combo: {connected}/{parts} partes conectaron, danio {damage}, desde golpe {since_hit}")
         return not self._should_stop()
 
     def _guard(self, frames):

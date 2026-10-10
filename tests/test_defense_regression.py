@@ -343,3 +343,32 @@ class PreventiveGuardHeight(unittest.TestCase):
 
     def test_original_unchanged(self):
         self.assertFalse(self.brain([st(f) for f in range(10)], preventive=False).guard_low())
+
+
+class ComboRearm(unittest.TestCase):
+    """combo_rearm_frames: no empezar un combo si el rival recibio un golpe hace poco."""
+
+    def brain(self, rearm, hit_frame):
+        feed = Feed()
+        b = RuleBrain(feed, {**IORI, "combat_mode": "DEFENSE_ONLY", "preventive_guard": False,
+                             "combo_rearm_frames": rearm})
+        for f in range(0, 200):
+            feed.s = st(f, mx=400, rx=430, rl=102 if f < hit_frame else 90)
+            b.state()
+        return b
+
+    def names(self, b):
+        return [o.name for o in b._options_for(b.state())[1]]
+
+    def test_recent_hit_waits(self):
+        names = self.names(self.brain(120, hit_frame=150))      # golpe hace 50 frames
+        self.assertFalse([n for n in names if n.startswith("combo")])
+        self.assertIn("esperar que el rival se levante", names)
+
+    def test_old_hit_allows_combos(self):
+        names = self.names(self.brain(120, hit_frame=50))       # golpe hace 150 frames
+        self.assertTrue([n for n in names if n.startswith("combo")])
+
+    def test_default_off(self):
+        names = self.names(self.brain(0, hit_frame=190))
+        self.assertTrue([n for n in names if n.startswith("combo")])
