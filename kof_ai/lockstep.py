@@ -109,7 +109,9 @@ class Lockstep:
         elif self._resetting and me.life > 0 and rival.life > 0:
             self._resetting = False
             self._round_start = self.frames
-        if self.on_step and not self._resetting:
+        # Registrar tambien el golpe que provoca KO. El logger detecta el aumento
+        # de vida al recargar y descarta esa transicion sin perder el golpe final.
+        if self.on_step:
             self.on_step(self.state, self.keys)
         self._respond(seq, hold)
         self.frames += hold

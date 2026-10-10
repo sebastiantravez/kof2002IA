@@ -8,9 +8,32 @@ from kof_ai.defense_log import DefenseLogger
 from kof_ai.game_state import Fighter, GameState
 from kof_ai.session_metrics import snapshot, damage_line
 from tools.compare_sessions import load_groups, value
+from kof_ai.lockstep import Lockstep
+from unittest.mock import Mock
 
 
 class SessionMetricsTests(unittest.TestCase):
+    def test_lockstep_logs_ko_damage_before_loading_next_round(self):
+        with tempfile.TemporaryDirectory() as folder:
+            logger = DefenseLogger(Path(folder) / "defensa.csv", lambda: ("castigo seguro", "castigo seguro: 2B", 1))
+            link = Lockstep(folder)
+            link.auto_reset = True
+            fighter = lambda life: Fighter(400, 100, 220, 0, life)
+            link._wait_request = Mock(side_effect=[
+                (1, 0, 0, fighter(80), fighter(12)),
+                (2, 1, 0, fighter(80), fighter(0)),
+                (3, 2, 1, fighter(102), fighter(102))])
+            link._respond = Mock()
+            link.on_step = logger.observe
+            try:
+                for _ in range(3):
+                    link.step()
+                self.assertEqual(logger.dealt, 12)
+                self.assertEqual(logger.taken, 0)
+                self.assertEqual(logger.rounds, 2)
+            finally:
+                logger.close()
+
     def test_damage_snapshot_includes_chip_and_survives_round_reload(self):
         with tempfile.TemporaryDirectory() as folder:
             logger = DefenseLogger(Path(folder) / "defensa.csv", lambda: ("rival ataca", "guardia", 1))

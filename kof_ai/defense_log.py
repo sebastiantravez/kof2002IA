@@ -27,7 +27,7 @@ STATE_OF = {"rival ataca": "DEFEND", "presion del rival": "DEFEND", "rival cae h
             "rival en el aire": "DEFEND", "me golpearon": "RECOVERY", "estoy en el aire": "RECOVERY",
             "castigar": "BLOCK_PUNISH", "castigo tras bloqueo": "BLOCK_PUNISH",
             "castigo a golpe fallado": "WHIFF_PUNISH", "castigo seguro": "SAFE_PUNISH"}
-OFFENSIVE_PREFIXES = ("poke", "barrida", "golpe bajo", "combo", "agarre", "overhead",
+OFFENSIVE_PREFIXES = ("poke", "barrida", "golpe bajo", "golpe cercano", "combo", "agarre", "overhead",
                       "especial de lejos", "castigo", "anti-aire")
 
 

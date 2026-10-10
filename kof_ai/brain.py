@@ -290,9 +290,9 @@ class RuleBrain:
     def _whiff_punishable(self, state):
         """WHIFF_PUNISH (solo BALANCED_EXPERIMENTAL): el ataque rival termino sin estar
         nunca cerca de mi: lo fallo; se castiga corriendo."""
-        just_ended = (state.frame - self._rival_attack_end_frame <= PUNISH_WINDOW
+        just_ended = (self.punish_confirm_frames <= state.frame - self._rival_attack_end_frame <= PUNISH_WINDOW
                       and not self._rival_attack_hit_me)
-        return (just_ended and not state.rival.attacking and not state.rival.airborne
+        return (just_ended and not state.rival.attacking and not state.rival.airborne and not state.me.airborne
                 and self._attack_min_dist > 90 and state.distance <= WHIFF_PUNISH_RANGE
                 and not self._recently_hit(state, 20))
 
@@ -345,13 +345,21 @@ class RuleBrain:
             options = [Option(75, "castigo seguro: 2B", "2B")]
             if d <= CLOSE_C_RANGE:
                 options.append(Option(25, "castigo seguro: C", "C"))
+            # Solo la ofensiva experimental y una ruta presente en el perfil:
+            # C>623C esta validada en laboratorio, y confirma C antes del especial.
+            if self.strategy is not None and d <= 40 and "C>623C" in self._moves.get("punish", {}).values():
+                options.append(Option(45, "castigo seguro: C Oniyaki confirmado", "C>623C"))
             return Proposal("castigo seguro", options)
         if self.strategy is not None and self._whiff_punishable(state):
             m = self._moves
-            options = [Option(45, "castigo: correr + 2B", "6 5 6[8]2B") if d > LIGHT_RANGE
-                       else Option(45, "castigo: 2B", "2B"),
-                       Option(20, "castigo: barrida 2D", "2D") if d <= 110 else
-                       Option(20, "castigo: poke", m["poke"])]
+            if d <= LIGHT_RANGE:
+                options = [Option(75, "castigo: 2B", "2B")]
+            elif d <= 110:
+                options = [Option(60, "castigo: poke", m["poke"]),
+                           Option(20, "castigo: barrida 2D", "2D")]
+            else:
+                # No adivinar cuanto avanza la carrera: reevaluar al terminar el paso.
+                options = [Option(60, "acercarse al golpe fallado", "6[5]", interruptible=True)]
             return Proposal("castigo a golpe fallado", options)
         return None
 

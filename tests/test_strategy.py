@@ -59,7 +59,7 @@ class StrategyTests(unittest.TestCase):
 
     def test_whiff_from_far_is_punished(self):
         # el rival ataca a 120 de distancia (nunca se acerca) y termina: golpe fallado
-        b = brain_after([st(f, mx=300, rx=420, ratk=(5 <= f < 12)) for f in range(0, 15)])
+        b = brain_after([st(f, mx=300, rx=420, ratk=(5 <= f < 12)) for f in range(0, 17)])
         self.assertTrue(b.can_punish_now())
         self.assertEqual(b._options_for(b.state())[0], "castigo a golpe fallado")
         # el mismo ataque a 150: fuera de alcance, no se castiga
@@ -99,7 +99,8 @@ class StrategyTests(unittest.TestCase):
         b = brain_after([st(f, mx=400, rx=435) for f in range(80)])
         situation, options = b._options_for(b.state())
         self.assertEqual(situation, "NEUTRAL:PRESSURE")
-        self.assertTrue(any(o.name == "combo corto 2B" for o in options))
+        self.assertTrue(any(o.name == "golpe cercano C" for o in options))
+        self.assertFalse(any(">" in o.notation for o in options))
         self.assertFalse(any(o.name.startswith("combo: ") for o in options))
 
     def test_choices_are_varied_and_not_all_guard(self):
@@ -107,6 +108,41 @@ class StrategyTests(unittest.TestCase):
         names = Counter(b.decide()[1].name for _ in range(300))
         self.assertGreater(len(names), 4)
         self.assertLess(names.get("guardia corta", 0), 120)
+
+    def test_whiff_waits_confirmation_and_never_runs_blindly_into_2b(self):
+        early = brain_after([st(f, mx=300, rx=420, ratk=5 <= f < 12) for f in range(15)])
+        self.assertFalse(early.can_punish_now())
+        b = brain_after([st(f, mx=300, rx=420, ratk=5 <= f < 12) for f in range(17)])
+        _, options = b._options_for(b.state())
+        self.assertTrue(all(o.interruptible and o.notation == "6[5]" for o in options))
+
+    def test_whiff_in_normal_range_attacks_without_running(self):
+        b = brain_after([st(f, mx=300, rx=400, ratk=5 <= f < 12) for f in range(17)])
+        situation, options = b._options_for(b.state())
+        self.assertEqual(situation, "castigo a golpe fallado")
+        self.assertEqual({o.notation for o in options}, {IORI["poke"], "2D"})
+
+    def test_new_attack_cancels_whiff_opportunity(self):
+        b = brain_after([st(f, mx=300, rx=400, ratk=5 <= f < 12 or f >= 16) for f in range(18)])
+        self.assertFalse(b.can_punish_now())
+        self.assertEqual(b._options_for(b.state())[0], "rival ataca")
+
+    def test_punish_combo_only_after_guarded_long_attack_and_in_range(self):
+        for distance in (35, 50):
+            b = brain_after([st(f, rx=400 + distance, ratk=5 <= f < 40) for f in range(45)])
+            self.assertNotEqual(b._options_for(b.state())[0], "castigo seguro")
+            b._guarded_attack = True
+            situation, options = b._options_for(b.state())
+            self.assertEqual(situation, "castigo seguro")
+            self.assertEqual(any(o.notation == "C>623C" for o in options), distance == 35)
+
+    def test_hysteresis_cannot_keep_short_attacks_out_of_range(self):
+        b = brain_after([st(f, rx=435) for f in range(80)])
+        b._options_for(b.state())
+        b._reader.s = st(81, rx=500)
+        b.state()
+        _, options = b._options_for(b.state())
+        self.assertFalse(any(o.notation in {"2B", "C", "6C", "6D", "2B>2A"} for o in options))
 
 
 if __name__ == "__main__":

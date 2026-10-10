@@ -164,24 +164,24 @@ class Strategy:
         if mode.name == "APPROACH":
             opts = [O(42 * push, "acercarse (pasos cortos)", "6[8]", interruptible=True),
                     O(12 * push, "correr", "6 5 6[12]", interruptible=True) if d > 180 else None,
-                    O(10, "guardia corta", "G[6]"),
+                    O(6, "guardia corta", "G[4]"),
                     O(4, "especial de lejos", moves["far_special"]) if d > 150 and not state.back_to_wall else None]
         elif mode.name == "POKE":
             opts = [O(30 * push, "poke", moves["poke"]),
                     O(15 * push, "barrida 2D", "2D") if d <= 110 else None,
-                    O(15, "acercarse (pasos cortos)", "6[8]", interruptible=True),
-                    O(10, "retroceder (pasos cortos)", "4[8]", interruptible=True),
-                    O(12, "guardia corta", "G[6]")]
+                    O(30 * push, "acercarse (pasos cortos)", "6[6]", interruptible=True),
+                    O(6, "retroceder (pasos cortos)", "4[6]", interruptible=True) if m.aggression > 30 else None,
+                    O(6, "guardia corta", "G[4]")]
         elif mode.name == "PRESSURE":
             # La RAM no confirma hitstun: no iniciar combos largos a ciegas.
             opts = [O(42 * push * cornered_rival, "golpe bajo 2B", "2B") if d <= 55 else None,
-                    O(12 * push * cornered_rival, "combo corto 2B", "2B>2A") if d <= 40 else None,
+                    O(24 * push * cornered_rival, "golpe cercano C", "C") if d <= 40 else None,
                     O(24, "acercarse (pasos cortos)", "6[5]", interruptible=True) if d > 40 else None]
             if d <= 40:
                 opts += [O(8 * blocks, "agarre C", "6C"), O(6 * blocks, "agarre D", "6D")]
             opts += [O(5 * blocks * (1.5 if not lows else 1), "overhead", moves["overhead"]) if d <= 40 else None,
-                     O(12, "backdash", "4 5 4") if not state.back_to_wall else None,
-                     O(10, "guardia corta", "G[8]")]
+                     O(6, "backdash", "4 5 4") if not state.back_to_wall and m.aggression > 30 else None,
+                     O(6, "guardia corta", "G[4]")]
         elif mode.name == "BAIT":
             # Entrar y salir del alcance del rival sin atacar, para que falle y castigarlo.
             opts = [O(30, "amague: entrar y salir", "6[8]4[10]", interruptible=True),
@@ -201,6 +201,13 @@ class Strategy:
                 and not (state.back_to_wall and
                          (o.name.startswith("retroceder") or o.name == "backdash"
                           or o.name == "amague: entrar y salir"))]
+        # La histeresis puede conservar PRESSURE tras alejarse el rival.
+        # Revalidar alcance antes de emitir botones, incluso sin cambio de modo.
+        opts = [o for o in opts if not (
+            (o.name == "golpe bajo 2B" and d > 55)
+            or (o.name in {"golpe cercano C", "agarre C", "agarre D", "overhead"} and d > 40)
+            or (o.name == "barrida 2D" and d > 110)
+            or (o.name == "poke" and d > POKE_MAX))]
         if not opts:
             opts = [O(1, "guardia corta", "G[6]")]
         return f"NEUTRAL:{mode.name}", [_with_risk(o, option_cls) for o in opts]
@@ -213,7 +220,7 @@ def _with_risk(option, option_cls):
     return option_cls(option.weight / (1 + risk), option.name, option.notation, option.interruptible)
 
 
-USEFUL_PREFIXES = ("acercarse", "correr", "poke", "barrida", "golpe bajo", "combo", "agarre",
+USEFUL_PREFIXES = ("acercarse", "correr", "poke", "barrida", "golpe bajo", "golpe cercano", "combo", "agarre",
                    "overhead", "amague", "especial de lejos", "castigo", "anti-aire")
 
 

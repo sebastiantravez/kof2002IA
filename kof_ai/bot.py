@@ -171,6 +171,7 @@ class RuleBot(_BaseBot):
         self.current = (None, None, 0)   # (situacion, accion, numero de decision)
         self._saved_at = time.perf_counter()
         self.save_every = 30   # segundos entre guardados de lo aprendido
+        self.save_enabled = True
 
     @property
     def brain(self):
@@ -188,6 +189,8 @@ class RuleBot(_BaseBot):
             discard()
 
     def _save(self):
+        if not self.save_enabled:
+            return
         save = getattr(self._brain, "save", None)
         if save:
             save()
@@ -254,7 +257,9 @@ class RuleBot(_BaseBot):
         connected, damage, _ = play_combo(self._keyboard, self._clock, notation, self._facing_right(),
                                           rival_life, self._config["motion_step_frames"],
                                           self._config["button_hold_frames"],
-                                          lambda: self._should_stop() or self._brain.being_thrown())
+                                          lambda: self._should_stop() or self._brain.being_thrown()
+                                          or (getattr(self._brain, "strategy", None) is not None
+                                              and self._brain.urgent()))
         # "desde golpe": frames desde que el rival perdio vida por ultima vez al empezar el
         # combo (para ver si se intenta mientras el rival sigue derribado)
         self._log(f"     combo: {connected}/{parts} partes conectaron, danio {damage}, desde golpe {since_hit}")
@@ -264,8 +269,8 @@ class RuleBot(_BaseBot):
         """Guardia que se reajusta cada frame: abajo si el rival esta agachado (lows),
         de pie si esta de pie o en el aire (overheads y saltos). Se corta si aparece
         una oportunidad de castigo. Devuelve False si hay que detener el bot."""
-        # En modo lockstep cada intercambio con el emulador es caro: reajustar cada 2 frames.
-        step = getattr(self._clock, "WATCH_CHUNK", 1)
+        # Reajustar cada frame para responder a cambios de lado/altura sin esperar dos.
+        step = 1
         for _ in range(0, frames, step):
             state = self._brain.state()
             if state is None:

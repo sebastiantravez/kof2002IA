@@ -180,6 +180,7 @@ bot = RuleBot(LockstepKeyboard(link), LockstepClock(link), config, None,
               lambda: reader.read().facing_right, on_log, reader, moves, brain,
               focus_required=False, fight_check=in_fight)
 bot.save_every = float("inf") if play else 120   # en modo prueba no se guarda nada
+bot.save_enabled = not play
 defense = DefenseLogger(ROOT / "logs" / f"defensa_{character}_{time.strftime('%Y%m%d_%H%M%S')}.csv",
                         lambda: bot.current)
 link.on_step = defense.observe
