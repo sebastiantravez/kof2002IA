@@ -18,6 +18,9 @@ Uso:
      --rival=Chin: detener si P2 no es ese personaje.
      --preventive=on|off: guardia preventiva (sin acciones largas cerca del rival).
      --speed=N: como maximo N veces la velocidad normal (tambien con --play).
+     --legacy-punish / --legacy-escapes: comportamiento ANTERIOR a las correcciones de la
+                 auditoria externa (castigo con el ataque rival activo / escapes al azar bajo
+                 amenaza), solo para compararlo en las mismas condiciones.
   Se detiene solo si P1 no es el personaje pedido (p. ej. la demo del arcade).
 """
 import json
@@ -50,6 +53,8 @@ wanted_rival = next((a.split("=", 1)[1] for a in sys.argv[1:] if a.startswith("-
 config = json.loads((ROOT / "config.json").read_text(encoding="utf-8"))
 moves = dict(config["characters"][character])
 for a in sys.argv[1:]:
+    if a in ("--legacy-punish", "--legacy-escapes"):   # reproducir el comportamiento anterior (comparar)
+        moves[a[2:].replace("-", "_")] = True
     if a.startswith("--preventive="):   # guardia preventiva on|off (docs/DEFENSE_AUDIT_V4.md)
         moves["preventive_guard"] = a.split("=", 1)[1].lower() in ("on", "1", "true", "si")
     if a.startswith("--mode="):      # modo de combate (kof_ai/arbiter.py)
@@ -263,6 +268,7 @@ summary = {"personaje": character, "modo": offense, "estilo": brain.style, "modo
            "minutos_juego": frames / 59.19 / 60, "ganadas": stats["ganadas"], "perdidas": stats["perdidas"],
            "otras": stats["empates"], "combos": dict(combo_stats), "rival": first.rival.character,
            "decisiones": dict(brain.arbiter.decisions), "preventiva": brain.preventive_guard,
+           "legacy_punish": brain.legacy_punish, "legacy_escapes": brain.legacy_escapes,
            **defense.metrics(rounds)}
 session_path = defense.path.with_name(defense.path.stem.replace("defensa_", "sesion_") + ".json")
 session_path.write_text(json.dumps(summary, indent=1, ensure_ascii=False), encoding="utf-8")

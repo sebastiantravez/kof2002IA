@@ -78,6 +78,10 @@ class RuleBrain:
         # Guardia preventiva: sin acciones largas no interrumpibles cerca del rival (perfil
         # "preventive_guard"; apagada = defensa original exacta).
         self.preventive_guard = bool(moves.get("preventive_guard", False))
+        # Interruptores para reproducir el comportamiento anterior a cada correccion de la
+        # auditoria externa (solo para comparar en FBNeo; por defecto apagados).
+        self.legacy_punish = bool(moves.get("legacy_punish", False))
+        self.legacy_escapes = bool(moves.get("legacy_escapes", False))
         # Ofensiva estrategica (kof_ai/strategy.py): solo en BALANCED_EXPERIMENTAL.
         self.strategy = Strategy() if self.combat_mode == BALANCED_EXPERIMENTAL else None
         self._attack_min_dist = 999       # distancia minima durante el ataque rival en curso
@@ -249,14 +253,24 @@ class RuleBrain:
         terminarlo) y esta cerca."""
         if state.rival.airborne or state.distance > CLOSE + 25 or self._recently_hit(state, 20):
             return False
-        recovering = state.rival.attacking and self._rival_attack_age(state) > BLOCK_FRAMES
         just_ended = (state.frame - self._rival_attack_end_frame <= PUNISH_WINDOW
                       and not self._rival_attack_hit_me)
-        if self.style == "defensive" and just_ended and not recovering:
-            # Un ataque corto que termina puede seguir en cadena: castigar solo los
-            # largos (fallados o muy recuperables), que dejan al rival vendido.
+        if self.legacy_punish:
+            # Comportamiento anterior (solo para comparar): "recuperacion" = el rival lleva
+            # atacando mas de BLOCK_FRAMES. Autorizaba castigos con el ataque todavia activo.
+            recovering = state.rival.attacking and self._rival_attack_age(state) > BLOCK_FRAMES
+            if self.style == "defensive" and just_ended and not recovering:
+                return self._rival_attack_duration >= LONG_ATTACK_FRAMES
+            return recovering or just_ended
+        # El bit de ataque (+0xE0 bit0) cubre toda la animacion y NO distingue golpe activo de
+        # recuperacion: mientras este encendido no hay ninguna senal fiable de vulnerabilidad.
+        # Solo despues de que el ataque termino (y no empezo otro).
+        if state.rival.attacking or not just_ended:
+            return False
+        if self.style == "defensive":
+            # Un ataque corto que termina puede seguir en cadena: solo tras ataques largos.
             return self._rival_attack_duration >= LONG_ATTACK_FRAMES
-        return recovering or just_ended
+        return True
 
     def _under_pressure(self, state):
         """El rival ataco hace poco y sigue cerca: no soltar la guardia todavia."""

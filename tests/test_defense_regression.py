@@ -372,3 +372,27 @@ class ComboRearm(unittest.TestCase):
     def test_default_off(self):
         names = self.names(self.brain(0, hit_frame=190))
         self.assertTrue([n for n in names if n.startswith("combo")])
+
+
+class PrematurePunish(unittest.TestCase):
+    """Auditoria externa, hallazgo 1: con el rival TODAVIA atacando (bit de ataque encendido
+    mas de BLOCK_FRAMES) la IA elegia 'castigar'. El bit de ataque cubre toda la animacion
+    (golpe activo y recuperacion): no es una senal de vulnerabilidad."""
+
+    def brain(self, **extra):
+        feed = Feed()
+        b = RuleBrain(feed, {**IORI, "combat_mode": "DEFENSE_ONLY", **extra})
+        for f in range(0, 46):
+            feed.s = st(f, ratk=(f >= 5))       # el rival ataca desde el frame 5 y sigue atacando
+            b.state()
+        return b
+
+    def test_no_punish_while_rival_still_attacking(self):
+        b = self.brain()
+        self.assertFalse(b.can_punish_now())
+        self.assertNotEqual(b._options_for(b.state())[0], "castigar")
+
+    def test_legacy_reproduces_the_bug(self):
+        b = self.brain(legacy_punish=True)      # comportamiento anterior, solo para comparar
+        self.assertTrue(b.can_punish_now())
+        self.assertEqual(b._options_for(b.state())[0], "castigar")
