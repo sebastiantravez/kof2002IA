@@ -341,9 +341,10 @@ class RuleBrain:
         d = state.distance
         if self._confirmed_punish(state):
             # Golpe corto y de vuelta a neutral (nada de combos largos todavia).
-            options = [Option(50, "castigo seguro: 2B", "2B")]
+            # Contra id30: 2B conecto 17/26 y C 15/30; preferir 2B.
+            options = [Option(75, "castigo seguro: 2B", "2B")]
             if d <= CLOSE_C_RANGE:
-                options.append(Option(50, "castigo seguro: C", "C"))
+                options.append(Option(25, "castigo seguro: C", "C"))
             return Proposal("castigo seguro", options)
         if self.strategy is not None and self._whiff_punishable(state):
             m = self._moves
