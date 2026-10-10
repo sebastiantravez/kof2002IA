@@ -396,3 +396,35 @@ class PrematurePunish(unittest.TestCase):
         b = self.brain(legacy_punish=True)      # comportamiento anterior, solo para comparar
         self.assertTrue(b.can_punish_now())
         self.assertEqual(b._options_for(b.state())[0], "castigar")
+
+
+class SafeDefenseUnderThreat(unittest.TestCase):
+    """Auditoria externa, hallazgo 2: con amenaza activa la defensa elegia al azar reversals,
+    rodadas o backdash. Ahora solo guardia; los escapes quedan fuera hasta tener condiciones
+    comprobables (legacy_escapes los reproduce para comparar)."""
+
+    def options(self, states, **extra):
+        feed = Feed()
+        b = RuleBrain(feed, {**IORI, "combat_mode": "DEFENSE_ONLY", **extra})
+        for s in states:
+            feed.s = s
+            b.state()
+        return b._options_for(b.state())
+
+    CASES = {
+        "rival ataca": [st(f, ratk=(f >= 10)) for f in range(0, 14)],
+        "presion del rival": [st(f, ratk=(5 <= f < 15)) for f in range(0, 21)],
+        "me golpearon": [st(f, ml=102 if f < 5 else 90) for f in range(0, 8)],
+        "rival cae hacia mi": [st(f, rh=h) for f, h in enumerate([0] * 5 + [60, 70, 65, 55, 45])],
+        "rival ataca desde el aire": [st(f, rh=40, ratk=(f >= 4)) for f in range(0, 8)],
+    }
+
+    def test_only_guard_under_threat(self):
+        for expected, states in self.CASES.items():
+            sit, opts = self.options(states)
+            self.assertEqual(sit, expected)
+            self.assertEqual({o.name for o in opts}, {"guardia"}, f"{sit}: {[o.name for o in opts]}")
+
+    def test_legacy_restores_escapes(self):
+        sit, opts = self.options(self.CASES["rival ataca"], legacy_escapes=True)
+        self.assertIn("reversal", [o.name for o in opts])

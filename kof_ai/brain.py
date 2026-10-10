@@ -1,4 +1,4 @@
-﻿"""Cerebro de Fase 3: decide segun el estado de la pelea, con aleatoriedad controlada.
+"""Cerebro de Fase 3: decide segun el estado de la pelea, con aleatoriedad controlada.
 
 Cada situacion tiene varias respuestas razonables con pesos. Se elige una al
 azar, y las que se acaban de usar pierden peso para no repetir patrones.
@@ -422,11 +422,11 @@ class RuleBrain:
 
         if self._recently_hit(state):
             # En hitstun los botones no hacen nada; la guardia dinamica bloquea en cuanto se pueda.
-            return "me golpearon", [
+            return self._threat_guard("me golpearon", [
                 Option(75, "guardia", "G[18]"),
                 Option(15, "reversal", "1[8]" + m["reversal"]),
                 Option(10, "roll atras", "1[8]4AB"),
-            ]
+            ])
 
         if allow_punish and self._can_punish(state):
             # El rival fallo o le bloquee un ataque: mi turno, con combo segun la distancia.
@@ -449,31 +449,31 @@ class RuleBrain:
             ]
             if me.stocks >= 1 and m.get("anti_air_dm"):
                 options.append(Option(30, "anti-aire DM", m["anti_air_dm"]))
-            return "rival cae hacia mi", options
+            return self._threat_guard("rival cae hacia mi", options)
 
         if self._rival_attacking_near(state):
             # La guardia elige alto/bajo cada frame segun la postura del rival.
             if rival.airborne:
-                return "rival ataca desde el aire", [
+                return self._threat_guard("rival ataca desde el aire", [
                     Option(75, "guardia", "G[12]"),
                     Option(15, "anti-aire normal", m["anti_air_normal"]),
                     Option(10, "retroceder", "4[8]"),
-                ]
-            return "rival ataca", [
+                ])
+            return self._threat_guard("rival ataca", [
                 Option(85, "guardia", "G[12]"),
                 Option(10, "backdash", "4 5 4") if not state.back_to_wall else Option(10, "roll adelante", "AB"),
                 Option(5, "reversal", m["reversal"]),
-            ]
+            ])
 
         if self._under_pressure(state):
             # Entre golpes de una cadena del rival: seguir cubierto hasta que termine.
             escape = (Option(8, "roll adelante (salir de la esquina)", "AB") if state.back_to_wall
                       else Option(8, "backdash", "4 5 4"))
-            return "presion del rival", [
+            return self._threat_guard("presion del rival", [
                 Option(80, "guardia", "G[10]"),
                 escape,
                 Option(6, "roll atras", "4AB") if not state.back_to_wall else Option(6, "salto adelante", "9[8]"),
-            ]
+            ])
 
         if state.back_to_wall and d <= MID and not rival.airborne:
             # Acorralado: no retroceder contra la pared; cubrirse, salir rodando o saltando,
@@ -542,6 +542,15 @@ class RuleBrain:
             Option(6, "salto atras (evitar agarre)", "7[8]"),
             Option(3, "reversal", m["reversal"]),
         ]
+
+    def _threat_guard(self, situation, options):
+        """Con amenaza activa solo guardia (auditoria externa, hallazgo 2). Reversals,
+        rodadas, backdash, saltos y anti-aereos quedan fuera: hoy no hay ninguna condicion
+        comprobable que diga cuando son seguros (el anti-aereo, por ejemplo, tiene valor
+        aprendido -6,4 contra -0,8 de cubrirse). legacy_escapes = comportamiento anterior."""
+        if self.legacy_escapes:
+            return situation, options
+        return situation, [o for o in options if o.name == "guardia"]
 
     def _combos_ready(self, state):
         """Perfil "combo_rearm_frames": tras golpear al rival, esperar N frames antes de
