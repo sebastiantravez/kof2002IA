@@ -24,7 +24,7 @@ MODES = (DEFENSE_ONLY, DEFENSE_WITH_PUNISH, BALANCED_EXPERIMENTAL)
 HARD_THREATS = {"ronda terminada", "me agarran", "en el aire (esperando aterrizar)", "estoy en el aire",
                 "me golpearon", "rival cae hacia mi", "rival ataca desde el aire", "rival ataca"}
 # Neutral de la defensa original: sin amenaza, el ataque estrategico puede proponer.
-NEUTRAL_SITUATIONS = {"rival lejos", "media distancia", "pegado al rival"}
+NEUTRAL_SITUATIONS = {"rival lejos", "media distancia", "pegado al rival", "acorralado"}
 
 
 def mode_from_profile(moves):
