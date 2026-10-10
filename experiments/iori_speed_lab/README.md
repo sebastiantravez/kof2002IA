@@ -174,3 +174,27 @@ final del frame y podrían no reflejar código RAM modificado durante el frame.
 Esta instrumentación puede ralentizar la emulación; no usarla para medir FPS o
 latencia base. El script retira sus hooks al finalizar y no debe ejecutarse junto
 con otro observador. No se modifica ROM, RAM, registros CPU o botones.
+
+## Comprobar el momento de ejecución
+
+La siguiente sonda es `probe_execution.lua`, también de solo lectura. Cargarla
+sola en lugar de `trace_access.lua`, con Iori P1 en Test Game offline. Pulsar Run,
+volver al juego y caminar/correr hacia delante durante unos 30 segundos.
+Termina con `PROBE FINISHED` y produce `captures/execution_FECHA_HORA.csv`.
+
+Comprueba primero las palabras exactas de seis instrucciones identificadas en
+las trazas locales. Si difieren, se detiene antes de instalar hooks. Observa los
+puntos que cargan +0x50 en D0 y los que suman D0 a X; registra PC, PPC, A4, D0,
+X fraccionaria, velocidad, personaje, vida, altura, flag de ataque y dos palabras
+de estado. Esas palabras no se interpretan como estados semánticos verificados.
+No usa hooks de lectura/escritura simultáneos ni modifica registros CPU.
+
+La comprobación esperada es PC igual al punto observado, D0 igual a +0x50 en
+el punto de suma, y X todavía sin la suma entre los dos puntos de un mismo
+frame. Una discrepancia impide asumir que el hook se ejecuta antes de la
+instrucción. Se debe contrastar con vida, altura y flags para separar transiciones.
+Los tests simulan ese orden: no demuestran el orden del ejecutable local.
+
+Todavía no existe una prueba real de modificación/restauración. Esta sonda
+prepara esa decisión, no activa +5%/+8%. No repetir capturas generales si esta
+sonda ya cubre los puntos: analizar el archivo de ejecución.
