@@ -1,0 +1,5 @@
+captures/
+status.txt
+control.txt
+*.tmp
+__pycache__/
