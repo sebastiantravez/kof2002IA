@@ -51,6 +51,10 @@ local out = assert(io.open(path, "w"), "Captures directory missing")
 out:write("frame,phase,route,original,applied,x_before,x_after,velocity_after,restored_d0,exact_add,restored_ok\n")
 local active, frames, phase, failure, ticket = true, 0, "baseline", nil, nil
 local pending, modified = {}, 0
+local rejected, hits = {}, 0
+local function reject(reason)
+  rejected[reason] = (rejected[reason] or 0) + 1
+end
 local function set_d0(n)
   local ok = pcall(memory.setregister, "m68000.d0", n)
   return ok and reg("d0") == n
@@ -63,6 +67,19 @@ local function finish(reason)
   end
   for _, row in ipairs(pending) do out:write(table.concat(row, ","), "\n") end
   pending = {}; out:close()
+  local diagnostic = io.open(path .. ".txt", "w")
+  if diagnostic then
+    diagnostic:write("reason=", reason, "\nframes=", frames, "\nhook_hits=", hits,
+      "\nmodified=", modified, "\n")
+    local names = {}
+    for name in pairs(rejected) do names[#names + 1] = name end
+    table.sort(names)
+    for _, name in ipairs(names) do
+      diagnostic:write(name, "=", rejected[name], "\n")
+      print("TRIAL FILTER: " .. name .. "=" .. rejected[name])
+    end
+    diagnostic:close()
+  end
   print("TRIAL FINISHED: " .. reason .. "; modified=" .. modified .. "; " .. path)
   if modified == 0 then print("No boosted movements recorded: trial not validated.") end
 end
@@ -75,18 +92,21 @@ for _, p in ipairs(routes) do
   local point = p
   memory.registerexec(point[1], 1, function()
     if not active or failure then return end
+    hits = hits + 1
     if ticket then failure = "missing post-ADD callback"; return end
-    if reg("a4") ~= P1 then return end
+    if reg("a4") ~= P1 then reject("other_player"); return end
     if reg("pc") ~= point[1] then failure = "hook timing mismatch"; return end
-    if memory.readbyte(P1 + 0x71) ~= 21 or memory.readbyte(P1 + 0x139) <= 0
-        or memory.readbyte(P1 + 0x139) > 102 or memory.readbyte(0x108439) <= 0
-        or memory.readword(P1 + 0x20) ~= 0 or memory.readbyte(P1 + 0xe0) ~= 0
-        or memory.readword(P1 + 0x72) ~= point[5] then return end
+    if memory.readbyte(P1 + 0x71) ~= 21 then reject("not_iori"); return end
+    local life = memory.readbyte(P1 + 0x139)
+    if life <= 0 or life > 102 or memory.readbyte(0x108439) <= 0 then reject("life"); return end
+    if memory.readword(P1 + 0x20) ~= 0 then reject("airborne"); return end
+    if memory.readbyte(P1 + 0xe0) ~= 0 then reject("attack_flags"); return end
+    if memory.readword(P1 + 0x72) ~= point[5] then reject("state_signature"); return end
     local original = reg("d0")
     local x_integer = memory.readword(P1 + 0x18)
-    if x_integer <= 65 or x_integer >= 710
-        or math.abs(x_integer - memory.readword(0x108318)) < 80 then return end
-    if original ~= point[4] or fixed(P1 + 0x50) ~= original then return end
+    if x_integer <= 65 or x_integer >= 710 then reject("stage_edge"); return end
+    if math.abs(x_integer - memory.readword(0x108318)) < 80 then reject("rival_too_close"); return end
+    if original ~= point[4] or fixed(P1 + 0x50) ~= original then reject("velocity"); return end
     local applied = phase == "enabled" and rounded(original * point[6]) or original
     local sr = reg("sr")
     ticket = {point=point, original=original, applied=applied, x=fixed(P1 + 0x18),

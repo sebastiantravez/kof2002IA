@@ -93,6 +93,10 @@ class SpeedTrialTests(unittest.TestCase):
             lua.execute((LAB / 'speed_trial.lua').read_text(encoding='utf-8'))
             lua.globals().simulate()
             self.assertFalse((root / 'trial_arm.txt').exists())
+            diagnostic = next((root / 'captures').glob('trial_*.csv.txt')).read_text()
+            self.assertIn('other_player=1', diagnostic)
+            self.assertIn('velocity=1', diagnostic)
+            self.assertIn('modified=3', diagnostic)
             with next((root / 'captures').glob('trial_*.csv')).open(newline='') as stream:
                 rows = list(csv.DictReader(stream))
             self.assertEqual(len(rows), 5)
