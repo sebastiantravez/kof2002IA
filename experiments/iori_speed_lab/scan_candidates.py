@@ -71,8 +71,10 @@ def scan(rows):
                                    'correlation_with_signed_dx': score, 'common_values': groups})
     candidates.sort(key=lambda c: abs(c['correlation_with_signed_dx']), reverse=True)
     return {'filtered_samples': len(samples), 'groups': dict(group_counts), 'candidates': candidates[:20],
+            'fast_directions_present': [direction for direction in (-1, 1)
+                                        if group_counts[f'fast_{direction}'] > 0],
             'status': 'Correlations only; no write performed or approved. Slow/fast are displacement buckets, '
-                      'not verified game states. No fast-left data means direction validation is incomplete.'}
+                      'not verified game states. Check group counts for missing directions.'}
 
 
 def main():
