@@ -52,6 +52,7 @@ out:write("frame,phase,route,original,applied,x_before,x_after,velocity_after,re
 local active, frames, phase, failure, ticket = true, 0, "baseline", nil, nil
 local pending, modified = {}, 0
 local rejected, hits = {}, 0
+local velocity_examples, example_counts = {}, {}
 local function reject(reason)
   rejected[reason] = (rejected[reason] or 0) + 1
 end
@@ -77,6 +78,9 @@ local function finish(reason)
     for _, name in ipairs(names) do
       diagnostic:write(name, "=", rejected[name], "\n")
       print("TRIAL FILTER: " .. name .. "=" .. rejected[name])
+    end
+    for _, line in ipairs(velocity_examples) do
+      diagnostic:write(line, "\n"); print("TRIAL DETAIL: " .. line)
     end
     diagnostic:close()
   end
@@ -106,7 +110,19 @@ for _, p in ipairs(routes) do
     local x_integer = memory.readword(P1 + 0x18)
     if x_integer <= 65 or x_integer >= 710 then reject("stage_edge"); return end
     if math.abs(x_integer - memory.readword(0x108318)) < 80 then reject("rival_too_close"); return end
-    if original ~= point[4] or fixed(P1 + 0x50) ~= original then reject("velocity"); return end
+    local stored_velocity = fixed(P1 + 0x50)
+    if original ~= point[4] or stored_velocity ~= original then
+      reject("velocity")
+      local n = example_counts[point[3]] or 0
+      if n < 3 then
+        velocity_examples[#velocity_examples + 1] = point[3] .. ": d0=" .. tostring(original)
+          .. ", expected=" .. tostring(point[4]) .. ", ram_velocity=" .. tostring(stored_velocity)
+          .. ", words=" .. tostring(memory.readword(P1 + 0x50)) .. "/"
+          .. tostring(memory.readword(P1 + 0x52)) .. ", phase=" .. phase
+        example_counts[point[3]] = n + 1
+      end
+      return
+    end
     local applied = phase == "enabled" and rounded(original * point[6]) or original
     local sr = reg("sr")
     ticket = {point=point, original=original, applied=applied, x=fixed(P1 + 0x18),

@@ -96,6 +96,7 @@ class SpeedTrialTests(unittest.TestCase):
             diagnostic = next((root / 'captures').glob('trial_*.csv.txt')).read_text()
             self.assertIn('other_player=1', diagnostic)
             self.assertIn('velocity=1', diagnostic)
+            self.assertIn('d0=-123, expected=-171520, ram_velocity=-123', diagnostic)
             self.assertIn('modified=3', diagnostic)
             with next((root / 'captures').glob('trial_*.csv')).open(newline='') as stream:
                 rows = list(csv.DictReader(stream))
