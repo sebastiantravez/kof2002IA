@@ -241,21 +241,11 @@ class RuleBrain:
     def _rival_attacking_near(self, state):
         """Ataque rival en su fase peligrosa (arranque/activo) y cerca: bloquear."""
         return (state.rival.attacking and state.distance <= MID
-                and self._rival_attack_age(state) <= BLOCK_FRAMES)
+                
 
     def _can_punish(self, state):
-        """El rival esta en la recuperacion de un ataque que no me pego (o acaba de
-        terminarlo) y esta cerca."""
-        if state.rival.airborne or state.distance > CLOSE + 25 or self._recently_hit(state, 20):
-            return False
-        recovering = state.rival.attacking and self._rival_attack_age(state) > BLOCK_FRAMES
-        just_ended = (state.frame - self._rival_attack_end_frame <= PUNISH_WINDOW
-                      and not self._rival_attack_hit_me)
-        if self.style == "defensive" and just_ended and not recovering:
-            # Un ataque corto que termina puede seguir en cadena: castigar solo los
-            # largos (fallados o muy recuperables), que dejan al rival vendido.
-            return self._rival_attack_duration >= LONG_ATTACK_FRAMES
-        return recovering or just_ended
+        """Only punish after a confirmed completed and guarded attack."""
+        return self._confirmed_punish(state)
 
     def _under_pressure(self, state):
         """El rival ataco hace poco y sigue cerca: no soltar la guardia todavia."""
@@ -399,23 +389,13 @@ class RuleBrain:
         self._air_attacked = False
 
         if self._recently_hit(state):
-            # En hitstun los botones no hacen nada; la guardia dinamica bloquea en cuanto se pueda.
-            return "me golpearon", [
-                Option(75, "guardia", "G[18]"),
-                Option(15, "reversal", "1[8]" + m["reversal"]),
-                Option(10, "roll atras", "1[8]4AB"),
-            ]
+            return "me golpearon", [Option(1, "guardia", "G[18]")]
 
         if allow_punish and self._can_punish(state):
-            # El rival fallo o le bloquee un ataque: mi turno, con combo segun la distancia.
-            punish = self._in_range(m["punish"], d) or self._in_range(m["combos"], d)
-            options = [Option(45 / max(len(punish), 1), f"castigo: {name}", notation)
-                       for name, notation in punish.items()]
-            options += self._dm_combos(me, d, total_weight=35, prefix="castigo DM")
-            return "castigar", options + [
-                Option(12, "agarre", "6C") if d <= CLOSE_C_RANGE else Option(12, "barrida 2D", "2D"),
-                Option(8, "golpe bajo 2B", "2B"),
-            ]
+            options = [Option(1, "castigo seguro: 2B", "2B")]
+            if d <= CLOSE_C_RANGE:
+                options.append(Option(1, "castigo seguro: C", "C"))
+            return "castigar", options
 
         if self._rival_jumping_in(state):
             # El anti-aire no es automatico: cubrirse de pie tambien es una respuesta
@@ -430,28 +410,10 @@ class RuleBrain:
             return "rival cae hacia mi", options
 
         if self._rival_attacking_near(state):
-            # La guardia elige alto/bajo cada frame segun la postura del rival.
-            if rival.airborne:
-                return "rival ataca desde el aire", [
-                    Option(75, "guardia", "G[12]"),
-                    Option(15, "anti-aire normal", m["anti_air_normal"]),
-                    Option(10, "retroceder", "4[8]"),
-                ]
-            return "rival ataca", [
-                Option(85, "guardia", "G[12]"),
-                Option(10, "backdash", "4 5 4") if not state.back_to_wall else Option(10, "roll adelante", "AB"),
-                Option(5, "reversal", m["reversal"]),
-            ]
+            return ("rival ataca desde el aire" if rival.airborne else "rival ataca"), [Option(1, "guardia", "G[12]")]
 
         if self._under_pressure(state):
-            # Entre golpes de una cadena del rival: seguir cubierto hasta que termine.
-            escape = (Option(8, "roll adelante (salir de la esquina)", "AB") if state.back_to_wall
-                      else Option(8, "backdash", "4 5 4"))
-            return "presion del rival", [
-                Option(80, "guardia", "G[10]"),
-                escape,
-                Option(6, "roll atras", "4AB") if not state.back_to_wall else Option(6, "salto adelante", "9[8]"),
-            ]
+            return "presion del rival", [Option(1, "guardia", "G[10]")]
 
         if state.back_to_wall and d <= MID and not rival.airborne:
             # Acorralado: no retroceder contra la pared; cubrirse, salir rodando o saltando,
