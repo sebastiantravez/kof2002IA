@@ -372,3 +372,18 @@ class ComboRearm(unittest.TestCase):
     def test_default_off(self):
         names = self.names(self.brain(0, hit_frame=190))
         self.assertTrue([n for n in names if n.startswith("combo")])
+
+
+class ChatGPTSafetyRegression(unittest.TestCase):
+    """Prevent premature punish and unsafe escapes while pressured."""
+
+    def test_no_punish_during_long_active_attack(self):
+        feed = Feed()
+        brain = RuleBrain(feed, {**IORI, "combat_mode": "DEFENSE_ONLY"})
+        for frame in range(45):
+            feed.s = st(frame, ratk=frame >= 5)
+            brain.state()
+        self.assertFalse(brain._can_punish(brain.state()))
+        situation, options = brain._options_for(brain.state())
+        self.assertEqual(situation, "rival ataca")
+        self.assertEqual([o.name for o in options], ["guardia"])
