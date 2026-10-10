@@ -66,7 +66,8 @@ class DefenseRegression:
     def test_long_attack_is_punished(self):
         if self.profile.get("combat_mode") != "DEFENSE_ONLY":
             self.skipTest("castigo original solo en DEFENSE_ONLY; ver SafePunish")
-        b = self.brain([st(f, ratk=(5 <= f < 40)) for f in range(0, 43)])
+        b = self.brain([st(f, ratk=(5 <= f < 40)) for f in range(0, 45)])
+        b._guarded_attack = True
         self.assertTrue(b.can_punish_now())
         self.assertEqual(self.situation(b), "castigar")
 
@@ -138,7 +139,7 @@ class SafePunish(unittest.TestCase):
         # Ataque largo con el bit encendido (recuperacion o varias partes): seguir cubierto.
         b = self.run_states([st(f, ratk=(f >= 5)) for f in range(0, 45)])
         self.assertFalse(b.can_punish_now())
-        self.assertEqual(self.situation(b), "presion del rival")
+        self.assertEqual(self.situation(b), "rival ataca")
 
     def test_no_punish_if_rival_restarts(self):
         # Termina en 40 y vuelve a atacar en 43 (cadena): no castigar.
@@ -282,11 +283,13 @@ class PreventiveGuard(unittest.TestCase):
         self.assertNotIn("esperar", [o.name for o in opts])
         self.assertTrue(all(not o.notation.startswith("5[") for o in opts))
 
-    def test_punish_keeps_combos(self):
-        b = self.brain([st(f, ratk=(5 <= f < 40)) for f in range(0, 43)])
+    def test_punish_only_short_confirmed_hits(self):
+        b = self.brain([st(f, ratk=(5 <= f < 40)) for f in range(0, 45)])
+        b._guarded_attack = True
         sit, opts = b._options_for(b.state())
         self.assertEqual(sit, "castigar")
-        self.assertTrue([o for o in opts if o.name.startswith("castigo")])
+        self.assertTrue(opts)
+        self.assertTrue(all(o.notation in ("2B", "C") for o in opts))
 
 
 class ChipDamageInBrain(unittest.TestCase):
