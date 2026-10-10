@@ -240,8 +240,8 @@ class RuleBrain:
 
     def _rival_attacking_near(self, state):
         """Ataque rival en su fase peligrosa (arranque/activo) y cerca: bloquear."""
-        return (state.rival.attacking and state.distance <= MID
-                
+        return state.rival.attacking and state.distance <= MID
+
 
     def _can_punish(self, state):
         """Only punish after a confirmed completed and guarded attack."""
