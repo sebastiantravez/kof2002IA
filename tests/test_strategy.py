@@ -75,6 +75,33 @@ class StrategyTests(unittest.TestCase):
         b = brain_after([st(f, mx=200, rx=450) for f in range(0, 30)], {**IORI, "combat_mode": "DEFENSE_ONLY"})
         self.assertEqual(b._options_for(b.state())[0], "rival lejos")
 
+    def test_corner_neutral_can_pressure_without_retreat(self):
+        b = brain_after([st(f, mx=40, rx=80) for f in range(80)])
+        situation, options = b._options_for(b.state())
+        self.assertEqual(situation, "NEUTRAL:PRESSURE")
+        self.assertIn("golpe bajo 2B", [o.name for o in options])
+        self.assertNotIn("backdash", [o.name for o in options])
+        self.assertFalse(any(o.name.startswith("retroceder") for o in options))
+
+    def test_corner_under_attack_still_defends(self):
+        b = brain_after([st(f, mx=40, rx=80, ratk=f >= 30) for f in range(80)])
+        situation, options = b._options_for(b.state())
+        self.assertEqual(situation, "rival ataca")
+        self.assertEqual([o.name for o in options], ["guardia"])
+
+    def test_outside_light_range_approaches_instead_of_combos(self):
+        b = brain_after([st(f, mx=400, rx=465) for f in range(80)])
+        situation, options = b._options_for(b.state())
+        self.assertEqual(situation, "NEUTRAL:APPROACH")
+        self.assertFalse(any("combo" in o.name for o in options))
+
+    def test_neutral_pressure_avoids_unconfirmed_long_combos(self):
+        b = brain_after([st(f, mx=400, rx=435) for f in range(80)])
+        situation, options = b._options_for(b.state())
+        self.assertEqual(situation, "NEUTRAL:PRESSURE")
+        self.assertTrue(any(o.name == "combo corto 2B" for o in options))
+        self.assertFalse(any(o.name.startswith("combo: ") for o in options))
+
     def test_choices_are_varied_and_not_all_guard(self):
         b = brain_after([st(f, mx=400, rx=440) for f in range(0, 100)])
         names = Counter(b.decide()[1].name for _ in range(300))
