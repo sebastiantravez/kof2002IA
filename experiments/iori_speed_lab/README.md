@@ -145,4 +145,32 @@ exclusión de saltos/daños/reset y separación de proxies de arranque/latencia 
 Incluye prueba opcional del script con Lua simulado que falla ante escrituras o
 inyección de botones. En este equipo la DLL Lua es de 32 bits y Python de 64 bits:
 esa prueba se omite por incompatibilidad; ejecutar el script en FBNeo aún requiere
-validación manual. No se han recogido todavía capturas manuales de línea base.
+validación manual. Las capturas manuales y sus resultados están documentados en
+`FINDINGS_20261010.md`.
+
+## Traza de accesos del 68000: siguiente fase de solo lectura
+
+`trace_access.lua` registra accesos a X y los candidatos +0x44/+0x50, con PC,
+PPC, D0/D1, A0/A1 y seis palabras de código a partir de PPC. Usa las APIs de
+observación documentadas en el código de Fightcade FBNeo; su funcionamiento en
+el ejecutable local requiere una ejecución manual. No interpreta automáticamente
+instrucciones ni demuestra causalidad antes de examinar el resultado.
+
+1. En Test Game offline, tener a Iori como P1 en la pelea. Detener todas las otras
+   ventanas Lua y el runner del bot.
+2. Cargar `experiments\iori_speed_lab\trace_access.lua` en la ventana Lua y Run.
+3. Durante unos 10 segundos, caminar brevemente y luego correr hacia delante,
+   con el rival lejos. Iori conserva tus controles y su velocidad original.
+4. Esperar `TRACE FINISHED`. La captura termina a los 600 frames o 30.000 eventos;
+   el límite de eventos puede producir una traza parcial. Stop también cierra el CSV.
+5. El resultado está en `captures/access_FECHA_HORA.csv`. Cero eventos significa
+   que no se ha confirmado soporte de hooks, no ausencia de accesos del juego.
+
+Los hooks observan escrituras del juego: el script no escribe memoria. En el código
+consultado, el hook de escritura precede la escritura y el valor de un hook de
+lectura es cero; no interpretarlo como el contenido leído. PC/PPC necesitan validar
+su alineación con la instrucción responsable. Las palabras de código se leen al
+final del frame y podrían no reflejar código RAM modificado durante el frame.
+Esta instrumentación puede ralentizar la emulación; no usarla para medir FPS o
+latencia base. El script retira sus hooks al finalizar y no debe ejecutarse junto
+con otro observador. No se modifica ROM, RAM, registros CPU o botones.
