@@ -151,3 +151,32 @@ Recalculado (ataques rivales evitados): original 60% → **71%**; con guardia pr
 
 Pendiente (no cambiado): el cerebro también trata ese raspado como "me golpearon" (`_recently_hit`)
 y el aprendizaje lo penaliza como daño recibido.
+
+## 5. Prueba controlada en FBNeo (versus, 2026-10-14): Iori (bot, GUARD_ONLY_TEST) contra Kim (script)
+
+`tools/guard_test.py`, 5 intentos por escenario y lado, posiciones guardadas, fase de control
+(sin guardia: el ataque llega 90/90) y fase de guardia. Trazas en `logs/guard_test_20261014_175549`.
+
+| Escenario de Kim | Estado de Kim (+0x73) | Bloqueado / golpeado |
+|---|---|---|
+| 2B (bajo) | 97 | 10 / 0 |
+| 2D (barrida) | 115 | 10 / 0 |
+| 5C (medio) | 98 | 10 / 0 |
+| salto + D | 123 | 10 / 0 |
+| 2B → 6B, 6B → 2B | 97 / 89 | 10 / 0 cada uno |
+| **agarre C** (pegado, 6 + C) | 229–231 | **0 / 10** |
+| **agarre D** | 232 | **0 / 10** |
+
+- La primera ejecución dio 90/90 "bloqueado" incluidos los agarres: las entradas de P2 pulsaban
+  dirección y botón en el mismo frame y los soltaban juntos, y el juego las leía como golpes DE PIE
+  (2B → B de pie, estado 89). Corregido (dirección antes y después del botón). Lección: sin la
+  fase de control y sin los estados, el 100% habría pasado por bueno.
+- **El 6B de Kim no salió como overhead** (estado 89 = B de pie, se bloquea agachado): el
+  escenario de overhead queda SIN validar.
+- **Agarres:** no encienden el bit de ataque (+0xE0 bit0). El que agarra pasa a 229–232; el
+  agarrado pasa a **168** en el frame en que lo atrapan (10/10 con C y con D), aunque esté en
+  guardia agachada. `Fighter.thrown = state_id == 168`.
+- **Bloqueo:** Iori en guardia pasa a 27–31 (de pie) o 32–37 (agachado), según el golpe.
+  Golpeado sin guardia: 4 (B/C de pie), 12 (salto D), 51/53/57 (barrida: derribo).
+- Pendiente: medir la ventana de escape (DEFENSE_ONLY, solo agarres), un overhead real, y los
+  estados de otros personajes como atacantes.

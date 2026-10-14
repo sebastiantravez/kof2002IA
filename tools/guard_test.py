@@ -37,6 +37,7 @@ LOAD_SETTLE = 20         # frames quietos tras cargar la posicion
 
 opt = {a.split("=")[0]: (a.split("=", 1)[1] if "=" in a else True) for a in sys.argv[1:] if a.startswith("--")}
 REPEATS = int(opt.get("--repeats", 5))
+MODE = str(opt.get("--mode", "GUARD_ONLY_TEST")).upper()   # DEFENSE_ONLY para probar el escape de agarres
 config = json.loads((ROOT / "config.json").read_text(encoding="utf-8"))
 
 link = Lockstep(ROOT)
@@ -65,9 +66,16 @@ def approach(ctx, target, max_frames=120):
         yield p2_keys(ctx.state, 6)
 
 
-def press(ctx, direction, buttons, frames=4):
+def press(ctx, direction, buttons, frames=3, pre=4, post=4):
+    """Como una persona: direccion sola unos frames (agacharse / adelantar), luego el boton, y
+    la direccion se mantiene al soltar el boton. (Medido: direccion+boton en el mismo frame y
+    soltados juntos salen como golpe DE PIE: 2B -> B de pie, 6C -> C de pie.)"""
+    for _ in range(pre):
+        yield p2_keys(ctx.state, direction)
     for _ in range(frames):
         yield p2_keys(ctx.state, direction, buttons)
+    for _ in range(post):
+        yield p2_keys(ctx.state, direction)
 
 
 def idle(frames):
@@ -85,12 +93,12 @@ SCENARIOS = {
     "bajo":          lambda c: [approach(c, 40), press(c, 2, "B"), idle(40)],
     "barrida":       lambda c: [approach(c, 50), press(c, 2, "D"), idle(50)],
     "medio":         lambda c: [approach(c, 40), press(c, 5, "C"), idle(45)],
-    "salto":         lambda c: [approach(c, 110), press(c, 9, "", 3), idle(14), press(c, 5, "D"), idle(50)],
+    "salto":         lambda c: [approach(c, 110), press(c, 9, "", 3, pre=0, post=0), idle(14), press(c, 5, "D", pre=0, post=0), idle(50)],
     "overhead":      lambda c: [approach(c, 40), notation(c, p2_overhead), idle(45)],
     "bajo_overhead": lambda c: [approach(c, 40), press(c, 2, "B"), idle(12), notation(c, p2_overhead), idle(45)],
     "overhead_bajo": lambda c: [approach(c, 40), notation(c, p2_overhead), idle(16), press(c, 2, "B"), idle(45)],
-    "agarre_C":      lambda c: [approach(c, 22), press(c, 6, "C", 3), idle(70)],
-    "agarre_D":      lambda c: [approach(c, 22), press(c, 6, "D", 3), idle(70)],
+    "agarre_C":      lambda c: [approach(c, 12), press(c, 6, "C"), idle(70)],
+    "agarre_D":      lambda c: [approach(c, 12), press(c, 6, "D"), idle(70)],
 }
 wanted = opt.get("--scenarios")
 names = [n for n in (wanted.split(",") if isinstance(wanted, str) else SCENARIOS) if n in SCENARIOS]
@@ -120,13 +128,18 @@ def place_p2(distance):
     step_with(frames=20)
 
 
-step_with(frames=30)
-x0 = link.state.rival.x
-step_with(p2=p2_keys(link.state, 4), frames=20)      # P2 retrocede: tiene que moverse
-moved = abs(link.state.rival.x - x0)
+# P2 tiene que poder moverse: durante la animacion de inicio de ronda nadie se mueve, asi que
+# se insiste hasta 15 s (si la ronda termina por tiempo, la siguiente vuelve a empezar).
+moved = 0
+for _ in range(45):
+    x0 = link.state.rival.x
+    step_with(p2=p2_keys(link.state, 4), frames=20)      # P2 retrocede
+    moved = abs(link.state.rival.x - x0)
+    if moved >= 4:
+        break
 if moved < 4:
-    sys.exit("P2 no responde a joypad.set (no se movio): hace falta modo VERSUS (P2 entra con Start) "
-             "o un muneco controlado por el jugador 2.")
+    sys.exit("P2 no responde a joypad.set (no se movio en 15 s): hace falta modo VERSUS (P2 entra con "
+             "Start) o un muneco controlado por el jugador 2.")
 print(f"P2 responde (se movio {moved}).")
 if "--normal" not in opt:
     link.send("TURBO")
@@ -239,7 +252,7 @@ runner.trace.close()
 control = runner.results
 
 # GUARDIA: el bot real en GUARD_ONLY_TEST, cada intercambio = 1 frame
-moves = {**config["characters"][p1_char], "combat_mode": "GUARD_ONLY_TEST"}
+moves = {**config["characters"][p1_char], "combat_mode": MODE}
 brain = RuleBrain(reader, moves)
 clock = LockstepClock(link)
 clock.WATCH_CHUNK = clock.FREE_CHUNK = 1
@@ -247,7 +260,7 @@ bot = RuleBot(LockstepKeyboard(link), clock, config, None, lambda: reader.read()
               lambda m: None, reader, moves, brain, focus_required=False, fight_check=lambda: True)
 runner = Runner(make_trials("guardia"), FrameTrace(out_dir / "traza_guardia.csv", lambda: bot.current))
 link.on_step = runner.on_step
-print(f"GUARDIA: {len(runner.trials)} intentos con {p1_char} en GUARD_ONLY_TEST...")
+print(f"GUARDIA: {len(runner.trials)} intentos con {p1_char} en {MODE}...")
 bot.start()
 while not runner.done and bot.running:
     time.sleep(0.2)

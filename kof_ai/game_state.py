@@ -45,7 +45,6 @@ class Fighter:
     attacking: bool = False
     crouching: bool = False
     character_id: int = -1
-    thrown: bool = False     # lo estan agarrando (se puede escapar con dir + C/D)
     stocks: int = 0          # barras de poder llenas (para DMs)
     state_id: int = 0        # +0x073: identificador de animacion/estado (ver STATE_OFFSET)
 
@@ -63,9 +62,14 @@ class Fighter:
         return cls(x=word(0x18), screen_x=word(0x24), screen_y=word(0x26),
                    height=word(0x20), life=raw[0x139], attacking=_is_attacking(raw),
                    crouching=_is_crouching(raw), character_id=raw[CHARACTER_OFFSET],
-                   thrown=THROWN_OFFSET is not None and bool(raw[THROWN_OFFSET] & THROWN_MASK),
                    stocks=raw[POWER_OFFSET] if POWER_OFFSET is not None else 0,
                    state_id=raw[STATE_OFFSET])
+
+    @property
+    def thrown(self):
+        """Me estan agarrando: estado 168 (medido en tools/guard_test.py, agarres C y D de Kim
+        sobre Iori, 20/20; empieza en el frame en que atrapan y NO enciende el bit de ataque)."""
+        return self.state_id in THROWN_STATES
 
 
 # Bit "en animacion de ataque" (encontrado con tools/probe_attack.py): se enciende en el
@@ -100,6 +104,10 @@ THROWN_MASK = 0x02
 # era este byte. La tabla de valores (bloqueo, agarre, por personaje) se completa con
 # tools/guard_test.py en modo versus.
 STATE_OFFSET = 0x73
+# Valores de +0x073 medidos en tools/guard_test.py (Iori defendiendo, Kim atacando, 2026-10-14):
+THROWN_STATES = {168}                      # agarrado (entrada del agarre, C y D)
+BLOCKSTUN_STATES = set(range(27, 38))      # bloqueando: 27-31 de pie, 32-37 agachado (segun golpe)
+THROWING_STATES = {229, 230, 231, 232}     # Kim agarrando (C: 229-231, D: 232); otros personajes: por medir
 POWER_OFFSET = 0x1E3
 
 
