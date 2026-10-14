@@ -10,8 +10,8 @@ import csv
 from pathlib import Path
 
 COLUMNS = ["frame", "situacion", "accion", "teclas_p1", "teclas_p2", "distancia", "p1_mira_derecha",
-           "p1_x", "p1_altura", "p1_vida", "p1_atacando", "p1_agachado",
-           "p2_x", "p2_altura", "p2_vida", "p2_atacando", "p2_agachado", "nota"]
+           "p1_x", "p1_altura", "p1_vida", "p1_atacando", "p1_agachado", "p1_estado",
+           "p2_x", "p2_altura", "p2_vida", "p2_atacando", "p2_agachado", "p2_estado", "nota"]
 
 
 class FrameTrace:
@@ -31,8 +31,8 @@ class FrameTrace:
         self._csv.writerow([
             state.frame, info[0], info[1], "+".join(sorted(p1_keys)) or "-", "+".join(sorted(p2_keys)) or "-",
             state.distance, int(state.facing_right),
-            me.x, me.height, me.life, int(me.attacking), int(me.crouching),
-            rival.x, rival.height, rival.life, int(rival.attacking), int(rival.crouching), self.note])
+            me.x, me.height, me.life, int(me.attacking), int(me.crouching), me.state_id,
+            rival.x, rival.height, rival.life, int(rival.attacking), int(rival.crouching), rival.state_id, self.note])
         self.note = ""
 
     def close(self):

@@ -89,6 +89,8 @@ SCENARIOS = {
     "overhead":      lambda c: [approach(c, 40), notation(c, p2_overhead), idle(45)],
     "bajo_overhead": lambda c: [approach(c, 40), press(c, 2, "B"), idle(12), notation(c, p2_overhead), idle(45)],
     "overhead_bajo": lambda c: [approach(c, 40), notation(c, p2_overhead), idle(16), press(c, 2, "B"), idle(45)],
+    "agarre_C":      lambda c: [approach(c, 22), press(c, 6, "C", 3), idle(70)],
+    "agarre_D":      lambda c: [approach(c, 22), press(c, 6, "D", 3), idle(70)],
 }
 wanted = opt.get("--scenarios")
 names = [n for n in (wanted.split(",") if isinstance(wanted, str) else SCENARIOS) if n in SCENARIOS]
@@ -183,6 +185,8 @@ class Runner:
                     self.life, self.prev_keys = state.me.life, set(keys)
                     self.hit = self.chip = 0
                     self.p2_attacked = False
+                    self.p2_move_state = None     # +0x73 de P2 al empezar su ataque (id del movimiento)
+                    self.p1_states = []           # +0x73 de P1 desde que P2 ataca (bloqueo / golpe)
                     self.hit_keys = None
         elif self.phase == "run":
             self.trace.note = f"{trial['id']}"
@@ -194,13 +198,19 @@ class Runner:
                 self.hit += drop
                 self.hit_keys = self.hit_keys or ("+".join(sorted(self.prev_keys)) or "nada")
             self.life, self.prev_keys = state.me.life, set(keys)
+            if state.rival.attacking and not self.p2_attacked:
+                self.p2_move_state = state.rival.state_id
             self.p2_attacked |= state.rival.attacking
+            if self.p2_attacked:
+                self.p1_states.append(state.me.state_id)
             try:
                 link.p2_keys = next(self.gen)
             except StopIteration:
                 link.p2_keys = set()
                 self.results.append({**trial, "danio": self.hit, "raspado": self.chip,
-                                     "p2_ataco": self.p2_attacked, "teclas_p1_al_golpe": self.hit_keys})
+                                     "p2_ataco": self.p2_attacked, "teclas_p1_al_golpe": self.hit_keys,
+                                     "estado_p2_ataque": self.p2_move_state,
+                                     "estados_p1": sorted(set(self.p1_states))})
                 self.trials.pop(0)
                 self.phase = "idle"
                 self.done = not self.trials
@@ -281,3 +291,14 @@ if hits:
 summary = {"p1": p1_char, "p2": p2_char, "repeticiones": REPEATS, "control": control, "guardia": guard}
 (out_dir / "resumen.json").write_text(json.dumps(summary, indent=1, ensure_ascii=False), encoding="utf-8")
 print(f"\nTrazas por frame y resumen en {out_dir}")
+
+# ---------- tabla de estados (+0x73) por escenario: id del movimiento de P2 y reaccion de P1 ----------
+print("\n== Identificadores de estado (+0x073) ==")
+print(f"{'escenario':16s}{'mov. P2':>9s}  P1 sin guardia (control)            P1 con guardia")
+for scenario in names:
+    p2 = Counter(r["estado_p2_ataque"] for r in control + guard if r["scenario"] == scenario)
+    def states(rs):
+        c = Counter(s for r in rs if r["scenario"] == scenario for s in r["estados_p1"] if s)
+        return ", ".join(f"{s}x{n}" for s, n in c.most_common(4))
+    print(f"{scenario:16s}{str(p2.most_common(1)[0][0]) if p2 else '-':>9s}  {states(control):36s} {states(guard)}")
+print("(estados que aparecen en 'control' pero no en 'guardia' = golpe; al reves = bloqueo)")

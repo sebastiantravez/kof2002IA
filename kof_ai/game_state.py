@@ -47,6 +47,7 @@ class Fighter:
     character_id: int = -1
     thrown: bool = False     # lo estan agarrando (se puede escapar con dir + C/D)
     stocks: int = 0          # barras de poder llenas (para DMs)
+    state_id: int = 0        # +0x073: identificador de animacion/estado (ver STATE_OFFSET)
 
     @property
     def character(self):
@@ -63,7 +64,8 @@ class Fighter:
                    height=word(0x20), life=raw[0x139], attacking=_is_attacking(raw),
                    crouching=_is_crouching(raw), character_id=raw[CHARACTER_OFFSET],
                    thrown=THROWN_OFFSET is not None and bool(raw[THROWN_OFFSET] & THROWN_MASK),
-                   stocks=raw[POWER_OFFSET] if POWER_OFFSET is not None else 0)
+                   stocks=raw[POWER_OFFSET] if POWER_OFFSET is not None else 0,
+                   state_id=raw[STATE_OFFSET])
 
 
 # Bit "en animacion de ataque" (encontrado con tools/probe_attack.py): se enciende en el
@@ -91,6 +93,13 @@ CROUCH_MASK = 0x04
 # en agarres). Desactivado hasta verificarlo con tools/probe_thrown_verify.py.
 THROWN_OFFSET = None
 THROWN_MASK = 0x02
+# +0x073 = identificador de animacion/estado del jugador (encontrado 2026-10-14 con
+# tools/find_move_id.py y tools/state_table.py sobre grabaciones etiquetadas): 0 en reposo,
+# un valor fijo por movimiento mientras dura (Iori: 98 = 6C, 129 = 236C, 183 = patada aerea...),
+# reacciones al golpe 148/149/151/169. Por eso el "bit1 = agarrado" daba falsos positivos:
+# era este byte. La tabla de valores (bloqueo, agarre, por personaje) se completa con
+# tools/guard_test.py en modo versus.
+STATE_OFFSET = 0x73
 POWER_OFFSET = 0x1E3
 
 
