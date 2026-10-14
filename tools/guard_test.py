@@ -214,8 +214,9 @@ class Runner:
             if state.rival.attacking and not self.p2_attacked:
                 self.p2_move_state = state.rival.state_id
             self.p2_attacked |= state.rival.attacking
-            if self.p2_attacked:
-                self.p1_states.append(state.me.state_id)
+            # Todos los estados de P1 durante el intento: los agarres NO encienden el bit de
+            # ataque del rival, asi que filtrar por p2_attacked perdia justo el estado 168.
+            self.p1_states.append(state.me.state_id)
             try:
                 link.p2_keys = next(self.gen)
             except StopIteration:
@@ -305,7 +306,9 @@ if throw_rows:
         for sc in sorted({r["scenario"] for r in throw_rows}):
             rs = [r for r in throw_rows if r["fase"] == phase and r["scenario"] == sc]
             esc = sum(r["danio"] == 0 for r in rs)
-            print(f"  {phase:20s} {sc:10s} escapados {esc}/{len(rs)}")
+            total = sum(1 for r in guard if r["fase"] == phase and r["scenario"] == sc)
+            print(f"  {phase:20s} {sc:10s} escapados {esc}/{len(rs)} agarres que conectaron "
+                  f"({total - len(rs)} de {total} intentos no agarraron: no cuentan)")
 
 print(f"\n== Guardia de {p1_char} contra {p2_char} ({REPEATS} intentos por escenario y lado) ==")
 print(f"{'escenario':16s}{'lado':6s}{'control: le pega':>18s}{'bloqueado':>11s}{'golpeado':>10s}")

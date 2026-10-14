@@ -180,3 +180,30 @@ y el aprendizaje lo penaliza como daño recibido.
   Golpeado sin guardia: 4 (B/C de pie), 12 (salto D), 51/53/57 (barrida: derribo).
 - Pendiente: medir la ventana de escape (DEFENSE_ONLY, solo agarres), un overhead real, y los
   estados de otros personajes como atacantes.
+
+## 6. Escape de agarres: medido, no funciona después de que te atrapan (2026-10-14)
+
+`tools/guard_test.py --scenarios=agarre_C,agarre_D --variants=...`, Iori (bot, solo guardia +
+escape configurable) contra Kim (script), 10 intentos por variante, escenario y lado
+(`logs/guard_test_20261014_181512`, trazas por frame `traza_guardia_<variante>.csv`).
+
+| Variante de escape (entrada al ser agarrado) | Agarres que conectaron | Con daño |
+|---|---|---|
+| atrás + C y D (la que usaba el bot) | 40 | 40 |
+| atrás + C | 40 | 40 |
+| atrás + D | 40 | 40 |
+| el mismo botón que el agarre del rival | 40 | 40 |
+| adelante + C | 40 | 40 |
+| adelante + D | 40 | 40 |
+
+- 240 de 240 agarres conectaron y quitaron vida; en todas las variantes la entrada se envió
+  entre +1 y +2 frames después de que el estado de Iori pasó a 168 (el frame en que lo atrapan).
+- La medición anterior ("27 de 40 escapados") era un error: 30 de 40 agarres ni salieron.
+- Conclusión acotada: **reaccionar al estado 168 no permite escapar** en esta ROM con estas
+  entradas. NO se ha probado si existe una ventana de escape anterior al agarre, ni si es posible
+  con otro timing o sostenido más tiempo. El estado de Kim pasa a 229–232 en el MISMO frame en
+  que Iori pasa a 168, así que no hay señal previa para anticiparlo.
+- Consecuencia práctica: defensa contra agarres = prevención (distancia, no quedarse pegado sin
+  motivo), no escape. El escape "me agarran → 4CD" del cerebro queda sin efecto medible.
+- Corrección de la herramienta: `p1_states` solo se registraba tras el bit de ataque del rival y
+  los agarres no lo encienden, por eso el resumen del script salía vacío; se registra siempre.
