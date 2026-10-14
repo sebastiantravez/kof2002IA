@@ -11,6 +11,7 @@ from dataclasses import dataclass, replace
 
 from .arbiter import (BALANCED_EXPERIMENTAL, DEFENSE_ONLY, GUARD_ONLY_TEST, CombatActionArbiter, Proposal,
                       mode_from_profile)
+from .game_state import BLOCKSTUN_STATES
 from .strategy import Strategy, is_useful
 
 # Distancias en unidades del escenario (la pantalla mide ~304).
@@ -36,6 +37,9 @@ LONG_ATTACK_FRAMES = 24   # ataque rival que dura >= N frames: lo deja vulnerabl
 # Configurable por perfil: "punish_confirm_frames".
 PUNISH_CONFIRM_FRAMES = 4
 D_THROW_STATES = {232}    # estado del rival mientras agarra con D (Kim; otros personajes por medir)
+CORNER_ESCAPE_RANGE = 70      # salida de esquina: el rival esta a menos de esto
+CORNER_ESCAPE_COOLDOWN = 90   # frames minimos entre dos salidas (no repetirla en cada hueco)
+HARD_ESCAPE_BLOCK = {"ronda terminada", "me agarran", "me golpearon"}
 # Guardia preventiva: situaciones sin amenaza pero con el rival en rango, y acciones que alli
 # dejan a Iori atado (no se pueden cortar a tiempo: el golpe rival llega en 3-5 frames).
 PREVENTIVE_SITUATIONS = {"pegado al rival", "media distancia", "acorralado", "rival en el aire, esperando"}
@@ -83,6 +87,9 @@ class RuleBrain:
         # auditoria externa (solo para comparar en FBNeo; por defecto apagados).
         self.legacy_punish = bool(moves.get("legacy_punish", False))
         self.legacy_escapes = bool(moves.get("legacy_escapes", False))
+        # Salida de esquina (none = comportamiento actual): ver _corner_option.
+        self.corner_escape = str(moves.get("corner_escape", "none"))
+        self._last_corner_escape = -10_000
         # Ofensiva estrategica (kof_ai/strategy.py): solo en BALANCED_EXPERIMENTAL.
         self.strategy = Strategy() if self.combat_mode == BALANCED_EXPERIMENTAL else None
         self._attack_min_dist = 999       # distancia minima durante el ataque rival en curso
@@ -341,10 +348,14 @@ class RuleBrain:
         if self.combat_mode == GUARD_ONLY_TEST:
             # Diagnostico: la situacion se calcula igual (para el registro), pero la unica
             # accion es la guardia dinamica (alta/baja segun guard_low()); si me agarran, el
-            # escape configurado (perfil "throw_escape"; tools/guard_test.py prueba variantes).
+            # escape configurado (perfil "throw_escape"; tools/guard_test.py prueba variantes);
+            # y la salida de esquina (perfil "corner_escape") si se cumplen sus condiciones.
             situation, _ = self._defense_options(state, allow_punish=False)
             if state.me.thrown:
                 return "me agarran", [Option(1, "escapar agarre", self.throw_escape(state))]
+            escape = self._corner_option(state)
+            if escape:
+                return "salida de esquina", [escape]
             return situation, [Option(1, "guardia", "G[8]")]
         if self.combat_mode == DEFENSE_ONLY:
             situation, options = self.arbiter.select(Proposal(*self._defense_options(state, allow_punish=True)))
@@ -354,7 +365,31 @@ class RuleBrain:
                                                      self._attack_proposal(state))
         if self.preventive_guard:
             options = self._preventive(situation, options)
+        if situation not in HARD_ESCAPE_BLOCK:
+            escape = self._corner_option(state)
+            if escape:
+                return "salida de esquina", [escape]
         return situation, options
+
+    def _corner_option(self, state):
+        """Salida de la esquina (perfil "corner_escape": none | roll | jump | reversal).
+        Solo en un HUECO de la presion: acorralado, rival cerca que ataco hace poco pero ahora
+        no ataca ni esta en el aire, yo ni bloqueando ni golpeado ni en el aire, y sin repetirla
+        antes del enfriamiento. Todo observable (state_id +0x073: bloqueo 27-37)."""
+        mode = self.corner_escape
+        if mode == "none" or not state.back_to_wall:
+            return None
+        me, rival = state.me, state.rival
+        if (me.airborne or me.thrown or rival.attacking or rival.airborne
+                or state.distance > CORNER_ESCAPE_RANGE or me.state_id in BLOCKSTUN_STATES
+                or self._recently_hit(state, 6) or not self._under_pressure(state)
+                or state.frame - self._last_corner_escape < CORNER_ESCAPE_COOLDOWN):
+            return None
+        move = {"roll": "AB", "jump": "9[8]"}.get(mode) or self._moves.get("reversal")
+        if not move:
+            return None
+        self._last_corner_escape = state.frame
+        return Option(1, f"salida de esquina: {mode}", move)
 
     @staticmethod
     def _preventive(situation, options):

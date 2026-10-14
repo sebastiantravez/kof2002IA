@@ -428,3 +428,53 @@ class SafeDefenseUnderThreat(unittest.TestCase):
     def test_legacy_restores_escapes(self):
         sit, opts = self.options(self.CASES["rival ataca"], legacy_escapes=True)
         self.assertIn("reversal", [o.name for o in opts])
+
+
+class CornerEscape(unittest.TestCase):
+    """corner_escape: solo en un hueco de la presion, acorralado, sin bloquear ni estar golpeado."""
+
+    def brain(self, states, **extra):
+        feed = Feed()
+        b = RuleBrain(feed, {**IORI, "combat_mode": "DEFENSE_ONLY", "corner_escape": "roll", **extra})
+        for s in states:
+            feed.s = s
+            b.state()
+        return b
+
+    def options(self, b):
+        return b._options_for(b.state())
+
+    def cornered(self, f, **kw):
+        return st(f, mx=40, rx=90, **kw)       # Iori pegado a la pared izquierda, rival a 50
+
+    def test_escapes_in_the_gap(self):
+        # el rival ataco (frames 5-15) y ahora esta quieto: hueco de la presion
+        b = self.brain([self.cornered(f, ratk=(5 <= f < 15)) for f in range(0, 20)])
+        sit, opts = self.options(b)
+        self.assertEqual(sit, "salida de esquina")
+        self.assertEqual(opts[0].notation, "AB")
+
+    def test_not_while_rival_attacks(self):
+        b = self.brain([self.cornered(f, ratk=(f >= 5)) for f in range(0, 12)])
+        self.assertNotEqual(self.options(b)[0], "salida de esquina")
+
+    def test_not_in_open_field(self):
+        b = self.brain([st(f, mx=400, rx=450, ratk=(5 <= f < 15)) for f in range(0, 20)])
+        self.assertNotEqual(self.options(b)[0], "salida de esquina")
+
+    def test_not_while_blocking(self):
+        feed = Feed()
+        b = RuleBrain(feed, {**IORI, "combat_mode": "DEFENSE_ONLY", "corner_escape": "roll"})
+        for f in range(0, 20):
+            from dataclasses import replace
+            s = self.cornered(f, ratk=(5 <= f < 15))
+            feed.s = replace(s, me=replace(s.me, state_id=30))      # bloqueando (27-37)
+            b.state()
+        self.assertNotEqual(self.options(b)[0], "salida de esquina")
+
+    def test_cooldown_and_off_by_default(self):
+        b = self.brain([self.cornered(f, ratk=(5 <= f < 15)) for f in range(0, 20)])
+        self.options(b)                          # usa la salida
+        self.assertNotEqual(self.options(b)[0], "salida de esquina")   # enfriamiento
+        off = self.brain([self.cornered(f, ratk=(5 <= f < 15)) for f in range(0, 20)], corner_escape="none")
+        self.assertNotEqual(self.options(off)[0], "salida de esquina")

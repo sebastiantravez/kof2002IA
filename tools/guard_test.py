@@ -89,6 +89,16 @@ def notation(ctx, text):
             yield p2_keys(ctx.state, step.direction, step.buttons)
 
 
+def pressure(ctx):
+    """Presion sostenida sobre Iori acorralado: 5A, 2B y 5C con huecos de 6-16 frames, 4 ciclos
+    (los huecos son donde una salida de esquina tiene que decidir)."""
+    for _ in range(4):
+        for gen in (approach(ctx, 45), press(ctx, 5, "A", pre=0, post=0), idle(8), press(ctx, 2, "B"),
+                    idle(6), press(ctx, 5, "C", pre=0, post=0), idle(16)):
+            yield from gen
+    yield from idle(30)
+
+
 SCENARIOS = {
     "bajo":          lambda c: [approach(c, 40), press(c, 2, "B"), idle(40)],
     "barrida":       lambda c: [approach(c, 50), press(c, 2, "D"), idle(50)],
@@ -97,6 +107,7 @@ SCENARIOS = {
     "overhead":      lambda c: [approach(c, 40), notation(c, p2_overhead), idle(45)],
     "bajo_overhead": lambda c: [approach(c, 40), press(c, 2, "B"), idle(12), notation(c, p2_overhead), idle(45)],
     "overhead_bajo": lambda c: [approach(c, 40), notation(c, p2_overhead), idle(16), press(c, 2, "B"), idle(45)],
+    "esquina":       lambda c: [pressure(c)],
     "agarre_C":      lambda c: [approach(c, 12), press(c, 6, "C"), idle(70)],
     "agarre_D":      lambda c: [approach(c, 12), press(c, 6, "D"), idle(70)],
 }
@@ -158,8 +169,7 @@ for attempt in range(3):              # lado B: P2 salta por encima de P1
         wait_commands()
         sides["B"] = 3
         break
-print(f"Posiciones guardadas: {', '.join(f'lado {s} (ranura {n})' for s, n in sides.items())}"
-      + ("" if "B" in sides else "  [no se pudo cambiar de lado: solo lado A]"))
+XX
 
 
 # ---------- intentos (se ejecutan dentro de on_step, en el hilo que avanza los frames) ----------
