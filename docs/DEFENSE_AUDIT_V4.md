@@ -207,3 +207,28 @@ escape configurable) contra Kim (script), 10 intentos por variante, escenario y 
   motivo), no escape. El escape "me agarran → 4CD" del cerebro queda sin efecto medible.
 - Corrección de la herramienta: `p1_states` solo se registraba tras el bit de ataque del rival y
   los agarres no lo encienden, por eso el resumen del script salía vacío; se registra siempre.
+
+## 7. Salida de esquina medida en FBNeo (versus, 2026-10-14)
+
+`tools/guard_test.py --scenarios=esquina --variants=corner:none,corner:roll,corner:jump,corner:reversal`
+(`logs/guard_test_20261014_184738`): Iori (bot, solo guardia + salida) en la esquina, Kim (script)
+le aplica 4 ciclos de 5A, 2B, 5C con huecos. 8 intentos por lado y variante.
+
+| Variante | Daño medio | Golpes | Salió de la esquina |
+|---|---|---|---|
+| (control: sin guardia) | 51,0 | — | — |
+| solo guardia (`none`) | 0,0 | 0,0 | 0% |
+| rodada (`roll`) | 0,2 | 0,1 | **100%** |
+| salto (`jump`) | 3,0 | 0,8 | 100% |
+| reversal | 0,0 | 0,0 | 31% |
+
+- Contra esta presión escrita, la guardia sola ya recibe 0 de daño: el patrón no reproduce el
+  daño de la pelea real (145 golpes en 7,8 min, 65% acorralado). La esquina real mezcla agarres,
+  saltos y combos, que este escenario no incluye.
+- La rodada sale de la esquina el 100% de las veces con casi nada de daño; el salto también sale
+  pero recibe golpes en el aire; el reversal casi no cambia de posición.
+- LIMITACIÓN: Kim por script no castiga una rodada ni un reversal bloqueado, así que NO se midió
+  el riesgo de usarlos contra una persona. El contador "salidas" subestima las rodadas (0,2 de
+  media con 100% de salidas): se toma solo como indicativo.
+- Siguiente paso: A/B en pelea real con una persona (`--corner=none` contra `--corner=roll`),
+  comparando daño por minuto y % acorralado.

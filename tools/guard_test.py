@@ -140,16 +140,16 @@ def place_p2(distance):
 
 
 # P2 tiene que poder moverse: durante la animacion de inicio de ronda nadie se mueve, asi que
-# se insiste hasta 15 s (si la ronda termina por tiempo, la siguiente vuelve a empezar).
+# se insiste hasta ~60 s (da tiempo a entrar en la pelea si el juego estaba en una pantalla de menu).
 moved = 0
-for _ in range(45):
+for _ in range(180):                                     # ~60 s a velocidad normal
     x0 = link.state.rival.x
     step_with(p2=p2_keys(link.state, 4), frames=20)      # P2 retrocede
     moved = abs(link.state.rival.x - x0)
     if moved >= 4:
         break
 if moved < 4:
-    sys.exit("P2 no responde a joypad.set (no se movio en 15 s): hace falta modo VERSUS (P2 entra con "
+    sys.exit("P2 no responde a joypad.set (no se movio en 60 s): hace falta modo VERSUS (P2 entra con "
              "Start) o un muneco controlado por el jugador 2.")
 print(f"P2 responde (se movio {moved}).")
 if "--normal" not in opt:
