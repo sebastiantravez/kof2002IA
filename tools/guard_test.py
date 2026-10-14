@@ -169,7 +169,31 @@ for attempt in range(3):              # lado B: P2 salta por encima de P1
         wait_commands()
         sides["B"] = 3
         break
-XX
+print(f"Posiciones guardadas: {', '.join(f'lado {s} (ranura {n})' for s, n in sides.items())}"
+      + ("" if "B" in sides else "  [no se pudo cambiar de lado: solo lado A]"))
+
+# Esquinas: desde cada lado, Iori camina hacia atras hasta la pared y Kim lo sigue a ~60.
+corner_slots = {}
+if "esquina" in names:
+    for side, slot in sides.items():
+        link.send(f"LOAD{slot}")
+        wait_commands()
+        step_with(frames=20)
+        for _ in range(900):
+            s = link.state
+            if s.back_to_wall:
+                break
+            step_with(p1=keys_for(4, "", s.facing_right), p2=p2_keys(s, 6 if s.distance > 58 else 5))
+        step_with(frames=10)
+        place_p2(60)
+        if link.state.back_to_wall:
+            link.send(f"SAVE{slot + 2}")
+            wait_commands()
+            corner_slots[side] = slot + 2
+    print("Esquinas guardadas: " + (", ".join(f"lado {s} (ranura {n})" for s, n in corner_slots.items())
+                                    or "NINGUNA (Iori no llego a la pared)"))
+    if not corner_slots:
+        sys.exit("No se pudo poner a Iori en la esquina.")
 
 
 # ---------- intentos (se ejecutan dentro de on_step, en el hilo que avanza los frames) ----------
@@ -211,6 +235,9 @@ class Runner:
                     self.p2_move_state = None     # +0x73 de P2 al empezar su ataque (id del movimiento)
                     self.p1_states = []           # +0x73 de P1 desde que P2 ataca (bloqueo / golpe)
                     self.hit_keys = None
+                    self.n_hits = 0               # golpes recibidos (no raspado)
+                    self.escapes = 0              # veces que el bot eligio una salida de esquina
+                    self.last_action = ""
         elif self.phase == "run":
             self.trace.note = f"{trial['id']}"
             drop = self.life - state.me.life
@@ -219,7 +246,13 @@ class Runner:
                 self.chip += drop
             elif drop > 0:
                 self.hit += drop
+                self.n_hits += 1
                 self.hit_keys = self.hit_keys or ("+".join(sorted(self.prev_keys)) or "nada")
+            info = self.trace._bot_info() if self.trace._bot_info else None
+            action = str(info[1]) if info and info[1] else ""
+            if action.startswith("salida de esquina") and not self.last_action.startswith("salida de esquina"):
+                self.escapes += 1
+            self.last_action = action
             self.life, self.prev_keys = state.me.life, set(keys)
             if state.rival.attacking and not self.p2_attacked:
                 self.p2_move_state = state.rival.state_id
@@ -234,7 +267,9 @@ class Runner:
                 self.results.append({**trial, "danio": self.hit, "raspado": self.chip,
                                      "p2_ataco": self.p2_attacked, "teclas_p1_al_golpe": self.hit_keys,
                                      "estado_p2_ataque": self.p2_move_state,
-                                     "estados_p1": sorted(set(self.p1_states))})
+                                     "estados_p1": sorted(set(self.p1_states)),
+                                     "golpes": self.n_hits, "salidas": self.escapes,
+                                     "salio_esquina": not state.back_to_wall, "x_final": state.me.x})
                 self.trials.pop(0)
                 self.phase = "idle"
                 self.done = not self.trials
@@ -243,7 +278,7 @@ class Runner:
 def make_trials(phase):
     trials, n = [], 0
     for scenario in names:
-        for side, slot in sides.items():
+        for side, slot in (corner_slots if scenario == "esquina" else sides).items():
             for r in range(REPEATS):
                 n += 1
                 trials.append({"id": f"{phase}-{scenario}-{side}-{r + 1}", "fase": phase,
@@ -268,7 +303,9 @@ variants = str(opt["--variants"]).split(",") if isinstance(opt.get("--variants")
 guard = []
 for variant in variants:
     moves = {**config["characters"][p1_char], "combat_mode": MODE}
-    if variant:
+    if variant and variant.startswith("corner:"):
+        moves["corner_escape"] = variant.split(":", 1)[1]      # none | roll | jump | reversal
+    elif variant:
         moves["throw_escape"] = variant
     brain = RuleBrain(reader, moves)
     clock = LockstepClock(link)
@@ -276,7 +313,8 @@ for variant in variants:
     bot = RuleBot(LockstepKeyboard(link), clock, config, None, lambda: reader.read().facing_right,
                   lambda m: None, reader, moves, brain, focus_required=False, fight_check=lambda: True)
     phase = "guardia" if not variant else f"guardia:{variant}"
-    trace_name = "traza_guardia.csv" if not variant else f"traza_guardia_{variant}.csv"
+    trace_name = ("traza_guardia.csv" if not variant
+                  else "traza_guardia_" + variant.replace(":", "-") + ".csv")
     runner = Runner(make_trials(phase), FrameTrace(out_dir / trace_name, lambda: bot.current))
     link.on_step = runner.on_step
     print(f"GUARDIA: {len(runner.trials)} intentos con {p1_char} en {MODE}"
@@ -307,6 +345,20 @@ for r in guard:
         table[key]["bloqueado"] += 1
     else:
         table[key]["no medible"] += 1
+
+corner_rows = [r for r in guard if r["scenario"] == "esquina"]
+if corner_rows:
+    print("\n== Presion en la esquina (Kim: 4 ciclos de 5A, 2B, 5C; Iori solo guardia + salida) ==")
+    print(f"  {'variante':22s}{'intentos':>9s}{'danio medio':>12s}{'golpes':>8s}{'salio':>7s}{'salidas':>9s}")
+    for phase in sorted({r["fase"] for r in corner_rows}):
+        rs = [r for r in corner_rows if r["fase"] == phase]
+        n = len(rs)
+        print(f"  {phase:22s}{n:9d}{sum(r['danio'] for r in rs) / n:12.1f}"
+              f"{sum(r['golpes'] for r in rs) / n:8.1f}{100 * sum(r['salio_esquina'] for r in rs) / n:6.0f}%"
+              f"{sum(r['salidas'] for r in rs) / n:9.1f}")
+    ctl = [r for r in control if r["scenario"] == "esquina"]
+    if ctl:
+        print(f"  {'(control: sin guardia)':22s}{len(ctl):9d}{sum(r['danio'] for r in ctl) / len(ctl):12.1f}")
 
 # Agarres: solo cuentan los que de verdad atraparon (estado 168 en P1); por variante de escape.
 throw_rows = [r for r in guard if r["scenario"].startswith("agarre") and 168 in r["estados_p1"]]
