@@ -251,24 +251,33 @@ while not runner.done:
 runner.trace.close()
 control = runner.results
 
-# GUARDIA: el bot real en GUARD_ONLY_TEST, cada intercambio = 1 frame
-moves = {**config["characters"][p1_char], "combat_mode": MODE}
-brain = RuleBrain(reader, moves)
-clock = LockstepClock(link)
-clock.WATCH_CHUNK = clock.FREE_CHUNK = 1
-bot = RuleBot(LockstepKeyboard(link), clock, config, None, lambda: reader.read().facing_right,
-              lambda m: None, reader, moves, brain, focus_required=False, fight_check=lambda: True)
-runner = Runner(make_trials("guardia"), FrameTrace(out_dir / "traza_guardia.csv", lambda: bot.current))
-link.on_step = runner.on_step
-print(f"GUARDIA: {len(runner.trials)} intentos con {p1_char} en {MODE}...")
-bot.start()
-while not runner.done and bot.running:
-    time.sleep(0.2)
-bot.stop()
-while bot.running:
-    time.sleep(0.05)
-runner.trace.close()
-guard = runner.results
+# GUARDIA: el bot real (GUARD_ONLY_TEST por defecto), cada intercambio = 1 frame. Con
+# --variants=4C,4D,matching,... se repite la fase una vez por variante de escape de agarre.
+variants = str(opt["--variants"]).split(",") if isinstance(opt.get("--variants"), str) else [None]
+guard = []
+for variant in variants:
+    moves = {**config["characters"][p1_char], "combat_mode": MODE}
+    if variant:
+        moves["throw_escape"] = variant
+    brain = RuleBrain(reader, moves)
+    clock = LockstepClock(link)
+    clock.WATCH_CHUNK = clock.FREE_CHUNK = 1
+    bot = RuleBot(LockstepKeyboard(link), clock, config, None, lambda: reader.read().facing_right,
+                  lambda m: None, reader, moves, brain, focus_required=False, fight_check=lambda: True)
+    phase = "guardia" if not variant else f"guardia:{variant}"
+    trace_name = "traza_guardia.csv" if not variant else f"traza_guardia_{variant}.csv"
+    runner = Runner(make_trials(phase), FrameTrace(out_dir / trace_name, lambda: bot.current))
+    link.on_step = runner.on_step
+    print(f"GUARDIA: {len(runner.trials)} intentos con {p1_char} en {MODE}"
+          + (f", escape {variant}" if variant else "") + "...")
+    bot.start()
+    while not runner.done and bot.running:
+        time.sleep(0.2)
+    bot.stop()
+    while bot.running:
+        time.sleep(0.05)
+    runner.trace.close()
+    guard += runner.results
 link.on_step = None
 link.keys, link.p2_keys = set(), set()
 link.send("NORMAL")
@@ -287,6 +296,16 @@ for r in guard:
         table[key]["bloqueado"] += 1
     else:
         table[key]["no medible"] += 1
+
+# Agarres: solo cuentan los que de verdad atraparon (estado 168 en P1); por variante de escape.
+throw_rows = [r for r in guard if r["scenario"].startswith("agarre") and 168 in r["estados_p1"]]
+if throw_rows:
+    print("\n== Escape de agarres (solo agarres que atraparon de verdad) ==")
+    for phase in sorted({r["fase"] for r in throw_rows}):
+        for sc in sorted({r["scenario"] for r in throw_rows}):
+            rs = [r for r in throw_rows if r["fase"] == phase and r["scenario"] == sc]
+            esc = sum(r["danio"] == 0 for r in rs)
+            print(f"  {phase:20s} {sc:10s} escapados {esc}/{len(rs)}")
 
 print(f"\n== Guardia de {p1_char} contra {p2_char} ({REPEATS} intentos por escenario y lado) ==")
 print(f"{'escenario':16s}{'lado':6s}{'control: le pega':>18s}{'bloqueado':>11s}{'golpeado':>10s}")

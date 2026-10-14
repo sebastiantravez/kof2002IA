@@ -35,6 +35,7 @@ LONG_ATTACK_FRAMES = 24   # ataque rival que dura >= N frames: lo deja vulnerabl
 # sin que empiece otro (ataques de varias partes apagan el bit de ataque entre partes).
 # Configurable por perfil: "punish_confirm_frames".
 PUNISH_CONFIRM_FRAMES = 4
+D_THROW_STATES = {232}    # estado del rival mientras agarra con D (Kim; otros personajes por medir)
 # Guardia preventiva: situaciones sin amenaza pero con el rival en rango, y acciones que alli
 # dejan a Iori atado (no se pueden cortar a tiempo: el golpe rival llega en 3-5 frames).
 PREVENTIVE_SITUATIONS = {"pegado al rival", "media distancia", "acorralado", "rival en el aire, esperando"}
@@ -339,8 +340,11 @@ class RuleBrain:
         """La defensa original y el ataque proponen por separado; el arbitro elige."""
         if self.combat_mode == GUARD_ONLY_TEST:
             # Diagnostico: la situacion se calcula igual (para el registro), pero la unica
-            # accion es la guardia dinamica (alta/baja segun guard_low()).
+            # accion es la guardia dinamica (alta/baja segun guard_low()); si me agarran, el
+            # escape configurado (perfil "throw_escape"; tools/guard_test.py prueba variantes).
             situation, _ = self._defense_options(state, allow_punish=False)
+            if state.me.thrown:
+                return "me agarran", [Option(1, "escapar agarre", self.throw_escape(state))]
             return situation, [Option(1, "guardia", "G[8]")]
         if self.combat_mode == DEFENSE_ONLY:
             situation, options = self.arbiter.select(Proposal(*self._defense_options(state, allow_punish=True)))
@@ -408,8 +412,7 @@ class RuleBrain:
             return "ronda terminada", [Option(1, "esperar", "5[30]")]
 
         if me.thrown:
-            # Escape de agarre: direccion + C y D a la vez cubre agarres con C y con D.
-            return "me agarran", [Option(1, "escapar agarre", "4CD5[1]4CD")]
+            return "me agarran", [Option(1, "escapar agarre", self.throw_escape(state))]
 
         if me.airborne:
             # Un solo ataque por salto, y ninguno si me lanzaron por un golpe.
@@ -545,6 +548,15 @@ class RuleBrain:
             Option(6, "salto atras (evitar agarre)", "7[8]"),
             Option(3, "reversal", m["reversal"]),
         ]
+
+    def throw_escape(self, state):
+        """Notacion del escape de agarre. Perfil "throw_escape": una notacion fija, o
+        "matching" = el mismo boton que el agarre del rival (su estado 232 = agarre con D;
+        229-231 = con C; medido con Kim)."""
+        escape = self._moves.get("throw_escape", "4CD5[1]4CD")
+        if escape == "matching":
+            return "4D5[1]4D" if state.rival.state_id in D_THROW_STATES else "4C5[1]4C"
+        return escape
 
     def _threat_guard(self, situation, options):
         """Con amenaza activa solo guardia (auditoria externa, hallazgo 2). Reversals,
