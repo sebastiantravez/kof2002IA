@@ -16,6 +16,7 @@ PUNISH_WINDOW = 60        # frames para ver si un castigo hizo danio
 NEAR = 180                # ataques mas lejos no se cuentan como amenaza
 LOW_WINDOW = 4
 MAX_DAMAGE = 60
+from .game_state import BLOCKSTUN_STATES  # noqa: E402
 CHIP_DAMAGE = 2           # perdida de vida con guardia puesta que es raspado de un especial bloqueado
                           # (medido: 1 punto casi siempre con guardia; los golpes reales quitan >= 4)
 COUNTER_WINDOW = 120      # ofensiva tras defensa: danio hecho hasta N frames despues de evitar un ataque
@@ -69,6 +70,7 @@ class DefenseLogger:
         self.chip = self.chip_blocks = 0   # raspado de especiales bloqueados (no son golpes)
         self.rounds = 1
         self._last_taken_frame = -10_000
+        self._move = None          # movimiento del rival en curso (ver tabla de movimientos)
         self._rival_end = None     # fin del ultimo ataque rival cercano
         self.attack_gaps = Counter()   # frames entre fin de un ataque rival y el siguiente (cerca)
         self.attacks = Counter()   # nuestros ataques: con danio / fallidos
@@ -147,6 +149,23 @@ class DefenseLogger:
                             situation, option, guard, "golpeado", taken, "no observable")
                 self.threats[(kind, "golpeado")] += 1
             self._last_taken_frame = f
+
+        # Tabla de movimientos del rival (para saber cuales dejan castigar): un registro por
+        # movimiento con su id de estado (+0x073), cuanto duro el bit de ataque (animacion
+        # completa, recuperacion incluida), si me pego y el resultado de bloquearlo.
+        if rival.attacking and not prev.rival.attacking:
+            self._move = {"start": f, "state": rival.state_id, "dist": state.distance,
+                          "hit": 0, "blocked": 0, "life": me.life, "guard": guard}
+        if self._move:
+            if 0 < taken <= MAX_DAMAGE and not (taken <= CHIP_DAMAGE and guard_before in ("de pie", "abajo")):
+                self._move["hit"] += taken
+            elif me.state_id in BLOCKSTUN_STATES:
+                self._move["blocked"] += 1
+            if prev.rival.attacking and not rival.attacking:
+                m, self._move = self._move, None
+                result = "golpeado" if m["hit"] else ("bloqueado" if m["blocked"] else "evitado")
+                self._write(f, "movimiento", rival.character, rival.character, m["dist"], state.back_to_wall,
+                            "", "", m["guard"], result, m["hit"], f"estado {m['state']} dura {f - m['start']} f")
 
         # Pausas entre ataques rivales cercanos (para calibrar punish_confirm_frames)
         if prev.rival.attacking and not rival.attacking and state.distance <= NEAR:

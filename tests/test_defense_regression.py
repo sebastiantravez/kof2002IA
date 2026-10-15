@@ -478,3 +478,22 @@ class CornerEscape(unittest.TestCase):
         self.assertNotEqual(self.options(b)[0], "salida de esquina")   # enfriamiento
         off = self.brain([self.cornered(f, ratk=(5 <= f < 15)) for f in range(0, 20)], corner_escape="none")
         self.assertNotEqual(self.options(off)[0], "salida de esquina")
+
+
+class MoveTable(unittest.TestCase):
+    def test_move_rows(self):
+        path = tempfile.mktemp(suffix=".csv")
+        log = DefenseLogger(path, lambda: ("rival ataca", "guardia", 1))
+        seq = []
+        for f in range(0, 40):               # movimiento 89 de 20 frames, sin pegar
+            s = st(f, ratk=(5 <= f < 25))
+            if 5 <= f < 25:
+                from dataclasses import replace
+                s = replace(s, rival=replace(s.rival, state_id=89))
+            seq.append(s)
+        for s in seq:
+            log.observe(s, {"left"})
+        log.close()
+        rows = [r.split(",") for r in Path(path).read_text(encoding="utf-8").splitlines() if ",movimiento," in r]
+        self.assertEqual(len(rows), 1)
+        self.assertIn("estado 89 dura 20 f", ",".join(rows[0]))
