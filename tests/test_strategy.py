@@ -84,3 +84,28 @@ class StrategyTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class CalmPressure(unittest.TestCase):
+    """pressure_needs_calm: sin presion cercana mientras el rival esta activo."""
+
+    def names(self, calm, rival_attacks):
+        profile = {**STRATEGIC, "pressure_needs_calm": calm}
+        # rival pegado (d=30); atacando hace poco o pasivo desde hace mucho
+        states = [st(f, mx=400, rx=430, ratk=(rival_attacks and f % 40 < 6)) for f in range(0, 400)]
+        b = brain_after(states, profile)
+        sit, opts = b._options_for(b.state())
+        return sit, {o.name for o in opts}
+
+    def test_active_rival_gets_no_pressure(self):
+        sit, names = self.names(calm=True, rival_attacks=True)
+        self.assertFalse([n for n in names if n.startswith("combo")])
+
+    def test_passive_rival_still_gets_pressure(self):
+        sit, names = self.names(calm=True, rival_attacks=False)
+        self.assertEqual(sit, "NEUTRAL:PRESSURE")
+        self.assertTrue([n for n in names if n.startswith("combo")])
+
+    def test_off_by_default(self):
+        sit, names = self.names(calm=False, rival_attacks=True)
+        self.assertTrue(sit != "NEUTRAL:PRESSURE" or [n for n in names if n.startswith("combo")])

@@ -13,6 +13,7 @@ WINDOW_FRAMES = 30 * 60          # el modelo del rival mira los ultimos 30 s de 
 MIN_DWELL_FRAMES = 20            # histeresis: minimo en un modo antes de cambiar
 POKE_MIN, POKE_MAX = 60, 130     # distancias donde llegan los pokes (2C/2D/D de Iori)
 PASSIVE_RIVAL_FRAMES = 90        # rival sin atacar este tiempo: esta pasivo
+CALM_PRESSURE_RANGE = 60         # presion cercana: distancia a la que aplica pressure_needs_calm
 BAIT_COOLDOWN_FRAMES = 300       # tras un amague, no volver a amagar en 5 s (medido: 24% del tiempo en BAIT sin pegar)
 
 # Riesgo si la accion falla o la bloquean (heuristico, por tipo de accion):
@@ -96,7 +97,11 @@ class OpponentModel:
 
 
 class Strategy:
-    def __init__(self):
+    def __init__(self, pressure_needs_calm=False):
+        # Medido contra una persona (2026-10-14): los ataques de presion iniciados pegado al
+        # rival mientras el rival TAMBIEN atacaba entraron 8 de 8 (el 2B rival gana a un golpe
+        # lento). Con este interruptor la presion cercana solo sale si el rival esta pasivo.
+        self.pressure_needs_calm = pressure_needs_calm
         self.model = OpponentModel()
         self.mode = Mode("NEUTRAL", "inicio")
         self.mode_since = 0
@@ -176,6 +181,11 @@ class Strategy:
         elif mode.name == "PRESSURE" and not attacks_ready:
             # El rival sigue derribado por el ultimo golpe: esperar cubierto, no pegar al aire.
             opts = [O(1, "esperar que el rival se levante", "G[8]")]
+        elif (mode.name == "PRESSURE" and self.pressure_needs_calm and d <= CALM_PRESSURE_RANGE
+              and not m.rival_passive(state.frame)):
+            # Rival activo y pegado: no iniciar presion; guardia y a esperar su error (los
+            # castigos seguros/a golpe fallado los propone el arbitro por separado).
+            opts = [O(40, "guardia corta", "G[8]"), O(6, "golpe bajo 2B", "2B")]
         elif mode.name == "PRESSURE":
             opts = [O(20 * push * cornered_rival, "golpe bajo 2B", "2B"),
                     O(15 * push * cornered_rival, "combo corto 2B", "2B>2A") ]

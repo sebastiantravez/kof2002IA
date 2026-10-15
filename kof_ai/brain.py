@@ -103,7 +103,8 @@ class RuleBrain:
         self._block_starts = deque(maxlen=8)    # frames en que empezo cada bloqueo reciente
         self._last_guard_cancel = -10_000
         # Ofensiva estrategica (kof_ai/strategy.py): solo en BALANCED_EXPERIMENTAL.
-        self.strategy = Strategy() if self.combat_mode == BALANCED_EXPERIMENTAL else None
+        self.strategy = (Strategy(pressure_needs_calm=bool(moves.get("pressure_needs_calm", False)))
+                         if self.combat_mode == BALANCED_EXPERIMENTAL else None)
         self._attack_min_dist = 999       # distancia minima durante el ataque rival en curso
         self._guarded_attack = False      # estaba en guardia durante ese ataque
         self._last_choice = None

@@ -18,6 +18,7 @@ Uso:
      --rival=Chin: detener si P2 no es ese personaje.
      --preventive=on|off: guardia preventiva (sin acciones largas cerca del rival).
      --corner=none|roll|jump|reversal: salida de esquina bajo presion (ver docs/DEFENSE_AUDIT_V4.md).
+     --calm-pressure: sin presion cercana mientras el rival ataca (BALANCED_EXPERIMENTAL).
      --speed=N: como maximo N veces la velocidad normal (tambien con --play).
      --legacy-punish / --legacy-escapes: comportamiento ANTERIOR a las correcciones de la
                  auditoria externa (castigo con el ataque rival activo / escapes al azar bajo
@@ -58,6 +59,8 @@ for a in sys.argv[1:]:
         moves[a[2:].replace("-", "_")] = True
     if a.startswith("--preventive="):   # guardia preventiva on|off (docs/DEFENSE_AUDIT_V4.md)
         moves["preventive_guard"] = a.split("=", 1)[1].lower() in ("on", "1", "true", "si")
+    if a == "--calm-pressure":       # presion cercana solo con el rival pasivo (ver strategy.py)
+        moves["pressure_needs_calm"] = True
     if a.startswith("--corner="):    # salida de esquina: none | roll | jump | reversal
         moves["corner_escape"] = a.split("=", 1)[1].lower()
     if a.startswith("--mode="):      # modo de combate (kof_ai/arbiter.py)
