@@ -277,6 +277,7 @@ class RuleBot(_BaseBot):
             self._keyboard.set_state(keys_for(1 if low else 4, "", state.facing_right))
             if not self._clock.wait_frames(step, self._should_stop):
                 return False
-            if self._brain.can_punish_now() or self._brain.being_thrown():
+            if (self._brain.can_punish_now() or self._brain.being_thrown()
+                    or getattr(self._brain, "guard_cancel_ready", lambda: False)()):
                 break
         return not self._should_stop()

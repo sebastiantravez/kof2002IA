@@ -31,6 +31,7 @@ from kof_ai.lockstep import Lockstep, LockstepClock, LockstepKeyboard, LockstepR
 from kof_ai.motions import keys_for, parse  # noqa: E402
 from kof_ai.trace import FrameTrace  # noqa: E402
 
+TECH_REPEATS = 2         # repeticiones por celda del barrido de la ventana de agarre
 CHIP = 2                 # perder <= 2 con atras sostenido = raspado de un ataque bloqueado (medido)
 START_DISTANCE = 120     # distancia de las posiciones guardadas
 LOAD_SETTLE = 20         # frames quietos tras cargar la posicion
@@ -99,7 +100,35 @@ def pressure(ctx):
     yield from idle(30)
 
 
+# Ventana de escape de agarres: Kim agarra y Iori (SCRIPTADO, sin reaccion) pulsa un boton en un
+# frame fijo respecto al del agarre. t = 0 es el primer frame con boton de Kim; offset negativo =
+# Iori pulsa ANTES. Si hay una ventana de escape, aparece como un offset donde Iori no es agarrado.
+TECH_INPUTS = ("-", "C", "D", "4C", "4D", "6C", "6D")
+TECH_OFFSETS = tuple(range(-6, 5))
+
+
+def tech(ctx, trial):
+    yield from approach(ctx, 12)
+    inp, off, kb = trial["p1_input"], trial["offset"], trial["kim_button"]
+    direction = int(inp[0]) if inp[0].isdigit() else 5
+    button = inp[-1] if inp != "-" else ""
+    for t in range(-4, 46):
+        if t < 0:
+            kim = p2_keys(ctx.state, 6)
+        elif t < 3:
+            kim = p2_keys(ctx.state, 6, kb)
+        elif t < 7:
+            kim = p2_keys(ctx.state, 6)
+        else:
+            kim = set()
+        iori = set(keys_for(direction, button, ctx.state.facing_right)) if button and off <= t < off + 3 else set()
+        yield (iori, kim)
+
+
+TRIAL_SCENARIOS = {"tecnica": tech}      # reciben (ctx, trial) y pueden mover tambien a P1
+
 SCENARIOS = {
+    "tecnica":       tech,
     "bajo":          lambda c: [approach(c, 40), press(c, 2, "B"), idle(40)],
     "barrida":       lambda c: [approach(c, 50), press(c, 2, "D"), idle(50)],
     "medio":         lambda c: [approach(c, 40), press(c, 5, "C"), idle(45)],
@@ -210,24 +239,31 @@ class Runner:
         self.phase = "idle"
         self.done = not self.trials
         self.ctx = Ctx()
+        self.p1_keys = set()          # teclas de P1 scriptadas (solo escenarios 'tecnica')
 
     def on_step(self, state, keys):
         self.ctx.state = state
         self.trace.observe(state, keys, link.p2_keys)
         if self.done:
-            link.p2_keys = set()
+            link.p2_keys, self.p1_keys = set(), set()
             return
         trial = self.trials[0]
         if self.phase == "idle":
-            link.p2_keys = set()
+            link.p2_keys, self.p1_keys = set(), set()
             link.send(f"LOAD{trial['slot']}")
             self.phase, self.wait = "loading", LOAD_SETTLE
         elif self.phase == "loading":
-            link.p2_keys = set()
+            link.p2_keys, self.p1_keys = set(), set()
             if not link.commands_pending:
                 self.wait -= 1
                 if self.wait <= 0:
-                    self.gen = (k for part in SCENARIOS[trial["scenario"]](self.ctx) for k in part)
+                    scenario = SCENARIOS[trial["scenario"]]
+                    parts = scenario(self.ctx, trial) if trial["scenario"] in TRIAL_SCENARIOS else scenario(self.ctx)
+                    if trial["scenario"] in TRIAL_SCENARIOS:
+                        parts = [parts]
+                    self.gen = (k for part in parts for k in part)
+                    self.stocks0 = state.me.stocks
+                    self.p2_states = []
                     self.phase = "run"
                     self.life, self.prev_keys = state.me.life, set(keys)
                     self.hit = self.chip = 0
@@ -250,9 +286,11 @@ class Runner:
                 self.hit_keys = self.hit_keys or ("+".join(sorted(self.prev_keys)) or "nada")
             info = self.trace._bot_info() if self.trace._bot_info else None
             action = str(info[1]) if info and info[1] else ""
-            if action.startswith("salida de esquina") and not self.last_action.startswith("salida de esquina"):
+            special = ("salida de esquina", "cancelar guardia")
+            if action.startswith(special) and not self.last_action.startswith(special):
                 self.escapes += 1
             self.last_action = action
+            self.p2_states.append(state.rival.state_id)
             self.life, self.prev_keys = state.me.life, set(keys)
             if state.rival.attacking and not self.p2_attacked:
                 self.p2_move_state = state.rival.state_id
@@ -261,10 +299,16 @@ class Runner:
             # ataque del rival, asi que filtrar por p2_attacked perdia justo el estado 168.
             self.p1_states.append(state.me.state_id)
             try:
-                link.p2_keys = next(self.gen)
+                item = next(self.gen)
+                if isinstance(item, tuple):               # (teclas de P1, teclas de P2)
+                    self.p1_keys, link.p2_keys = set(item[0]), set(item[1])
+                else:
+                    self.p1_keys, link.p2_keys = set(), set(item)
             except StopIteration:
-                link.p2_keys = set()
+                link.p2_keys, self.p1_keys = set(), set()
                 self.results.append({**trial, "danio": self.hit, "raspado": self.chip,
+                                     "estados_p2": sorted(set(self.p2_states)),
+                                     "barras_usadas": self.stocks0 - state.me.stocks,
                                      "p2_ataco": self.p2_attacked, "teclas_p1_al_golpe": self.hit_keys,
                                      "estado_p2_ataque": self.p2_move_state,
                                      "estados_p1": sorted(set(self.p1_states)),
@@ -278,6 +322,20 @@ class Runner:
 def make_trials(phase):
     trials, n = [], 0
     for scenario in names:
+        if scenario == "tecnica":
+            # barrido de la ventana de agarre: solo en la fase de control (P1 scriptado, sin bot)
+            if phase == "control":
+                for side, slot in sides.items():
+                    for kb in ("C", "D"):
+                        for inp in TECH_INPUTS:
+                            for off in TECH_OFFSETS:
+                                for r in range(TECH_REPEATS):
+                                    n += 1
+                                    trials.append({"id": f"{phase}-tecnica-{side}-{kb}-{inp}-{off}-{r + 1}",
+                                                   "fase": phase, "scenario": "tecnica", "side": side,
+                                                   "slot": slot, "kim_button": kb, "p1_input": inp,
+                                                   "offset": off})
+            continue
         for side, slot in (corner_slots if scenario == "esquina" else sides).items():
             for r in range(REPEATS):
                 n += 1
@@ -293,7 +351,7 @@ runner = Runner(make_trials("control"), FrameTrace(out_dir / "traza_control.csv"
 link.on_step = runner.on_step
 print(f"CONTROL: {len(runner.trials)} intentos sin guardia...")
 while not runner.done:
-    step_with(p2=link.p2_keys)
+    step_with(p1=runner.p1_keys, p2=link.p2_keys)
 runner.trace.close()
 control = runner.results
 
@@ -305,6 +363,8 @@ for variant in variants:
     moves = {**config["characters"][p1_char], "combat_mode": MODE}
     if variant and variant.startswith("corner:"):
         moves["corner_escape"] = variant.split(":", 1)[1]      # none | roll | jump | reversal
+    elif variant and variant.startswith("gc:"):
+        moves["guard_cancel"] = variant.split(":", 1)[1]       # none | roll_b | roll_f | atk | atk_d
     elif variant:
         moves["throw_escape"] = variant
     brain = RuleBrain(reader, moves)
@@ -316,6 +376,8 @@ for variant in variants:
     trace_name = ("traza_guardia.csv" if not variant
                   else "traza_guardia_" + variant.replace(":", "-") + ".csv")
     runner = Runner(make_trials(phase), FrameTrace(out_dir / trace_name, lambda: bot.current))
+    if runner.done:                      # p. ej. solo 'tecnica': no hay fase con bot
+        continue
     link.on_step = runner.on_step
     print(f"GUARDIA: {len(runner.trials)} intentos con {p1_char} en {MODE}"
           + (f", escape {variant}" if variant else "") + "...")
@@ -349,13 +411,14 @@ for r in guard:
 corner_rows = [r for r in guard if r["scenario"] == "esquina"]
 if corner_rows:
     print("\n== Presion en la esquina (Kim: 4 ciclos de 5A, 2B, 5C; Iori solo guardia + salida) ==")
-    print(f"  {'variante':22s}{'intentos':>9s}{'danio medio':>12s}{'golpes':>8s}{'salio':>7s}{'salidas':>9s}")
+    print(f"  {'variante':22s}{'intentos':>9s}{'danio medio':>12s}{'golpes':>8s}{'salio':>7s}"
+          f"{'salidas':>9s}{'barras':>8s}")
     for phase in sorted({r["fase"] for r in corner_rows}):
         rs = [r for r in corner_rows if r["fase"] == phase]
         n = len(rs)
         print(f"  {phase:22s}{n:9d}{sum(r['danio'] for r in rs) / n:12.1f}"
               f"{sum(r['golpes'] for r in rs) / n:8.1f}{100 * sum(r['salio_esquina'] for r in rs) / n:6.0f}%"
-              f"{sum(r['salidas'] for r in rs) / n:9.1f}")
+              f"{sum(r['salidas'] for r in rs) / n:9.1f}{sum(r['barras_usadas'] for r in rs) / n:8.1f}")
     ctl = [r for r in control if r["scenario"] == "esquina"]
     if ctl:
         print(f"  {'(control: sin guardia)':22s}{len(ctl):9d}{sum(r['danio'] for r in ctl) / len(ctl):12.1f}")
@@ -372,9 +435,26 @@ if throw_rows:
             print(f"  {phase:20s} {sc:10s} escapados {esc}/{len(rs)} agarres que conectaron "
                   f"({total - len(rs)} de {total} intentos no agarraron: no cuentan)")
 
+tech_rows = [r for r in control if r["scenario"] == "tecnica"]
+if tech_rows:
+    print("\n== Ventana de escape de agarres (Iori SCRIPTADO pulsa en el frame t respecto al boton de Kim) ==")
+    print("   celda = % de intentos en que Iori NO fue agarrado (estado 168) / intentos en que Kim agarro")
+    for kb in ("C", "D"):
+        print(f"\n  Kim agarra con {kb}:   offset " + "".join(f"{o:>7d}" for o in TECH_OFFSETS))
+        for inp in TECH_INPUTS:
+            line = f"    Iori pulsa {inp:>2s}:       "
+            for o in TECH_OFFSETS:
+                rs = [r for r in tech_rows if r["kim_button"] == kb and r["p1_input"] == inp and r["offset"] == o
+                      and any(s in r["estados_p2"] for s in (229, 230, 231, 232))]
+                free = sum(168 not in r["estados_p1"] for r in rs)
+                line += f"{f'{free}/{len(rs)}' if rs else '-':>7s}"
+            print(line)
+    extra = Counter(s for r in tech_rows if 168 not in r["estados_p1"] for s in r["estados_p1"] if s not in (0, 1, 2, 23, 21, 46, 45, 48, 47))
+    print("\n  Estados de Iori en los intentos donde NO fue agarrado:", extra.most_common(10))
+
 print(f"\n== Guardia de {p1_char} contra {p2_char} ({REPEATS} intentos por escenario y lado) ==")
 print(f"{'escenario':16s}{'lado':6s}{'control: le pega':>18s}{'bloqueado':>11s}{'golpeado':>10s}")
-for scenario in names:
+for scenario in [n for n in names if n != "tecnica"]:
     for side in sides:
         k = (scenario, side)
         print(f"{scenario:16s}{side:6s}{f'{sum(reach[k])}/{len(reach[k])}':>18s}"

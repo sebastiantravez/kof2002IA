@@ -40,6 +40,9 @@ D_THROW_STATES = {232}    # estado del rival mientras agarra con D (Kim; otros p
 CORNER_ESCAPE_RANGE = 70      # salida de esquina: el rival esta a menos de esto
 CORNER_ESCAPE_COOLDOWN = 90   # frames minimos entre dos salidas (no repetirla en cada hueco)
 HARD_ESCAPE_BLOCK = {"ronda terminada", "me agarran", "me golpearon"}
+GUARD_CANCEL_MOVES = {"roll_b": "4AB", "roll_f": "6AB", "atk": "4CD", "atk_d": "1CD"}   # por verificar en FBNeo
+GUARD_CANCEL_WINDOW = 90      # bloqueos contados en los ultimos N frames
+GUARD_CANCEL_COOLDOWN = 150   # frames minimos entre dos cancelaciones
 # Guardia preventiva: situaciones sin amenaza pero con el rival en rango, y acciones que alli
 # dejan a Iori atado (no se pueden cortar a tiempo: el golpe rival llega en 3-5 frames).
 PREVENTIVE_SITUATIONS = {"pegado al rival", "media distancia", "acorralado", "rival en el aire, esperando"}
@@ -90,6 +93,11 @@ class RuleBrain:
         # Salida de esquina (none = comportamiento actual): ver _corner_option.
         self.corner_escape = str(moves.get("corner_escape", "none"))
         self._last_corner_escape = -10_000
+        # Cancelacion de guardia (none = actual): ver guard_cancel_ready.
+        self.guard_cancel = str(moves.get("guard_cancel", "none"))
+        self.guard_cancel_after = int(moves.get("guard_cancel_after", 2))
+        self._block_starts = deque(maxlen=8)    # frames en que empezo cada bloqueo reciente
+        self._last_guard_cancel = -10_000
         # Ofensiva estrategica (kof_ai/strategy.py): solo en BALANCED_EXPERIMENTAL.
         self.strategy = Strategy() if self.combat_mode == BALANCED_EXPERIMENTAL else None
         self._attack_min_dist = 999       # distancia minima durante el ataque rival en curso
@@ -127,6 +135,8 @@ class RuleBrain:
             self._cached_at = now
             if state and self._cached and state.frame != self._cached.frame:
                 self._prev = self._cached
+                if state.me.state_id in BLOCKSTUN_STATES and self._cached.me.state_id not in BLOCKSTUN_STATES:
+                    self._block_starts.append(state.frame)
                 taken = self._cached.me.life - state.me.life
                 dealt = self._cached.rival.life - state.rival.life
                 if 0 < taken <= CHIP_DAMAGE and self._was_guarding(self._cached):
@@ -353,6 +363,9 @@ class RuleBrain:
             situation, _ = self._defense_options(state, allow_punish=False)
             if state.me.thrown:
                 return "me agarran", [Option(1, "escapar agarre", self.throw_escape(state))]
+            cancel = self._guard_cancel_option(state)
+            if cancel:
+                return "cancelar guardia", [cancel]
             escape = self._corner_option(state)
             if escape:
                 return "salida de esquina", [escape]
@@ -365,11 +378,39 @@ class RuleBrain:
                                                      self._attack_proposal(state))
         if self.preventive_guard:
             options = self._preventive(situation, options)
+        if situation != "me agarran":
+            cancel = self._guard_cancel_option(state)
+            if cancel:
+                return "cancelar guardia", [cancel]
         if situation not in HARD_ESCAPE_BLOCK:
             escape = self._corner_option(state)
             if escape:
                 return "salida de esquina", [escape]
         return situation, options
+
+    def guard_cancel_ready(self, state=None):
+        """Cancelacion de guardia (perfil "guard_cancel": none | roll_b | roll_f | atk | atk_d;
+        cuesta una barra). Condiciones observables: bloqueando (estado +0x073 27-37), al menos
+        una barra, N bloqueos recientes (guard_cancel_after, por defecto 2) y enfriamiento."""
+        state = state or self.state()
+        if state is None or self.guard_cancel == "none":
+            return False
+        me = state.me
+        if me.state_id not in BLOCKSTUN_STATES or me.stocks < 1 or me.airborne or me.thrown:
+            return False
+        if state.frame - self._last_guard_cancel < GUARD_CANCEL_COOLDOWN:
+            return False
+        recent = [f for f in self._block_starts if state.frame - f <= GUARD_CANCEL_WINDOW]
+        return len(recent) >= self.guard_cancel_after
+
+    def _guard_cancel_option(self, state):
+        if not self.guard_cancel_ready(state):
+            return None
+        notation = GUARD_CANCEL_MOVES.get(self.guard_cancel)
+        if not notation:
+            return None
+        self._last_guard_cancel = state.frame
+        return Option(1, f"cancelar guardia: {self.guard_cancel}", notation)
 
     def _corner_option(self, state):
         """Salida de la esquina (perfil "corner_escape": none | roll | jump | reversal).

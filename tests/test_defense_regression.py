@@ -497,3 +497,37 @@ class MoveTable(unittest.TestCase):
         rows = [r.split(",") for r in Path(path).read_text(encoding="utf-8").splitlines() if ",movimiento," in r]
         self.assertEqual(len(rows), 1)
         self.assertIn("estado 89 dura 20 f", ",".join(rows[0]))
+
+
+class GuardCancel(unittest.TestCase):
+    """guard_cancel: solo bloqueando, con barra, tras N bloqueos recientes y con enfriamiento."""
+
+    def feed(self, frames_blocking, stocks=3, **extra):
+        from dataclasses import replace
+        feed = Feed()
+        b = RuleBrain(feed, {**IORI, "combat_mode": "DEFENSE_ONLY", "guard_cancel": "roll_b", **extra})
+        for f in range(0, 60):
+            s = st(f, mx=400, rx=440, ratk=(f % 20 < 8))
+            blocking = f in frames_blocking
+            feed.s = replace(s, me=replace(s.me, state_id=30 if blocking else 23, stocks=stocks))
+            b.state()
+        return b
+
+    def test_second_block_triggers(self):
+        b = self.feed(set(range(10, 16)) | set(range(50, 60)))     # dos bloqueos; el segundo en curso
+        self.assertTrue(b.guard_cancel_ready())
+        sit, opts = b._options_for(b.state())
+        self.assertEqual(sit, "cancelar guardia")
+        self.assertEqual(opts[0].notation, "4AB")
+
+    def test_single_block_does_not(self):
+        b = self.feed(set(range(50, 59)))                           # un solo bloqueo, en curso
+        self.assertFalse(b.guard_cancel_ready())
+
+    def test_needs_a_stock(self):
+        b = self.feed(set(range(10, 16)) | set(range(30, 36)) | set(range(50, 59)), stocks=0)
+        self.assertFalse(b.guard_cancel_ready())
+
+    def test_off_by_default(self):
+        b = self.feed(set(range(10, 16)) | set(range(30, 36)) | set(range(50, 59)), guard_cancel="none")
+        self.assertFalse(b.guard_cancel_ready())
