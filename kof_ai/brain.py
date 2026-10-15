@@ -481,18 +481,26 @@ class RuleBrain:
     def _punish_proposal(self, state):
         d = state.distance
         if self._confirmed_punish(state):
-            # Golpe corto y de vuelta a neutral (nada de combos largos todavia).
+            # Combo corto CON confirmacion: la segunda parte solo sale si la primera pego
+            # (combo.py '>'), asi que bloqueado sigue siendo seguro. Pelea 2026-10-15: el C
+            # suelto pego 3 de 3 y nunca siguio (12 de danio); C>623C verificado hace ~24.
             options = [Option(50, "castigo seguro: 2B", "2B")]
             if d <= CLOSE_C_RANGE:
-                options.append(Option(50, "castigo seguro: C", "C"))
+                options += [Option(60, "castigo seguro: C Oniyaki", "C>623C"),
+                            Option(25, "castigo seguro: C Aoi Hana", "C>214C>214C>214C")]
             return Proposal("castigo seguro", options)
         if self.strategy is not None and self._whiff_punishable(state):
             m = self._moves
-            options = [Option(45, "castigo: correr + 2B", "6 5 6[8]2B") if d > LIGHT_RANGE
-                       else Option(45, "castigo: 2B", "2B"),
-                       Option(20, "castigo: barrida 2D", "2D") if d <= 110 else
-                       Option(20, "castigo: poke", m["poke"])]
-            return Proposal("castigo a golpe fallado", options)
+            # "correr + 2B" medido 0 de 4 (3 fallos, 2 castigados): el rival ya no esta donde
+            # estaba al llegar. De lejos, poke o barrida; de cerca, el combo confirmado.
+            if d <= CLOSE_C_RANGE:
+                options = [Option(45, "castigo: C Oniyaki", "C>623C"), Option(20, "castigo: 2B", "2B")]
+            elif d <= LIGHT_RANGE:
+                options = [Option(45, "castigo: 2B", "2B"), Option(20, "castigo: barrida 2D", "2D")]
+            else:
+                options = [Option(45, "castigo: poke", m["poke"]),
+                           Option(20, "castigo: barrida 2D", "2D") if d <= 110 else None]
+            return Proposal("castigo a golpe fallado", [o for o in options if o])
         return None
 
     def _attack_proposal(self, state):

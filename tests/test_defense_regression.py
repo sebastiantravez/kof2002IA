@@ -133,7 +133,9 @@ class SafePunish(unittest.TestCase):
         self.assertTrue(b.can_punish_now())
         sit, opts = b._options_for(b.state())
         self.assertEqual(sit, "castigo seguro")
-        self.assertTrue(all(o.notation in ("2B", "C") for o in opts))      # golpe corto, sin combos
+        # golpe corto o combo CON confirmacion ('>'): nunca una parte larga sin confirmar
+        for o in opts:
+            self.assertTrue(o.notation == "2B" or o.notation.startswith("C>"), o.notation)
 
     def test_no_punish_while_rival_still_attacking(self):
         # Ataque largo con el bit encendido (recuperacion o varias partes): seguir cubierto.
@@ -626,3 +628,35 @@ class GuardHeightByRivalMove(unittest.TestCase):
 
     def test_other_character_same_state_id_is_not_assumed_low(self):
         self.assertFalse(self.guard_low_with(137, rival_char=0))   # Kyo: 137 no esta medido
+
+
+class ConfirmedPunishCombos(unittest.TestCase):
+    """Castigo seguro de cerca = combo corto con confirmacion (C>623C): seguro si lo bloquean."""
+
+    def test_close_safe_punish_offers_confirmed_combo(self):
+        from kof_ai.combo import is_combo
+        feed = Feed()
+        b = RuleBrain(feed, {**IORI, "combat_mode": "BALANCED_EXPERIMENTAL"})   # el modo de las peleas
+        for f in range(0, 45):
+            feed.s = st(f, mx=400, rx=430, ratk=(5 <= f < 40))
+            b.state()
+            if 5 <= f < 40:
+                b._last_choice = Option(1, "guardia", "G[12]")
+        self.assertTrue(b.can_punish_now())
+        sit, opts = b._options_for(b.state())
+        self.assertEqual(sit, "castigo seguro")
+        names = {o.name: o.notation for o in opts}
+        self.assertEqual(names["castigo seguro: C Oniyaki"], "C>623C")
+        self.assertTrue(is_combo(names["castigo seguro: C Oniyaki"]))
+        self.assertNotIn("castigo seguro: C", names)      # el C suelto ya no se propone
+
+    def test_whiff_punish_never_runs_in(self):
+        from kof_ai.brain import RuleBrain as RB
+        feed = Feed()
+        b = RB(feed, {**IORI, "combat_mode": "BALANCED_EXPERIMENTAL"})
+        for f in range(0, 15):
+            feed.s = st(f, mx=300, rx=420, ratk=(5 <= f < 12))
+            b.state()
+        sit, opts = b._options_for(b.state())
+        self.assertEqual(sit, "castigo a golpe fallado")
+        self.assertFalse([o for o in opts if "correr" in o.name])
