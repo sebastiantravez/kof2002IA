@@ -11,7 +11,7 @@ from dataclasses import dataclass, replace
 
 from .arbiter import (BALANCED_EXPERIMENTAL, DEFENSE_ONLY, GUARD_ONLY_TEST, CombatActionArbiter, Proposal,
                       mode_from_profile)
-from .game_state import BLOCKSTUN_STATES
+from .game_state import BLOCKSTUN_STATES, THROWING_STATES
 from .strategy import Strategy, is_useful
 
 # Distancias en unidades del escenario (la pantalla mide ~304).
@@ -269,7 +269,15 @@ class RuleBrain:
     def being_thrown(self):
         """Me estan agarrando: hay que cortar cualquier accion y escapar YA."""
         state = self.state()
-        return state is not None and state.me.thrown
+        return state is not None and self._thrown(state)
+
+    @staticmethod
+    def _thrown(state):
+        """Me agarran: mi estado 168 (medido de pie) O el rival en su animacion de agarre
+        (229-232 en Kim: solo aparecen cuando el agarre conecto; si falla sale un normal).
+        Pelea 2026-10-15: 8 agarres de una persona sobre Iori en guardia agachada y el 168
+        no aparecio ni una vez, asi que el estado del rival es la senal fiable."""
+        return state.me.thrown or state.rival.state_id in THROWING_STATES
 
     def _rival_attack_age(self, state):
         return state.frame - self._rival_attack_start_frame
@@ -374,7 +382,7 @@ class RuleBrain:
             # escape configurado (perfil "throw_escape"; tools/guard_test.py prueba variantes);
             # y la salida de esquina (perfil "corner_escape") si se cumplen sus condiciones.
             situation, _ = self._defense_options(state, allow_punish=False)
-            if state.me.thrown:
+            if self._thrown(state):
                 return "me agarran", [Option(1, "escapar agarre", self.throw_escape(state))]
             cancel = self._guard_cancel_option(state)
             if cancel:
@@ -500,7 +508,7 @@ class RuleBrain:
         if rival.life == 0 or me.life == 0:
             return "ronda terminada", [Option(1, "esperar", "5[30]")]
 
-        if me.thrown:
+        if self._thrown(state):
             return "me agarran", [Option(1, "escapar agarre", self.throw_escape(state))]
 
         if me.airborne:

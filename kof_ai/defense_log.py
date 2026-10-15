@@ -18,6 +18,16 @@ LOW_WINDOW = 4
 MAX_DAMAGE = 60
 from .game_state import BLOCKSTUN_STATES  # noqa: E402
 CHIP_DAMAGE = 2           # perdida de vida con guardia puesta que es raspado de un especial bloqueado
+STATE_HISTORY = 40        # frames de estados (+0x073) guardados para explicar un golpe sin ataque visible
+
+
+def _runs(pairs):
+    """Comprime una lista de pares consecutivos repetidos: [(0,1),(0,1),(23,229)] -> [(0,1),(23,229)]."""
+    out = []
+    for p in pairs:
+        if not out or out[-1] != p:
+            out.append(p)
+    return out
                           # (medido: 1 punto casi siempre con guardia; los golpes reales quitan >= 4)
 COUNTER_WINDOW = 120      # ofensiva tras defensa: danio hecho hasta N frames despues de evitar un ataque
 ATTACK_RESULT_FRAMES = 40 # un ataque nuestro "fallo" si no hizo danio en N frames
@@ -71,6 +81,7 @@ class DefenseLogger:
         self.rounds = 1
         self._last_taken_frame = -10_000
         self._move = None          # movimiento del rival en curso (ver tabla de movimientos)
+        self._states = []          # ultimos (mi estado, estado rival) para explicar golpes sin ataque visible
         self._rival_end = None     # fin del ultimo ataque rival cercano
         self.attack_gaps = Counter()   # frames entre fin de un ataque rival y el siguiente (cerca)
         self.attacks = Counter()   # nuestros ataques: con danio / fallidos
@@ -106,6 +117,7 @@ class DefenseLogger:
         self.dealt += dealt
         self._track_state(state, situation, guard, keys)
         self._track_our_attack(f, option, decision, dealt)
+        self._states = (self._states + [(me.state_id, rival.state_id)])[-STATE_HISTORY:]
         if dealt and f <= self._counter_deadline:
             self.counters["con danio"] += 1
             self._counter_deadline = -1
@@ -145,8 +157,11 @@ class DefenseLogger:
                 kind = ("continuacion de combo (golpe seguido)" if f - self._last_taken_frame <= 40 else
                         "sin ataque visible (posible agarre)" if state.distance <= 35
                         else "sin ataque visible (posible proyectil)")
+                # Los estados (+0x073) de los dos en los ultimos frames: un agarre se ve como
+                # 229-232 en Kim aunque mi estado no sea 168 (agarrado agachado, por medir).
                 self._write(f, "golpe", kind, rival.character, state.distance, state.back_to_wall,
-                            situation, option, guard, "golpeado", taken, "no observable")
+                            situation, option, guard, "golpeado", taken,
+                            "no observable; estados yo/rival: " + " ".join(f"{m}/{r}" for m, r in _runs(self._states)))
                 self.threats[(kind, "golpeado")] += 1
             self._last_taken_frame = f
 

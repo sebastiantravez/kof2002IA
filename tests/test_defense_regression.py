@@ -591,3 +591,16 @@ class ThrowEscape(unittest.TestCase):
         for rival_state in (229, 230, 231, 232):
             _, (_, options) = self.thrown_by(rival_state)
             self.assertNotIn("CD", options[0].notation)
+
+    def test_rival_throw_state_triggers_escape_even_if_my_state_is_unknown(self):
+        # Pelea 2026-10-15: agarrado en guardia agachada, mi estado nunca fue 168
+        feed = Feed()
+        b = RuleBrain(feed, IORI)
+        for f in range(0, 10):
+            s = st(f, mx=400, rx=430)
+            feed.s = replace(s, me=replace(s.me, state_id=23), rival=replace(s.rival, state_id=232 if f >= 6 else 1))
+            b.state()
+        self.assertTrue(b.being_thrown())
+        situation, options = b._options_for(b.state())
+        self.assertEqual(situation, "me agarran")
+        self.assertEqual(options[0].notation, "5[6]4D[5]")
