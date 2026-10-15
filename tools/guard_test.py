@@ -205,6 +205,8 @@ for attempt in range(3):              # lado B: P2 salta por encima de P1
         break
 print(f"Posiciones guardadas: {', '.join(f'lado {s} (ranura {n})' for s, n in sides.items())}"
       + ("" if "B" in sides else "  [no se pudo cambiar de lado: solo lado A]"))
+if isinstance(opt.get("--sides"), str):          # --sides=A: solo un lado (barridos largos)
+    sides = {s: n for s, n in sides.items() if s in opt["--sides"].upper()}
 
 # Esquinas: desde cada lado, Iori camina hacia atras hasta la pared y Kim lo sigue a ~60.
 corner_slots = {}
