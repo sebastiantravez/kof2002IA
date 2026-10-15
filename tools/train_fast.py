@@ -43,6 +43,7 @@ from kof_ai.game_state import MAX_LIFE  # noqa: E402
 from kof_ai.imitation import Imitation  # noqa: E402
 from kof_ai.learning import LearningBrain  # noqa: E402
 from kof_ai.lockstep import Lockstep, LockstepClock, LockstepKeyboard, LockstepReader  # noqa: E402
+from kof_ai.trace import FrameTrace  # noqa: E402
 
 args = [a for a in sys.argv[1:] if not a.startswith("--")]
 character = args[0] if args else "Kim"
@@ -199,9 +200,20 @@ bot = RuleBot(LockstepKeyboard(link), LockstepClock(link), config, None,
               lambda: reader.read().facing_right, on_log, reader, moves, brain,
               focus_required=False, fight_check=in_fight)
 bot.save_every = float("inf") if play else 120   # en modo prueba no se guarda nada
-defense = DefenseLogger(ROOT / "logs" / f"defensa_{character}_{time.strftime('%Y%m%d_%H%M%S')}.csv",
-                        lambda: bot.current)
-link.on_step = defense.observe
+stamp = time.strftime('%Y%m%d_%H%M%S')
+defense = DefenseLogger(ROOT / "logs" / f"defensa_{character}_{stamp}.csv", lambda: bot.current)
+# Traza por frame (estados +0x073 de los dos, teclas, decision): la unica forma de ver que paso
+# en un agarre o una soltada sin suponerlo. Siempre activa con --play (2-8 min: < 2 MB).
+trace = FrameTrace(ROOT / "logs" / f"traza_{character}_{stamp}.csv", lambda: bot.current) if play else None
+
+
+def on_step(state, keys):
+    defense.observe(state, keys)
+    if trace:
+        trace.observe(state, keys)
+
+
+link.on_step = on_step
 offense = brain.combat_mode
 print(f"Estilo: {brain.style}, modo: {offense}, guardia preventiva: {'si' if brain.preventive_guard else 'no'}, "
       f"tiempo de reaccion extra: {brain.reaction_frames} frames")
@@ -241,6 +253,9 @@ while bot.running:
 link.keys = set()
 link.send("NORMAL")
 link.step()
+if trace:
+    trace.close()
+    print(f"Traza por frame: {trace.path}")
 if play:
     print("Modo prueba: no se guardo nada de esta sesion.")
 elif practice_suspect:
