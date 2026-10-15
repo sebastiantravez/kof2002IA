@@ -99,20 +99,21 @@ end
 -- el seq, este archivo ya tiene el mismo seq. Si no hay persona, es todo ceros.
 local PAD = ROOT .. "lock_pad.txt"
 local PAD_BITS = {
-  ["P1 Up"] = 1, ["P1 Down"] = 2, ["P1 Left"] = 4, ["P1 Right"] = 8,
-  ["P1 Button A"] = 16, ["P1 Button B"] = 32, ["P1 Button C"] = 64, ["P1 Button D"] = 128,
+  Up = 1, Down = 2, Left = 4, Right = 8,
+  ["Button A"] = 16, ["Button B"] = 32, ["Button C"] = 64, ["Button D"] = 128,
 }
 local function write_pad(n)
   local ok, pad = pcall(joypad.get)
-  local mask = 0
+  local m1, m2 = 0, 0
   if ok and type(pad) == "table" then
     for name, bit in pairs(PAD_BITS) do
-      if pad[name] then mask = mask + bit end
+      if pad["P1 " .. name] then m1 = m1 + bit end
+      if pad["P2 " .. name] then m2 = m2 + bit end
     end
   end
   local f = io.open(PAD, "w")
   if f then
-    f:write(n, " ", mask, " ", n, "\n")
+    f:write(n, " ", m1, " ", m2, " ", n, "\n")
     f:close()
   end
 end
