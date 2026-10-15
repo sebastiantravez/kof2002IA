@@ -531,3 +531,36 @@ class GuardCancel(unittest.TestCase):
     def test_off_by_default(self):
         b = self.feed(set(range(10, 16)) | set(range(30, 36)) | set(range(50, 59)), guard_cancel="none")
         self.assertFalse(b.guard_cancel_ready())
+
+
+class GuardCancelChain(unittest.TestCase):
+    """Medido en FBNeo: bajo una cadena el bloqueo es continuo (estados 27-37 sin salir)."""
+
+    def test_chained_blocks_count(self):
+        from dataclasses import replace
+        feed = Feed()
+        b = RuleBrain(feed, {**IORI, "combat_mode": "DEFENSE_ONLY", "guard_cancel": "roll_b"})
+        # Iori en bloqueo continuo desde el frame 10; el rival ataca en 10-18 y otra vez en 28-36
+        for f in range(0, 40):
+            s = st(f, mx=400, rx=440, ratk=(10 <= f < 18 or 28 <= f < 36))
+            blocking = f >= 12
+            feed.s = replace(s, me=replace(s.me, state_id=(27 + f % 5) if blocking else 23, stocks=3))
+            b.state()
+        self.assertTrue(b.guard_cancel_ready())
+
+
+class NeverBlowback(unittest.TestCase):
+    """Regla del usuario: nada de C+D (empuje) al bloquear, ni por configuracion."""
+
+    def test_atk_variants_are_not_available(self):
+        from dataclasses import replace
+        for mode in ("atk", "atk_d"):
+            feed = Feed()
+            b = RuleBrain(feed, {**IORI, "combat_mode": "DEFENSE_ONLY", "guard_cancel": mode})
+            for f in range(0, 40):
+                s = st(f, mx=400, rx=440, ratk=(10 <= f < 18 or 28 <= f < 36))
+                feed.s = replace(s, me=replace(s.me, state_id=(27 + f % 5) if f >= 12 else 23, stocks=3))
+                b.state()
+            self.assertIsNone(b._guard_cancel_option(b.state()))
+        from kof_ai import brain
+        self.assertFalse([m for m in brain.GUARD_CANCEL_MOVES.values() if "CD" in m])

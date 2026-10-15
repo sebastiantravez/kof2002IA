@@ -40,7 +40,11 @@ D_THROW_STATES = {232}    # estado del rival mientras agarra con D (Kim; otros p
 CORNER_ESCAPE_RANGE = 70      # salida de esquina: el rival esta a menos de esto
 CORNER_ESCAPE_COOLDOWN = 90   # frames minimos entre dos salidas (no repetirla en cada hueco)
 HARD_ESCAPE_BLOCK = {"ronda terminada", "me agarran", "me golpearon"}
-GUARD_CANCEL_MOVES = {"roll_b": "4AB", "roll_f": "6AB", "atk": "4CD", "atk_d": "1CD"}   # por verificar en FBNeo
+# Regla del usuario (KOF 2002 Magic Plus): el empuje con C+D al bloquear NO se usa nunca: gasta
+# barra, es falta/desventaja y el rival puede cruzar y castigar con un combo. Solo la rodada
+# A+B. Medido en FBNeo (docs/DEFENSE_AUDIT_V4.md, seccion 8): atras + A+B funciona (gasta una
+# barra, estados 60-62, sin daño); adelante + A+B NO sale (no gasta barra y suelta la guardia).
+GUARD_CANCEL_MOVES = {"roll_b": "4AB"}
 GUARD_CANCEL_WINDOW = 90      # bloqueos contados en los ultimos N frames
 GUARD_CANCEL_COOLDOWN = 150   # frames minimos entre dos cancelaciones
 # Guardia preventiva: situaciones sin amenaza pero con el rival en rango, y acciones que alli
@@ -136,6 +140,12 @@ class RuleBrain:
             if state and self._cached and state.frame != self._cached.frame:
                 self._prev = self._cached
                 if state.me.state_id in BLOCKSTUN_STATES and self._cached.me.state_id not in BLOCKSTUN_STATES:
+                    self._block_starts.append(state.frame)
+                elif (state.rival.attacking and not self._cached.rival.attacking
+                      and state.me.state_id in BLOCKSTUN_STATES):
+                    # Medido (guard_test, esquina): contra una cadena Iori queda en bloqueo
+                    # CONTINUO (estados 27-37, ~84 frames) y no vuelve a "entrar" al bloqueo:
+                    # cada golpe nuevo mientras sigo bloqueando cuenta como otro bloqueo.
                     self._block_starts.append(state.frame)
                 taken = self._cached.me.life - state.me.life
                 dealt = self._cached.rival.life - state.rival.life

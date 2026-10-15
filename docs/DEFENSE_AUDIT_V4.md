@@ -232,3 +232,39 @@ le aplica 4 ciclos de 5A, 2B, 5C con huecos. 8 intentos por lado y variante.
   media con 100% de salidas): se toma solo como indicativo.
 - Siguiente paso: A/B en pelea real con una persona (`--corner=none` contra `--corner=roll`),
   comparando daño por minuto y % acorralado.
+
+## 8. Ventana de escape de agarres y cancelación de guardia (FBNeo, 2026-10-14)
+
+### 8.1 Barrido de la ventana de agarre (`logs/guard_test_20261014_193332`)
+Kim agarra (C o D) y Iori, SCRIPTADO (sin reacción), pulsa `-`, C, D, 4C, 4D, 6C o 6D en offsets
+de −6 a +4 frames respecto al botón del agarre (4 intentos por celda, ambos lados).
+- En todas las celdas donde Kim llegó a agarrar: Iori agarrado (0/4 libres). No hay ventana de
+  escape con estas entradas ni con ningún offset probado.
+- Única excepción: un C (solo, 4C o 6C) pulsado ≥4 frames ANTES que Kim hace que Kim no llegue
+  a agarrar (72/72): es pegar primero (estado 98 de Iori), no un escape. Con D no ocurre.
+
+### 8.2 Cancelación de guardia en la esquina (`logs/guard_test_20261014_200014`)
+Kim presiona 4 ciclos de 5A, 2B, 5C; Iori solo guardia + cancelación. 16 intentos por variante.
+
+| Variante | Daño medio | Golpes | Salió de la esquina | Barras gastadas |
+|---|---|---|---|---|
+| solo guardia | 0,0 | 0,0 | 0% | 0,0 |
+| atrás + A+B (`roll_b`) | 0,0 | 0,0 | 0% | 1,0 |
+| adelante + A+B (`roll_f`) | 2,4 | 1,2 | 0% | 0,0 |
+| atrás + C+D (`atk`) — DESCARTADO | 5,1 | 1,0 | 38% | 0,6 |
+| abajo-atrás + C+D (`atk_d`) — DESCARTADO | 0,0 | 0,0 | 0% | 0,0 |
+
+- `roll_b` funciona: en bloqueo (estado 30) la entrada atrás + A+B lleva a los estados 60 → 61 →
+  62 (~38 frames) y gasta una barra; sin daño. Rodando hacia atrás desde la pared no cambia de
+  posición (x = 32 fijo).
+- `roll_f` NO sale: el estado sigue en bloqueo, no gasta barra, y al soltar la guardia recibe
+  golpes (1,2 por intento). Se elimina.
+- C+D: descartado por regla del usuario (falta/desventaja: gasta barra y el rival puede cruzar y
+  castigar con un combo). En la prueba empujó fuera de la esquina el 38% de las veces pero recibió
+  daño.
+- La solo-guardia ya recibe 0 de daño contra esta presión, así que la rodada no mejora el
+  resultado medido. Su único costo observado: una barra. NO medido: si el rival puede castigar
+  los ~38 frames de la rodada.
+- Corrección de la herramienta: el contador de bloqueos de `guard_cancel` solo veía las
+  transiciones de entrada; bajo una cadena el bloqueo es continuo (estados 27-37 ~84 frames), así
+  que ahora cada golpe nuevo mientras se sigue bloqueando cuenta como otro bloqueo.
