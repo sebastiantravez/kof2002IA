@@ -108,6 +108,12 @@ STATE_OFFSET = 0x73
 THROWN_STATES = {168}                      # agarrado (entrada del agarre, C y D)
 BLOCKSTUN_STATES = set(range(27, 38))      # bloqueando: 27-31 de pie, 32-37 agachado (segun golpe)
 THROWING_STATES = {229, 230, 231, 232}     # Kim agarrando (C: 229-231, D: 232); otros personajes: por medir
+# Movimientos del rival que hay que bloquear AGACHADO (golpes bajos que no salen de agachado, asi que
+# el bit de agachado no los delata), por personaje. Kim 137 = Haki Kyaku (abajo-abajo + D, golpea el
+# piso): pelea 2026-10-15, 18 de 22 entraron con Iori cubriendo DE PIE, 9-10 de danio cada uno.
+LOW_HIT_STATES = {"Kim": {137}}
+# Movimientos que hay que bloquear DE PIE (overheads de pie): ninguno medido aun.
+OVERHEAD_STATES = {}
 POWER_OFFSET = 0x1E3
 
 

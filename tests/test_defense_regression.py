@@ -604,3 +604,25 @@ class ThrowEscape(unittest.TestCase):
         situation, options = b._options_for(b.state())
         self.assertEqual(situation, "me agarran")
         self.assertEqual(options[0].notation, "5[6]4D[5]")
+
+
+class GuardHeightByRivalMove(unittest.TestCase):
+    """Kim 137 (Haki Kyaku, abajo-abajo+D) es bajo aunque Kim este de pie y atacando: guardia abajo."""
+
+    def guard_low_with(self, rival_state, rival_char=6):
+        feed = Feed()
+        b = RuleBrain(feed, IORI)
+        for f in range(0, 12):
+            s = st(f, mx=400, rx=460, ratk=(f >= 4))
+            feed.s = replace(s, rival=replace(s.rival, state_id=rival_state if f >= 6 else 98, character_id=rival_char))
+            b.state()
+        return b.guard_low()
+
+    def test_haki_kyaku_is_blocked_low(self):
+        self.assertTrue(self.guard_low_with(137))
+
+    def test_standing_c_is_blocked_high(self):
+        self.assertFalse(self.guard_low_with(98))
+
+    def test_other_character_same_state_id_is_not_assumed_low(self):
+        self.assertFalse(self.guard_low_with(137, rival_char=0))   # Kyo: 137 no esta medido

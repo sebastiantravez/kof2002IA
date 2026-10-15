@@ -11,7 +11,7 @@ from dataclasses import dataclass, replace
 
 from .arbiter import (BALANCED_EXPERIMENTAL, DEFENSE_ONLY, GUARD_ONLY_TEST, CombatActionArbiter, Proposal,
                       mode_from_profile)
-from .game_state import BLOCKSTUN_STATES, THROWING_STATES
+from .game_state import BLOCKSTUN_STATES, LOW_HIT_STATES, OVERHEAD_STATES, THROWING_STATES
 from .strategy import Strategy, is_useful
 
 # Distancias en unidades del escenario (la pantalla mide ~304).
@@ -321,7 +321,15 @@ class RuleBrain:
         """True -> bloquear abajo (rival agachado o atacando desde agachado: lows).
         False -> bloquear de pie (rival de pie o en el aire: overheads y saltos)."""
         state = self.state()
-        if state is None or state.rival.airborne:
+        if state is None:
+            return False
+        rival = state.rival
+        # Movimientos identificados por su estado (+0x073): mandan sobre cualquier heuristica.
+        if rival.state_id in LOW_HIT_STATES.get(rival.character, ()):
+            return True
+        if rival.state_id in OVERHEAD_STATES.get(rival.character, ()):
+            return False
+        if rival.airborne:
             return False
         if self.preventive_guard and not state.rival.attacking:
             # Sin ataque en curso: guardia agachada. Sostener atras de pie sin que llegue un
