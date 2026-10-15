@@ -466,7 +466,6 @@ class CornerEscape(unittest.TestCase):
         feed = Feed()
         b = RuleBrain(feed, {**IORI, "combat_mode": "DEFENSE_ONLY", "corner_escape": "roll"})
         for f in range(0, 20):
-            from dataclasses import replace
             s = self.cornered(f, ratk=(5 <= f < 15))
             feed.s = replace(s, me=replace(s.me, state_id=30))      # bloqueando (27-37)
             b.state()
@@ -488,7 +487,6 @@ class MoveTable(unittest.TestCase):
         for f in range(0, 40):               # movimiento 89 de 20 frames, sin pegar
             s = st(f, ratk=(5 <= f < 25))
             if 5 <= f < 25:
-                from dataclasses import replace
                 s = replace(s, rival=replace(s.rival, state_id=89))
             seq.append(s)
         for s in seq:
@@ -503,7 +501,6 @@ class GuardCancel(unittest.TestCase):
     """guard_cancel: solo bloqueando, con barra, tras N bloqueos recientes y con enfriamiento."""
 
     def feed(self, frames_blocking, stocks=3, **extra):
-        from dataclasses import replace
         feed = Feed()
         b = RuleBrain(feed, {**IORI, "combat_mode": "DEFENSE_ONLY", "guard_cancel": "roll_b", **extra})
         for f in range(0, 60):
@@ -537,7 +534,6 @@ class GuardCancelChain(unittest.TestCase):
     """Medido en FBNeo: bajo una cadena el bloqueo es continuo (estados 27-37 sin salir)."""
 
     def test_chained_blocks_count(self):
-        from dataclasses import replace
         feed = Feed()
         b = RuleBrain(feed, {**IORI, "combat_mode": "DEFENSE_ONLY", "guard_cancel": "roll_b"})
         # Iori en bloqueo continuo desde el frame 10; el rival ataca en 10-18 y otra vez en 28-36
@@ -553,7 +549,6 @@ class NeverBlowback(unittest.TestCase):
     """Regla del usuario: nada de C+D (empuje) al bloquear, ni por configuracion."""
 
     def test_atk_variants_are_not_available(self):
-        from dataclasses import replace
         for mode in ("atk", "atk_d"):
             feed = Feed()
             b = RuleBrain(feed, {**IORI, "combat_mode": "DEFENSE_ONLY", "guard_cancel": mode})
