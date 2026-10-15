@@ -103,8 +103,13 @@ def pressure(ctx):
 # Ventana de escape de agarres: Kim agarra y Iori (SCRIPTADO, sin reaccion) pulsa un boton en un
 # frame fijo respecto al del agarre. t = 0 es el primer frame con boton de Kim; offset negativo =
 # Iori pulsa ANTES. Si hay una ventana de escape, aparece como un offset donde Iori no es agarrado.
-TECH_INPUTS = ("-", "C", "D", "4C", "4D", "6C", "6D")
-TECH_OFFSETS = tuple(range(-6, 5))
+TECH_INPUTS = tuple(str(opt.get("--tech-inputs", "-,C,D,4C,4D,6C,6D")).split(","))
+_lo, _hi = (int(x) for x in str(opt.get("--tech-offsets", "-6:5")).split(":"))
+TECH_OFFSETS = tuple(range(_lo, _hi))
+# El agarre de Kim aparece en la RAM en t=6 (Iori en 168) y el escape (estado 76, sin danio) sale
+# 5 frames despues de pulsar. Medido con una persona (tools/tech_record.py): los escapes fueron con
+# pulsaciones en t=13..21, DENTRO del estado 168. El barrido original (-6..4) terminaba antes.
+TECH_FRAMES = int(opt.get("--tech-frames", 46))
 
 
 def tech(ctx, trial):
@@ -112,7 +117,7 @@ def tech(ctx, trial):
     inp, off, kb = trial["p1_input"], trial["offset"], trial["kim_button"]
     direction = int(inp[0]) if inp[0].isdigit() else 5
     button = inp[-1] if inp != "-" else ""
-    for t in range(-4, 46):
+    for t in range(-4, TECH_FRAMES):
         if t < 0:
             kim = p2_keys(ctx.state, 6)
         elif t < 3:
@@ -446,7 +451,8 @@ if tech_rows:
             for o in TECH_OFFSETS:
                 rs = [r for r in tech_rows if r["kim_button"] == kb and r["p1_input"] == inp and r["offset"] == o
                       and any(s in r["estados_p2"] for s in (229, 230, 231, 232))]
-                free = sum(168 not in r["estados_p1"] for r in rs)
+                # soltado = sin danio y con el estado de escape (76); el agarre siempre pasa antes por 168
+                free = sum((76 in r["estados_p1"] and r["danio"] == 0) or 168 not in r["estados_p1"] for r in rs)
                 line += f"{f'{free}/{len(rs)}' if rs else '-':>7s}"
             print(line)
     extra = Counter(s for r in tech_rows if 168 not in r["estados_p1"] for s in r["estados_p1"] if s not in (0, 1, 2, 23, 21, 46, 45, 48, 47))

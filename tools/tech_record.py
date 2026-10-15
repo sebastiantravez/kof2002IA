@@ -90,8 +90,13 @@ frames_w = csv.writer(frames_f)
 frames_w.writerow(["intento", "t", "teclas_p1", "estado_p1", "estado_p2", "vida_p1", "boton_kim", "distancia"])
 results = []
 
+HALF = max(TRIALS // 2, 1)
 for n in range(1, TRIALS + 1):
-    kb = random.choice("CD")
+    # Primero un bloque con C y despues otro con D: la persona sabe con que boton va a soltar
+    kb = "C" if n <= HALF else "D"
+    if n in (1, HALF + 1):
+        print(f"\n=== BLOQUE {kb}: Kim te agarra con {kb}; suelta con {kb} en cuanto veas el agarre ===")
+        time.sleep(3)
     delay = random.randint(0, 45)               # espera antes del agarre: no se puede anticipar
     link.send("LOAD2")
     wait_commands()
