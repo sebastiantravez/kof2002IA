@@ -78,6 +78,10 @@
       "combat_mode": "DEFENSE_ONLY",
       "punish_confirm_frames": 4,
       "preventive_guard": true,
+      "throw_escape": "matching",
+      "throw_escape_delay": 6,
+      "throw_escape_hold": 5,
+      "_throw_escape": "matching: atras + el boton del agarre (C para 229-231, D para 232) tras throw_escape_delay frames, mantenido throw_escape_hold. Medido con una persona 2026-10-15: soltadas con atras+boton 7-15 frames despues de ver el agarre; ni C+D ni boton solo.",
       "reaction_frames": 0,
       "_estilo": "style 'defensive': mas guardia/retroceso, menos riesgo, castigo solo de ataques largos, no soltar la guardia bajo presion. reaction_frames: retraso extra de percepcion (0 = solo la latencia del sistema, ~2-4 frames; 10-15 ~ humano)."
     },

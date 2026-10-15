@@ -19,6 +19,8 @@ Uso:
      --preventive=on|off: guardia preventiva (sin acciones largas cerca del rival).
      --corner=none|roll|jump|reversal: salida de esquina bajo presion (ver docs/DEFENSE_AUDIT_V4.md).
      --calm-pressure: sin presion cercana mientras el rival ataca (BALANCED_EXPERIMENTAL).
+     --throw-escape=matching[:espera[:mantener]]|none: soltar agarres con atras + el boton del
+                 agarre tras 'espera' frames (perfil: matching:6:5); none = no intentar.
      --speed=N: como maximo N veces la velocidad normal (tambien con --play).
      --legacy-punish / --legacy-escapes: comportamiento ANTERIOR a las correcciones de la
                  auditoria externa (castigo con el ataque rival activo / escapes al azar bajo
@@ -63,6 +65,13 @@ for a in sys.argv[1:]:
         moves["pressure_needs_calm"] = True
     if a.startswith("--corner="):    # salida de esquina: none | roll | jump | reversal
         moves["corner_escape"] = a.split("=", 1)[1].lower()
+    if a.startswith("--throw-escape="):   # matching[:espera[:mantener]] | none | notacion fija
+        parts = a.split("=", 1)[1].split(":")
+        moves["throw_escape"] = {"none": "5[1]"}.get(parts[0], parts[0])
+        if len(parts) > 1:
+            moves["throw_escape_delay"] = int(parts[1])
+        if len(parts) > 2:
+            moves["throw_escape_hold"] = int(parts[2])
     if a.startswith("--mode="):      # modo de combate (kof_ai/arbiter.py)
         moves["combat_mode"] = a.split("=", 1)[1].upper()
     if a.startswith("--offense="):   # compatibilidad: off | strategic

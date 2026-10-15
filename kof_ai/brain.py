@@ -37,6 +37,8 @@ LONG_ATTACK_FRAMES = 24   # ataque rival que dura >= N frames: lo deja vulnerabl
 # Configurable por perfil: "punish_confirm_frames".
 PUNISH_CONFIRM_FRAMES = 4
 D_THROW_STATES = {232}    # estado del rival mientras agarra con D (Kim; otros personajes por medir)
+THROW_ESCAPE_DELAY = 6    # frames de espera tras ver el agarre antes de pulsar (persona: soltadas en t=13..21)
+THROW_ESCAPE_HOLD = 5     # frames con atras+boton mantenidos (la persona mantuvo 2-7)
 CORNER_ESCAPE_RANGE = 70      # salida de esquina: el rival esta a menos de esto
 CORNER_ESCAPE_COOLDOWN = 90   # frames minimos entre dos salidas (no repetirla en cada hueco)
 HARD_ESCAPE_BLOCK = {"ronda terminada", "me agarran", "me golpearon"}
@@ -639,10 +641,19 @@ class RuleBrain:
     def throw_escape(self, state):
         """Notacion del escape de agarre. Perfil "throw_escape": una notacion fija, o
         "matching" = el mismo boton que el agarre del rival (su estado 232 = agarre con D;
-        229-231 = con C; medido con Kim)."""
+        229-231 = con C; medido con Kim), pulsado con ATRAS tras esperar
+        "throw_escape_delay" frames y mantenido "throw_escape_hold" frames.
+
+        Medido con una persona (2026-10-15, tools/tech_record.py): el agarre aparece en la RAM
+        en t=6 y las soltadas de Iori fueron pulsando atras+boton en t=13..21 (7-15 frames
+        despues de verlo); el boton solo, o pulsado al instante, no solto. El escape sale 5
+        frames despues de la pulsacion."""
         escape = self._moves.get("throw_escape", "4CD5[1]4CD")
         if escape == "matching":
-            return "4D5[1]4D" if state.rival.state_id in D_THROW_STATES else "4C5[1]4C"
+            delay = int(self._moves.get("throw_escape_delay", THROW_ESCAPE_DELAY))
+            hold = int(self._moves.get("throw_escape_hold", THROW_ESCAPE_HOLD))
+            button = "D" if state.rival.state_id in D_THROW_STATES else "C"
+            return (f"5[{delay}]" if delay > 0 else "") + f"4{button}[{hold}]"
         return escape
 
     def _threat_guard(self, situation, options):

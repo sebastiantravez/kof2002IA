@@ -564,3 +564,34 @@ class NeverBlowback(unittest.TestCase):
             self.assertIsNone(b._guard_cancel_option(b.state()))
         from kof_ai import brain
         self.assertFalse([m for m in brain.GUARD_CANCEL_MOVES.values() if "CD" in m])
+
+
+class ThrowEscape(unittest.TestCase):
+    """Soltar agarres: atras + el boton del agarre, tras una espera, mantenido (medido con una
+    persona el 2026-10-15: ni C+D ni el boton al instante sueltan)."""
+
+    def thrown_by(self, rival_state, **overrides):
+        feed = Feed()
+        b = RuleBrain(feed, {**IORI, **overrides})
+        for f in range(0, 10):
+            s = st(f, mx=400, rx=430)
+            feed.s = replace(s, me=replace(s.me, state_id=168 if f >= 6 else 0),
+                             rival=replace(s.rival, state_id=rival_state if f >= 6 else 1))
+            b.state()
+        return b, b._options_for(b.state())
+
+    def test_profile_is_matching_with_back_and_delay(self):
+        b, (situation, options) = self.thrown_by(229)
+        self.assertEqual(situation, "me agarran")
+        self.assertEqual(options[0].notation, "5[6]4C[5]")
+        b, (_, options) = self.thrown_by(232)
+        self.assertEqual(options[0].notation, "5[6]4D[5]")
+
+    def test_delay_and_hold_come_from_profile(self):
+        _, (_, options) = self.thrown_by(232, throw_escape_delay=0, throw_escape_hold=3)
+        self.assertEqual(options[0].notation, "4D[3]")
+
+    def test_never_blowback(self):
+        for rival_state in (229, 230, 231, 232):
+            _, (_, options) = self.thrown_by(rival_state)
+            self.assertNotIn("CD", options[0].notation)
