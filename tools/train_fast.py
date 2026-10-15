@@ -174,6 +174,10 @@ def on_log(message):
             since = int(message.rsplit("desde golpe", 1)[1])
             bucket = ("<60 f" if since < 60 else "60-119 f" if since < 120 else ">=120 f")
             combo_timing[(bucket, int(done) >= 1)] += 1
+    elif message.startswith("Fuera de pelea"):
+        # Cada vez que el bot suelta las teclas por creer que no hay pelea. Antes era invisible:
+        # en la pelea del 2026-10-15 paso en cada salto alto del rival (ver _on_stage).
+        stats["fuera de pelea"] += 1
     elif message.startswith("Deteniendo") or message.startswith("IA "):
         print(message)
 
@@ -189,11 +193,19 @@ imitation = Imitation.load(ROOT / "recordings" / "imitation.json", character)
 brain = LearningBrain(reader, moves, table_path, explore=not play, imitation=imitation)
 link.on_round_end = on_round_end
 known_before = sum(n for acts in brain.table.values() for n, _ in acts.values())
+def _on_stage(fighter):
+    """Posicion en pantalla de un luchador en la pelea. Un salto alto (altura > ~85) sube
+    screen_y por debajo de 150: con el limite fijo, cada salto de Kim hacia Iori hacia que
+    el bot creyera 'fuera de pelea' y SOLTARA la guardia justo cuando le caia encima (traza
+    2026-10-15: 198 intercambios sin teclas con el rival bajando a menos de 70)."""
+    return fighter.screen_y <= 240 and (fighter.height > 0 or fighter.screen_y >= 150)
+
+
 def in_fight():
     """Pelea real (no menus ni pantallas de continuar, donde A/B/C/D eligen opciones)."""
     s = reader.read()
     return (s is not None and 0 < s.me.life <= MAX_LIFE and 0 < s.rival.life <= MAX_LIFE
-            and 150 <= s.me.screen_y <= 240 and 150 <= s.rival.screen_y <= 240)
+            and _on_stage(s.me) and _on_stage(s.rival))
 
 
 bot = RuleBot(LockstepKeyboard(link), LockstepClock(link), config, None,
@@ -276,6 +288,8 @@ print(f"Tiempo real {elapsed / 60:.1f} min, frames de juego {frames} "
       f"({frames / 59.19 / 60:.1f} min de juego, {frames / max(elapsed, 1) / 59.19:.1f}x)")
 print(f"Rondas {rounds}: {stats['ganadas']} ganadas, {stats['perdidas']} perdidas, {stats['empates']} otras "
       f"({100 * stats['ganadas'] / max(rounds, 1):.0f}% ganadas)")
+if stats["fuera de pelea"]:
+    print(f"AVISO: el bot solto las teclas {stats['fuera de pelea']} veces por creer que no habia pelea (in_fight).")
 print(f"Danio hecho {brain.dealt_total}, recibido {brain.taken_total} en golpes "
       f"+ {brain.chip_total} de raspado bloqueando especiales")
 print(f"Combos: {combo_stats['intentos']} intentos, {combo_stats['con 2+ golpes']} con 2+ golpes, "
