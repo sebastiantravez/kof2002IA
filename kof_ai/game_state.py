@@ -142,6 +142,13 @@ class GameState:
             return self.me.x <= LEFT_WALL_X + CORNER_MARGIN
         return self.me.x >= RIGHT_WALL_X - CORNER_MARGIN
 
+    def near_wall(self, margin=100):
+        """La pared que tengo detras esta a menos de `margin`: retroceder me acorrala. Pelea
+        2026-10-15: Iori acorralado el 58% del tiempo recibiendo 240/min (153/min libre)."""
+        if self.facing_right:
+            return self.me.x <= LEFT_WALL_X + margin
+        return self.me.x >= RIGHT_WALL_X - margin
+
     @property
     def rival_cornered(self):
         if self.facing_right:

@@ -19,6 +19,8 @@ CLOSE = 75
 MID = 180
 ANTI_AIR_RANGE = 120     # el rival tiene que estar cayendo dentro de este rango
 ANTI_AIR_MAX_HEIGHT = 70  # y ya no muy alto, para que el anti-aire conecte
+JUMP_GUARD_HEIGHT = 60    # rival en el aire por encima de esto: guardia agachada (no caminar atras)
+JUMP_GUARD_RANGE = 70     # rival en el aire mas lejos de esto: idem
 HIT_MEMORY_FRAMES = 40   # cuanto tiempo "recuerdo" haber recibido un golpe
 MAX_DAMAGE_PER_FRAME = 60  # caidas mayores son KO/transiciones de ronda, no golpes
 CHIP_DAMAGE = 2           # perder <= N con guardia puesta = raspado de un especial bloqueado
@@ -330,7 +332,10 @@ class RuleBrain:
         if rival.state_id in OVERHEAD_STATES.get(rival.character, ()):
             return False
         if rival.airborne:
-            return False
+            # Saltando pero aun alto o lejos: atras de pie CAMINA hacia atras (asi acabo en la
+            # esquina); agachado no se mueve. Se pasa a guardia de pie cuando ya baja cerca
+            # (los golpes de salto medidos pegan a altura 28-45 y distancia < 50).
+            return rival.height > JUMP_GUARD_HEIGHT or state.distance > JUMP_GUARD_RANGE
         if self.preventive_guard and not state.rival.attacking:
             # Sin ataque en curso: guardia agachada. Sostener atras de pie sin que llegue un
             # golpe hace CAMINAR hacia atras (medido: acorralado en el 40% de los ataques
@@ -609,11 +614,11 @@ class RuleBrain:
 
         if rival.airborne and d <= MID:
             # Esta saltando pero aun alto o subiendo: esperar el momento justo.
-            return "rival en el aire, esperando", [
-                Option(45, "esperar", "5[3]", interruptible=True),
-                Option(40, "guardia", "G[4]"),
-                Option(15, "retroceder un paso", "4[6]", interruptible=True),
-            ]
+            # Con la pared cerca no se retrocede: cada paso atras es un paso a la esquina.
+            options = [Option(45, "esperar", "5[3]", interruptible=True), Option(40, "guardia", "G[4]")]
+            if not state.near_wall():
+                options.append(Option(15, "retroceder un paso", "4[6]", interruptible=True))
+            return "rival en el aire, esperando", options
 
         if d > MID:
             return "rival lejos", [

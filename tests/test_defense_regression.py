@@ -660,3 +660,37 @@ class ConfirmedPunishCombos(unittest.TestCase):
         sit, opts = b._options_for(b.state())
         self.assertEqual(sit, "castigo a golpe fallado")
         self.assertFalse([o for o in opts if "correr" in o.name])
+
+
+class NoWalkingIntoTheCorner(unittest.TestCase):
+    """Pelea 2026-10-15: acorralado el 58% del tiempo. Con el rival en el aire alto o lejos la guardia
+    es agachada (no camina atras) y cerca de la pared no se propone 'retroceder un paso'."""
+
+    def brain(self, states):
+        feed = Feed()
+        b = RuleBrain(feed, {**IORI, "combat_mode": "BALANCED_EXPERIMENTAL"})
+        for s in states:
+            feed.s = s
+            b.state()
+        return b
+
+    def test_rival_high_in_the_air_guards_crouching(self):
+        b = self.brain([st(f, mx=400, rx=460, rh=90) for f in range(0, 10)])
+        self.assertTrue(b.guard_low())
+
+    def test_rival_descending_close_guards_standing(self):
+        b = self.brain([st(f, mx=400, rx=440, rh=40) for f in range(0, 10)])
+        self.assertFalse(b.guard_low())
+
+    def test_no_step_back_near_the_wall(self):
+        # pared izquierda en x=32: Iori a 90 de ella mirando a la derecha
+        near = self.brain([st(f, mx=120, rx=250, rh=90) for f in range(0, 10)])
+        sit, opts = near._options_for(near.state())
+        self.assertEqual(sit, "rival en el aire, esperando")
+        self.assertFalse([o for o in opts if o.name == "retroceder un paso"])
+        far = self.brain([st(f, mx=400, rx=530, rh=90) for f in range(0, 10)])
+        _, opts = far._options_for(far.state())
+        self.assertTrue([o for o in opts if o.name == "retroceder un paso"])
+
+    def test_profile_rolls_out_of_the_corner(self):
+        self.assertEqual(IORI.get("corner_escape"), "roll")
