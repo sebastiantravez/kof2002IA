@@ -94,6 +94,29 @@ local function apply(keys, cmds)
   joypad.set(pad)
 end
 
+-- Teclas FISICAS de P1 en este frame (mascara de bits), para grabar lo que hace una persona
+-- mientras Python mueve a P2 (tools/tech_record.py). Va antes que el pedido: cuando Python lee
+-- el seq, este archivo ya tiene el mismo seq. Si no hay persona, es todo ceros.
+local PAD = ROOT .. "lock_pad.txt"
+local PAD_BITS = {
+  ["P1 Up"] = 1, ["P1 Down"] = 2, ["P1 Left"] = 4, ["P1 Right"] = 8,
+  ["P1 Button A"] = 16, ["P1 Button B"] = 32, ["P1 Button C"] = 64, ["P1 Button D"] = 128,
+}
+local function write_pad(n)
+  local ok, pad = pcall(joypad.get)
+  local mask = 0
+  if ok and type(pad) == "table" then
+    for name, bit in pairs(PAD_BITS) do
+      if pad[name] then mask = mask + bit end
+    end
+  end
+  local f = io.open(PAD, "w")
+  if f then
+    f:write(n, " ", mask, " ", n, "\n")
+    f:close()
+  end
+end
+
 local alive_count = 0
 
 local function on_frame()
@@ -108,6 +131,7 @@ local function on_frame()
     return
   end
   seq = seq + 1
+  write_pad(seq)
   -- "seq frame ack p1 p2 seq" en una linea, reescrita en el mismo lugar (Python
   -- descarta la lectura si los dos seq no coinciden).
   local f = io.open(REQ, "w")
