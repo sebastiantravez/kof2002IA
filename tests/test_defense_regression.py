@@ -4,6 +4,7 @@ seguir teniendo prioridad ante amenazas reales, con o sin la ofensiva estrategic
 Uso: python -m unittest discover tests
 """
 import json
+from dataclasses import replace
 import sys
 import tempfile
 import unittest
