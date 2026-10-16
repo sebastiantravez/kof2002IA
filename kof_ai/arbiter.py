@@ -24,7 +24,7 @@ GUARD_ONLY_TEST = "GUARD_ONLY_TEST"
 MODES = (DEFENSE_ONLY, DEFENSE_WITH_PUNISH, BALANCED_EXPERIMENTAL, GUARD_ONLY_TEST)
 
 # Situaciones defensivas que el ataque no puede interrumpir nunca.
-HARD_THREATS = {"ronda terminada", "me agarran", "en el aire (esperando aterrizar)", "estoy en el aire",
+HARD_THREATS = {"ronda terminada", "me agarran", "derribado", "en el aire (esperando aterrizar)", "estoy en el aire",
                 "me golpearon", "rival cae hacia mi", "rival ataca desde el aire", "rival ataca"}
 # Neutral de la defensa original: sin amenaza, el ataque estrategico puede proponer.
 NEUTRAL_SITUATIONS = {"rival lejos", "media distancia", "pegado al rival"}

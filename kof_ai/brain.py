@@ -360,7 +360,7 @@ class RuleBrain:
         no me pego), termino hace >= punish_confirm_frames y no empezo otro; esta en el
         suelo y al alcance de un golpe corto. Todo observable en la RAM."""
         since_end = state.frame - self._rival_attack_end_frame
-        return (not state.rival.attacking and not state.rival.airborne and not state.me.airborne
+        return (not state.rival.attacking and not state.rival.airborne and not state.me.airborne and not state.me.down
                 and self.punish_confirm_frames <= since_end <= self.punish_confirm_frames + PUNISH_WINDOW
                 and self._rival_attack_duration >= LONG_ATTACK_FRAMES
                 and self._guarded_attack and not self._rival_attack_hit_me
@@ -371,7 +371,7 @@ class RuleBrain:
         nunca cerca de mi: lo fallo; se castiga corriendo."""
         just_ended = (state.frame - self._rival_attack_end_frame <= PUNISH_WINDOW
                       and not self._rival_attack_hit_me)
-        return (just_ended and not state.rival.attacking and not state.rival.airborne
+        return (just_ended and not state.rival.attacking and not state.rival.airborne and not state.me.down
                 and self._attack_min_dist > 90 and state.distance <= WHIFF_PUNISH_RANGE
                 and not self._recently_hit(state, 20))
 
@@ -455,7 +455,7 @@ class RuleBrain:
         if mode == "none" or not state.back_to_wall:
             return None
         me, rival = state.me, state.rival
-        if (me.airborne or me.thrown or rival.attacking or rival.airborne
+        if (me.airborne or me.thrown or me.down or rival.attacking or rival.airborne
                 or state.distance > CORNER_ESCAPE_RANGE or me.state_id in BLOCKSTUN_STATES
                 or self._recently_hit(state, 6) or not self._under_pressure(state)
                 or state.frame - self._last_corner_escape < CORNER_ESCAPE_COOLDOWN):
@@ -531,6 +531,11 @@ class RuleBrain:
 
         if self._thrown(state):
             return "me agarran", [Option(1, "escapar agarre", self.throw_escape(state))]
+
+        if me.down:
+            # Tirado o levantandose: nada sale. Atras+abajo sostenido para levantarse cubriendo
+            # (el rival espera encima: 2B o agarre al levantarme; el agarre lo suelta su regla).
+            return "derribado", [Option(1, "levantarse cubierto", "G[6]")]
 
         if me.airborne:
             # Un solo ataque por salto, y ninguno si me lanzaron por un golpe.

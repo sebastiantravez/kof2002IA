@@ -694,3 +694,35 @@ class NoWalkingIntoTheCorner(unittest.TestCase):
 
     def test_profile_rolls_out_of_the_corner(self):
         self.assertEqual(IORI.get("corner_escape"), "roll")
+
+
+class KnockedDown(unittest.TestCase):
+    """Derribado (72/73/78): solo levantarse cubierto; ni rodadas, ni castigos, ni ataque."""
+
+    def brain(self, my_state, mode="BALANCED_EXPERIMENTAL", **extra):
+        feed = Feed()
+        b = RuleBrain(feed, {**IORI, "combat_mode": mode, **extra})
+        for f in range(0, 50):
+            s = st(f, mx=60, rx=100, ratk=(5 <= f < 40))     # acorralado a la izquierda, presion y hueco
+            feed.s = replace(s, me=replace(s.me, state_id=my_state if f >= 20 else 0))
+            b.state()
+            if 5 <= f < 40:
+                b._last_choice = Option(1, "guardia", "G[12]")
+        return b
+
+    def test_down_means_guarded_wakeup_only(self):
+        for state_id in (72, 73, 78):
+            b = self.brain(state_id)
+            sit, opts = b._options_for(b.state())
+            self.assertEqual(sit, "derribado", state_id)
+            self.assertEqual([o.notation for o in opts], ["G[6]"])
+            self.assertFalse(b.can_punish_now())
+
+    def test_no_corner_roll_while_down(self):
+        b = self.brain(72, corner_escape="roll")
+        self.assertIsNone(b._corner_option(b.state()))
+
+    def test_standing_in_the_same_spot_still_escapes(self):
+        b = self.brain(0, mode="GUARD_ONLY_TEST", corner_escape="roll")
+        sit, _ = b._options_for(b.state())
+        self.assertEqual(sit, "salida de esquina")

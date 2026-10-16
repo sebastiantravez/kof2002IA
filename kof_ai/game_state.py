@@ -66,6 +66,11 @@ class Fighter:
                    state_id=raw[STATE_OFFSET])
 
     @property
+    def down(self):
+        """Derribado (cayendo, tirado o levantandose): los botones no hacen nada."""
+        return self.state_id in DOWN_STATES
+
+    @property
     def thrown(self):
         """Me estan agarrando: estado 168 (medido en tools/guard_test.py, agarres C y D de Kim
         sobre Iori, 20/20; empieza en el frame en que atrapan y NO enciende el bit de ataque)."""
@@ -112,6 +117,10 @@ THROWING_STATES = {229, 230, 231, 232}     # Kim agarrando (C: 229-231, D: 232);
 # el bit de agachado no los delata), por personaje. Kim 137 = Haki Kyaku (abajo-abajo + D, golpea el
 # piso): pelea 2026-10-15, 18 de 22 entraron con Iori cubriendo DE PIE, 9-10 de danio cada uno.
 LOW_HIT_STATES = {"Kim": {137}}
+# Derribado: cayendo al suelo (78), tirado (73) y levantandose (72, ~50 frames). Medido en las trazas
+# del 2026-10-15 (Iori): 20 entradas, 0 ataques salieron con el boton pulsado dentro, las rodadas y
+# castigos que el bot pidio ahi se perdieron. Lo unico util es levantarse cubierto.
+DOWN_STATES = {72, 73, 78}
 # Movimientos que hay que bloquear DE PIE (overheads de pie): ninguno medido aun.
 OVERHEAD_STATES = {}
 POWER_OFFSET = 0x1E3
