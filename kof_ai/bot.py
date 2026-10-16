@@ -274,7 +274,8 @@ class RuleBot(_BaseBot):
             if state is None:
                 break
             low = self._brain.guard_low()
-            self._keyboard.set_state(keys_for(1 if low else 4, "", state.facing_right))
+            facing = getattr(self._brain, "guard_facing_right", lambda: state.facing_right)()
+            self._keyboard.set_state(keys_for(1 if low else 4, "", facing))
             if not self._clock.wait_frames(step, self._should_stop):
                 return False
             if (self._brain.can_punish_now() or self._brain.being_thrown()

@@ -21,6 +21,8 @@ ANTI_AIR_RANGE = 120     # el rival tiene que estar cayendo dentro de este rango
 ANTI_AIR_MAX_HEIGHT = 70  # y ya no muy alto, para que el anti-aire conecte
 JUMP_GUARD_HEIGHT = 60    # rival en el aire por encima de esto: guardia agachada (no caminar atras)
 JUMP_GUARD_RANGE = 70     # rival en el aire mas lejos de esto: idem
+CROSSUP_RANGE = 30        # rival en el aire a menos de esto: cubrir hacia donde va a caer, no donde esta
+CROSSUP_LOOKAHEAD = 4     # frames de avance para estimar donde cae (el golpe llega 3-5 frames tras el bit)
 HIT_MEMORY_FRAMES = 40   # cuanto tiempo "recuerdo" haber recibido un golpe
 MAX_DAMAGE_PER_FRAME = 60  # caidas mayores son KO/transiciones de ronda, no golpes
 CHIP_DAMAGE = 2           # perder <= N con guardia puesta = raspado de un especial bloqueado
@@ -321,6 +323,21 @@ class RuleBrain:
         return (state.distance <= MID and not state.rival.airborne
                 and (state.rival.attacking or state.frame - last_attack <= PRESSURE_FRAMES))
 
+    def guard_facing_right(self):
+        """Hacia donde esta el rival a efectos de cubrir: normalmente su lado actual, pero si
+        viene por el aire pegado y cruzando por encima, el lado donde va a CAER. Medido
+        (2026-10-15): el golpe de salto con A que cruza pego 4 veces a distancia 0-19 con Iori
+        cubriendo hacia el lado viejo en el mismo frame del cruce."""
+        state = self.state()
+        if state is None:
+            return True
+        rival, prev = state.rival, self._prev
+        if (rival.airborne and state.distance <= CROSSUP_RANGE and prev is not None
+                and prev.rival.x != rival.x):
+            landing_x = rival.x + (rival.x - prev.rival.x) * CROSSUP_LOOKAHEAD
+            return state.me.x <= landing_x
+        return state.facing_right
+
     def guard_low(self):
         """True -> bloquear abajo (rival agachado o atacando desde agachado: lows).
         False -> bloquear de pie (rival de pie o en el aire: overheads y saltos)."""
@@ -334,9 +351,11 @@ class RuleBrain:
         if rival.state_id in OVERHEAD_STATES.get(rival.character, ()):
             return False
         if rival.airborne:
-            # Saltando pero aun alto o lejos: atras de pie CAMINA hacia atras (asi acabo en la
-            # esquina); agachado no se mueve. Se pasa a guardia de pie cuando ya baja cerca
-            # (los golpes de salto medidos pegan a altura 28-45 y distancia < 50).
+            # Golpe de salto en marcha (bit de ataque): guardia de pie a cualquier altura (el
+            # 134 de Kim pega desde altura 80). Saltando SIN atacar y aun alto o lejos: agachado,
+            # porque atras de pie CAMINA hacia atras (asi acabo en la esquina).
+            if rival.attacking:
+                return False
             return rival.height > JUMP_GUARD_HEIGHT or state.distance > JUMP_GUARD_RANGE
         if self.preventive_guard and not state.rival.attacking:
             # Sin ataque en curso: guardia agachada. Sostener atras de pie sin que llegue un

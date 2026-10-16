@@ -116,7 +116,9 @@ THROWING_STATES = {229, 230, 231, 232}     # Kim agarrando (C: 229-231, D: 232);
 # Movimientos del rival que hay que bloquear AGACHADO (golpes bajos que no salen de agachado, asi que
 # el bit de agachado no los delata), por personaje. Kim 137 = Haki Kyaku (abajo-abajo + D, golpea el
 # piso): pelea 2026-10-15, 18 de 22 entraron con Iori cubriendo DE PIE, 9-10 de danio cada uno.
-LOW_HIT_STATES = {"Kim": {137}}
+#  Kim 144/146 = arranque y barrida del Hou'ou Kyaku (DM): si esa barrida entra, el resto (167, 14 de
+#  danio por golpe) ya no se bloquea. Pelea 19:27: 5 veces, las 5 con Iori cubriendo DE PIE.
+LOW_HIT_STATES = {"Kim": {137, 144, 146}}
 # Derribado: cayendo al suelo (78), tirado (73) y levantandose (72, ~50 frames). Medido en las trazas
 # del 2026-10-15 (Iori): 20 entradas, 0 ataques salieron con el boton pulsado dentro, las rodadas y
 # castigos que el bot pidio ahi se perdieron. Lo unico util es levantarse cubierto.

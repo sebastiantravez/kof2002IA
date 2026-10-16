@@ -749,3 +749,40 @@ class MeasuredRanges(unittest.TestCase):
 
     def test_point_blank_offers_2b_too(self):
         self.assertIn("castigo seguro: 2B", self.punish_at(425))   # d = 25
+
+
+class CrossupAndAirGuard(unittest.TestCase):
+    def brain(self, states):
+        feed = Feed()
+        b = RuleBrain(feed, {**IORI, "combat_mode": "BALANCED_EXPERIMENTAL"})
+        for s in states:
+            feed.s = s
+            b.state()
+        return b
+
+    def test_air_attack_is_blocked_standing_at_any_height(self):
+        b = self.brain([st(f, mx=400, rx=440, rh=82, ratk=(f >= 8)) for f in range(0, 10)])
+        self.assertFalse(b.guard_low())
+
+    def test_air_without_attack_high_stays_crouched(self):
+        b = self.brain([st(f, mx=400, rx=440, rh=82) for f in range(0, 10)])
+        self.assertTrue(b.guard_low())
+
+    def test_crossup_blocks_towards_landing_side(self):
+        # Kim viene por el aire desde la derecha, pegada, moviendose a la izquierda: va a caer detras
+        b = self.brain([st(f, mx=400, rx=430 - 6 * f, rh=40) for f in range(0, 4)])   # rx: 430..412
+        self.assertTrue(b.state().facing_right)            # por posicion aun esta a la derecha
+        self.assertFalse(b.guard_facing_right())           # pero se cubre hacia la izquierda (donde cae)
+
+    def test_no_crossup_prediction_when_far(self):
+        b = self.brain([st(f, mx=400, rx=480 - 6 * f, rh=40) for f in range(0, 4)])
+        self.assertTrue(b.guard_facing_right())
+
+    def test_houou_kyaku_slide_is_blocked_low(self):
+        feed = Feed()
+        b = RuleBrain(feed, IORI)
+        for f in range(0, 12):
+            s = st(f, mx=400, rx=460, ratk=(f >= 4))
+            feed.s = replace(s, rival=replace(s.rival, state_id=146 if f >= 6 else 144, character_id=6))
+            b.state()
+        self.assertTrue(b.guard_low())
