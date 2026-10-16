@@ -11,7 +11,7 @@ from dataclasses import dataclass
 
 WINDOW_FRAMES = 30 * 60          # el modelo del rival mira los ultimos 30 s de juego
 MIN_DWELL_FRAMES = 20            # histeresis: minimo en un modo antes de cambiar
-POKE_MIN, POKE_MAX = 60, 130     # distancias donde llegan los pokes (2C/2D/D de Iori)
+POKE_MIN, POKE_MAX = 60, 100     # 2C de Iori medido (5 trazas, 2026-10-15): pega 12/16 a 70-89 y 2/5 a 100+
 PASSIVE_RIVAL_FRAMES = 90        # rival sin atacar este tiempo: esta pasivo
 CALM_PRESSURE_RANGE = 60         # presion cercana: distancia a la que aplica pressure_needs_calm
 BAIT_COOLDOWN_FRAMES = 300       # tras un amague, no volver a amagar en 5 s (medido: 24% del tiempo en BAIT sin pegar)

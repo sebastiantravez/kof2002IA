@@ -726,3 +726,26 @@ class KnockedDown(unittest.TestCase):
         b = self.brain(0, mode="GUARD_ONLY_TEST", corner_escape="roll")
         sit, _ = b._options_for(b.state())
         self.assertEqual(sit, "salida de esquina")
+
+
+class MeasuredRanges(unittest.TestCase):
+    """Castigo seguro a 31-45: C>623C si, 2B no (el 2B de Iori no llega mas alla de ~30)."""
+
+    def punish_at(self, rx):
+        feed = Feed()
+        b = RuleBrain(feed, {**IORI, "combat_mode": "BALANCED_EXPERIMENTAL"})
+        for f in range(0, 45):
+            feed.s = st(f, mx=400, rx=rx, ratk=(5 <= f < 40))
+            b.state()
+            if 5 <= f < 40:
+                b._last_choice = Option(1, "guardia", "G[12]")
+        self.assertTrue(b.can_punish_now())
+        return {o.name for o in b._options_for(b.state())[1]}
+
+    def test_mid_close_uses_confirmed_c_not_2b(self):
+        names = self.punish_at(438)      # d = 38
+        self.assertIn("castigo seguro: C Oniyaki", names)
+        self.assertNotIn("castigo seguro: 2B", names)
+
+    def test_point_blank_offers_2b_too(self):
+        self.assertIn("castigo seguro: 2B", self.punish_at(425))   # d = 25

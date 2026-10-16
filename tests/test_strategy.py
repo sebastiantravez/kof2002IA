@@ -109,3 +109,10 @@ class CalmPressure(unittest.TestCase):
     def test_off_by_default(self):
         sit, names = self.names(calm=False, rival_attacks=True)
         self.assertTrue(sit != "NEUTRAL:PRESSURE" or [n for n in names if n.startswith("combo")])
+
+
+class PokeRanges(unittest.TestCase):
+    def test_poke_max_is_measured(self):
+        # 2C de Iori medido en 5 trazas: pega 12/16 a 70-89 y 2/5 a 100+ (antes POKE_MAX = 130)
+        from kof_ai.strategy import POKE_MAX
+        self.assertEqual(POKE_MAX, 100)

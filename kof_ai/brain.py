@@ -27,8 +27,10 @@ CHIP_DAMAGE = 2           # perder <= N con guardia puesta = raspado de un espec
 WHIFF_PUNISH_RANGE = 130  # golpe fallado del rival: se castiga corriendo hasta esta distancia
 PUNISH_WINDOW = 12       # frames tras el fin de un ataque rival en los que se puede castigar
 BLOCK_FRAMES = 18         # primeros frames de un ataque rival: bloquear; despues es recuperacion
-CLOSE_C_RANGE = 45        # distancia maxima para que salga el C de cerca (cancelable)
-LIGHT_RANGE = 55          # alcance de un ligero (2B) para empezar un combo; mas lejos falla
+CLOSE_C_RANGE = 45        # distancia maxima para que salga el C de cerca (cancelable); medido: C pega 10/11 a 30-39
+# Alcance del 2B de Iori medido en 5 trazas (2026-10-15): a 30-39 fallo 12 veces y pego 5 (con Kim
+# acercandose); a menos de 30 pega. Antes valia 55: la mitad de los castigos con 2B daban al aire.
+LIGHT_RANGE = 30
 HEAVY_START = re.compile(r"^[1-9]?[CD]")  # combo que empieza con C/D (o 6C...): solo pegado
 DISTANCE_BUCKET = 40      # igual que en learning.py (tramos de distancia de los contextos)
 LOW_ATTACK_WINDOW = 4     # ataque que empieza <= N frames despues de estar agachado = low
@@ -364,7 +366,7 @@ class RuleBrain:
                 and self.punish_confirm_frames <= since_end <= self.punish_confirm_frames + PUNISH_WINDOW
                 and self._rival_attack_duration >= LONG_ATTACK_FRAMES
                 and self._guarded_attack and not self._rival_attack_hit_me
-                and not self._recently_hit(state, 20) and state.distance <= LIGHT_RANGE)
+                and not self._recently_hit(state, 20) and state.distance <= CLOSE_C_RANGE)
 
     def _whiff_punishable(self, state):
         """WHIFF_PUNISH (solo BALANCED_EXPERIMENTAL): el ataque rival termino sin estar
@@ -489,19 +491,18 @@ class RuleBrain:
             # Combo corto CON confirmacion: la segunda parte solo sale si la primera pego
             # (combo.py '>'), asi que bloqueado sigue siendo seguro. Pelea 2026-10-15: el C
             # suelto pego 3 de 3 y nunca siguio (12 de danio); C>623C verificado hace ~24.
-            options = [Option(50, "castigo seguro: 2B", "2B")]
-            if d <= CLOSE_C_RANGE:
-                options += [Option(60, "castigo seguro: C Oniyaki", "C>623C"),
-                            Option(25, "castigo seguro: C Aoi Hana", "C>214C>214C>214C")]
+            options = [Option(60, "castigo seguro: C Oniyaki", "C>623C"),
+                       Option(25, "castigo seguro: C Aoi Hana", "C>214C>214C>214C")]
+            if d <= LIGHT_RANGE:
+                options.append(Option(30, "castigo seguro: 2B", "2B"))
             return Proposal("castigo seguro", options)
         if self.strategy is not None and self._whiff_punishable(state):
             m = self._moves
             # "correr + 2B" medido 0 de 4 (3 fallos, 2 castigados): el rival ya no esta donde
             # estaba al llegar. De lejos, poke o barrida; de cerca, el combo confirmado.
             if d <= CLOSE_C_RANGE:
-                options = [Option(45, "castigo: C Oniyaki", "C>623C"), Option(20, "castigo: 2B", "2B")]
-            elif d <= LIGHT_RANGE:
-                options = [Option(45, "castigo: 2B", "2B"), Option(20, "castigo: barrida 2D", "2D")]
+                options = [Option(45, "castigo: C Oniyaki", "C>623C"),
+                           Option(20, "castigo: 2B", "2B") if d <= LIGHT_RANGE else None]
             else:
                 options = [Option(45, "castigo: poke", m["poke"]),
                            Option(20, "castigo: barrida 2D", "2D") if d <= 110 else None]
