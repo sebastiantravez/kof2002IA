@@ -129,7 +129,9 @@ THROWING_STATES = {229, 230, 231, 232, 248, 249, 250, 251}
 #  danio por golpe) ya no se bloquea. Pelea 19:27: 5 veces, las 5 con Iori cubriendo DE PIE.
 #  Kim 250 = tercera parte (abajo+D) de la patada 214+K con seguimientos (235 -> 246/247 -> 250): pelea
 #  2026-10-17, 23 de 23 entraron con Iori cubriendo DE PIE tras bloquear las dos primeras partes.
-LOW_HIT_STATES = {"Kim": {137, 144, 146, 250}}
+#  Kim 235 = primera parte de esa patada (214+K): el usuario confirma que se bloquea agachado; 247 (arriba+D,
+#  saltito) de pie.
+LOW_HIT_STATES = {"Kim": {137, 144, 146, 235, 250}}
 # Carrera del rival (sin guardia mientras corre, segun el usuario): Kim 95 (el estado mas rapido
 # en el suelo, 2026-10-16).
 RUN_STATES = {"Kim": {95}}
