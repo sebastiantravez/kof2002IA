@@ -11,7 +11,7 @@ from dataclasses import dataclass, replace
 
 from .arbiter import (BALANCED_EXPERIMENTAL, DEFENSE_ONLY, GUARD_ONLY_TEST, CombatActionArbiter, Proposal,
                       mode_from_profile)
-from .game_state import BLOCKSTUN_STATES, LOW_HIT_STATES, OVERHEAD_STATES, THROWING_STATES
+from .game_state import BLOCKSTUN_STATES, LOW_HIT_STATES, OVERHEAD_STATES, RUN_STATES, THROWING_STATES
 from .strategy import Strategy, is_useful
 
 # Distancias en unidades del escenario (la pantalla mide ~304).
@@ -41,6 +41,8 @@ PRESSURE_FRAMES = 30      # el rival ataco hace <= N frames y sigue cerca: la pr
 GUARD_WORN_BLOCKS = 4     # bloqueos en GUARD_WORN_WINDOW que ya son 'demasiados' (guard crush en Magic Plus)
 GUARD_WORN_WINDOW = 240   # 4 s
 GUARD_WORN_RANGE = 60     # la respuesta (2B / Oniyaki) tiene que llegar
+RUN_PUNISH_RANGE = 100    # rival corriendo hacia mi a menos de esto: pegarle (2C llega a 60-100)
+RUN_SPEED = 5.0           # acercamiento por frame que ya es carrera (caminar: ~2-3)
 LONG_ATTACK_FRAMES = 24   # ataque rival que dura >= N frames: lo deja vulnerable al terminar
 # Castigo seguro (DEFENSE_WITH_PUNISH): el ataque rival tiene que llevar N frames terminado
 # sin que empiece otro (ataques de varias partes apagan el bit de ataque entre partes).
@@ -322,6 +324,19 @@ class RuleBrain:
             # Un ataque corto que termina puede seguir en cadena: solo tras ataques largos.
             return self._rival_attack_duration >= LONG_ATTACK_FRAMES
         return True
+
+    def _rival_running_in(self, state):
+        """El rival corre hacia mi por el suelo: estado de carrera conocido, o acercandose a
+        >= RUN_SPEED por frame sin atacar ni saltar, a distancia de golpe."""
+        rival, prev = state.rival, self._prev
+        if rival.attacking or rival.airborne or state.me.airborne or state.me.down or state.distance > RUN_PUNISH_RANGE:
+            return False
+        if rival.state_id in RUN_STATES.get(rival.character, ()):
+            return True
+        if prev is None or prev.frame == state.frame:
+            return False
+        closing = (prev.distance - state.distance) / (state.frame - prev.frame)
+        return closing >= RUN_SPEED
 
     def _guard_worn(self, state):
         """Bloqueos recientes >= GUARD_WORN_BLOCKS en GUARD_WORN_WINDOW frames, y ahora un hueco:
@@ -644,6 +659,8 @@ class RuleBrain:
             ]
             if me.stocks >= 1 and m.get("anti_air_dm"):
                 options.append(Option(30, "anti-aire DM", m["anti_air_dm"]))
+            if self.style == "aggressive":
+                return "rival cae hacia mi", options      # el anti-aereo cuenta (pedido del usuario)
             return self._threat_guard("rival cae hacia mi", options)
 
         if self._rival_attacking_near(state):
@@ -660,6 +677,14 @@ class RuleBrain:
                 Option(5, "reversal", m["reversal"]),
             ])
 
+        if self.style == "aggressive" and self._rival_running_in(state):
+            # Quien corre hacia ti no tiene guardia (usuario): golpe que llegue a esa distancia.
+            if d <= CLOSE_C_RANGE:
+                options = [Option(60, "castigo a la carrera: C Oniyaki", "C>623C"), Option(30, "golpe bajo 2B", "2B")]
+            else:
+                options = [Option(60, "castigo a la carrera: 2C", m["poke"]), Option(25, "barrida 2D", "2D")]
+            return "rival corre hacia mi", options
+
         if self._under_pressure(state) and self._guard_worn(state):
             # Muchos bloqueos seguidos y un hueco: en Magic Plus la guardia se ROMPE si solo
             # cubres (guard crush). Respuesta del usuario: pegar bajo, el Oniyaki o rodar; nunca
@@ -675,11 +700,17 @@ class RuleBrain:
             # Entre golpes de una cadena del rival: seguir cubierto hasta que termine.
             escape = (Option(8, "roll adelante (salir de la esquina)", "AB") if state.back_to_wall
                       else Option(8, "backdash", "4 5 4"))
-            return self._threat_guard("presion del rival", [
+            options = [
                 Option(80, "guardia", "G[10]"),
                 escape,
                 Option(6, "roll atras", "4AB") if not state.back_to_wall else Option(6, "salto adelante", "9[8]"),
-            ])
+            ]
+            if self.style == "aggressive" and d <= GUARD_WORN_RANGE:
+                # Disputar el hueco (usuario: "la pelea es atacar y buscar errores"): un bajo
+                # rapido o el Oniyaki. Se mide cuanto pega y cuanto cuesta.
+                options += [Option(35, "golpe bajo 2B", "2B"), Option(15, "anti-aire en la esquina", m["anti_air"])]
+                return "presion del rival", options
+            return self._threat_guard("presion del rival", options)
 
         if state.back_to_wall and d <= MID and not rival.airborne:
             # Acorralado: no retroceder contra la pared; cubrirse, salir rodando o saltando,

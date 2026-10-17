@@ -908,3 +908,36 @@ class CornerMixAndGuardWorn(unittest.TestCase):
         b = self.cornered_brain(blocks=2)
         sit, _ = b._options_for(b.state())
         self.assertNotEqual(sit, "guardia desgastada: responder")
+
+
+class AggressiveStyle(unittest.TestCase):
+    def brain(self, states, style="aggressive"):
+        feed = Feed()
+        b = RuleBrain(feed, {**IORI, "combat_mode": "BALANCED_EXPERIMENTAL", "style": style, "preventive_guard": False})
+        for s in states:
+            feed.s = s
+            b.state()
+        return b
+
+    def test_running_rival_gets_hit(self):
+        states = [replace(st(f, mx=400, rx=560 - 12 * f), rival=replace(st(f).rival, x=560 - 12 * f, character_id=6, state_id=95))
+                  for f in range(0, 6)]
+        b = self.brain(states)
+        sit, opts = b._options_for(b.state())
+        self.assertEqual(sit, "rival corre hacia mi")
+        self.assertTrue([o for o in opts if "carrera" in o.name])
+        # estilo defensivo: no
+        sit2, _ = self.brain(states, style="defensive")._options_for(b.state())
+        self.assertNotEqual(sit2, "rival corre hacia mi")
+
+    def test_pressure_gap_is_contested(self):
+        b = self.brain([st(f, mx=400, rx=440, ratk=(5 <= f < 30)) for f in range(0, 40)])
+        sit, opts = b._options_for(b.state())
+        self.assertEqual(sit, "presion del rival")
+        self.assertTrue([o for o in opts if o.name == "golpe bajo 2B"])
+
+    def test_defensive_pressure_gap_only_guards(self):
+        b = self.brain([st(f, mx=400, rx=440, ratk=(5 <= f < 30)) for f in range(0, 40)], style="defensive")
+        sit, opts = b._options_for(b.state())
+        self.assertEqual(sit, "presion del rival")
+        self.assertEqual({o.name for o in opts}, {"guardia"})

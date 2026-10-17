@@ -128,6 +128,9 @@ THROWING_STATES = {229, 230, 231, 232, 248, 249, 250, 251}
 #  Kim 144/146 = arranque y barrida del Hou'ou Kyaku (DM): si esa barrida entra, el resto (167, 14 de
 #  danio por golpe) ya no se bloquea. Pelea 19:27: 5 veces, las 5 con Iori cubriendo DE PIE.
 LOW_HIT_STATES = {"Kim": {137, 144, 146}}
+# Carrera del rival (sin guardia mientras corre, segun el usuario): Kim 95 (el estado mas rapido
+# en el suelo, 2026-10-16).
+RUN_STATES = {"Kim": {95}}
 # Derribado: cayendo al suelo (78), tirado (73) y levantandose (72, ~50 frames). Medido en las trazas
 # del 2026-10-15 (Iori): 20 entradas, 0 ataques salieron con el boton pulsado dentro, las rodadas y
 # castigos que el bot pidio ahi se perdieron. Lo unico util es levantarse cubierto.
