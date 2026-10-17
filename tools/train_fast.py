@@ -19,6 +19,7 @@ Uso:
      --preventive=on|off: guardia preventiva (sin acciones largas cerca del rival).
      --corner=none|roll|jump|reversal: salida de esquina bajo presion (ver docs/DEFENSE_AUDIT_V4.md).
      --calm-pressure: sin presion cercana mientras el rival ataca (BALANCED_EXPERIMENTAL).
+     --style=balanced: sin los pesos defensivos del perfil (mas ataque, mas riesgo).
      --throw-escape=matching[:espera[:mantener]]|none: soltar agarres con atras + el boton del
                  agarre tras 'espera' frames (perfil: matching:6:5); none = no intentar.
      --speed=N: como maximo N veces la velocidad normal (tambien con --play).
@@ -62,6 +63,8 @@ for a in sys.argv[1:]:
         moves[a[2:].replace("-", "_")] = True
     if a.startswith("--preventive="):   # guardia preventiva on|off (docs/DEFENSE_AUDIT_V4.md)
         moves["preventive_guard"] = a.split("=", 1)[1].lower() in ("on", "1", "true", "si")
+    if a.startswith("--style="):     # defensive | balanced | aggressive (pesos de brain.DEFENSIVE_STYLE)
+        moves["style"] = a.split("=", 1)[1].lower()
     if a == "--calm-pressure":       # presion cercana solo con el rival pasivo (ver strategy.py)
         moves["pressure_needs_calm"] = True
     if a.startswith("--corner="):    # salida de esquina: none | roll | jump | reversal
