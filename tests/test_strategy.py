@@ -140,17 +140,18 @@ class Rush(unittest.TestCase):
         self.assertTrue(names & {"correr", "especial de lejos"})
         self.assertFalse([n for n in names if "retroceder" in n or "amague" in n])
 
-    def test_mid_pokes(self):
+    def test_mid_closes_in_or_sweeps(self):
         _, names = self.names(400, 480)
-        self.assertIn("poke", names)
+        self.assertTrue(names & {"acercarse (pasos cortos)", "barrida 2D"})
 
     def test_close_combos(self):
         _, names = self.names(400, 430)
         self.assertIn("combo: C Oniyaki C", names)
 
-    def test_air_rival_close_gets_anti_air(self):
-        _, names = self.names(400, 460, rh=60)
-        self.assertIn("anti-aire especial", names)
+    def test_air_rival_close_mostly_guards(self):
+        b = self.brain([st(f, mx=400, rx=460, rh=60) for f in range(0, 30)])
+        _, opts = b._options_for(b.state())
+        self.assertEqual(max(opts, key=lambda o: o.weight).name, "guardia corta")   # Oniyaki anti-aereo: 3/14
 
     def test_attacks_between_rival_hits_when_aggressive(self):
         b = self.brain([st(f, mx=400, rx=440, ratk=(5 <= f < 30)) for f in range(0, 40)])

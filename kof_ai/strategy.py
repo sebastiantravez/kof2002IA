@@ -176,21 +176,23 @@ class Strategy:
         if mode.name == "RUSH":
             # Tabla por distancia (alcances medidos 2026-10-15/16: 2B <= 30, C ~40, 2C 60-100,
             # Yami Barai de lejos). Rival en el aire: Oniyaki si cae cerca, si no acercarse por debajo.
+            # Medido contra el usuario (5 min, 2026-10-17, 62 ataques): C>623C 11/12 y 150 de danio sin
+            # castigo, 2D 3/3; el Oniyaki anti-aereo 3/14 con 9 castigos, el Yami Barai de lejos 2/9 (4
+            # castigos), el 2C 1/7 (5), el 2B 1/6 (4). Se queda lo que pega: acercarse y C>623C / 2D.
             if state.rival.airborne:
-                opts = ([O(50, "anti-aire especial", moves["anti_air"]), O(20, "guardia corta", "G[4]")] if d <= 90
+                opts = ([O(50, "guardia corta", "G[4]"), O(12, "anti-aire especial", moves["anti_air"])] if d <= 90
                         else [O(40, "acercarse (pasos cortos)", "6[8]", interruptible=True), O(15, "guardia corta", "G[4]")])
             elif d <= 45:
-                opts = [O(30, "combo: C Oniyaki C", "C>623C"), O(20, "combo corto 2B", "2B>2A"),
-                        O(15, "agarre C", "6C"), O(10, "agarre D", "6D"), O(10, "overhead", moves["overhead"]),
-                        O(10, "golpe bajo 2B", "2B")]
+                opts = [O(50, "combo: C Oniyaki C", "C>623C"), O(12, "combo corto 2B", "2B>2A"),
+                        O(12, "agarre C", "6C"), O(8, "agarre D", "6D"), O(8, "overhead", moves["overhead"])]
                 opts += [O(20 / max(len(combos_in_range), 1), f"combo: {name}", notation)
                          for name, notation in combos_in_range.items()]
             elif d <= 100:
-                opts = [O(35, "poke", moves["poke"]), O(20, "barrida 2D", "2D"),
-                        O(30, "acercarse (pasos cortos)", "6[8]", interruptible=True), O(8, "hop adelante", "9[3]")]
+                opts = [O(45, "acercarse (pasos cortos)", "6[8]", interruptible=True), O(30, "barrida 2D", "2D"),
+                        O(8, "poke", moves["poke"]), O(8, "hop adelante", "9[3]")]
             else:
-                opts = [O(40, "correr", "6 5 6[18]", interruptible=True), O(25, "acercarse (pasos cortos)", "6[10]", interruptible=True),
-                        O(20, "especial de lejos", moves["far_special"])]
+                opts = [O(50, "correr", "6 5 6[18]", interruptible=True), O(30, "acercarse (pasos cortos)", "6[10]", interruptible=True),
+                        O(6, "especial de lejos", moves["far_special"])]
             if not attacks_ready:
                 opts = [O(1, "esperar que el rival se levante", "G[6]"), O(1, "acercarse (pasos cortos)", "6[6]", interruptible=True)]
         elif mode.name == "APPROACH":
