@@ -97,7 +97,9 @@ class OpponentModel:
 
 
 class Strategy:
-    def __init__(self, pressure_needs_calm=False):
+    def __init__(self, pressure_needs_calm=False, aggressive=False):
+        # aggressive: acercarse siempre y elegir el golpe por distancia (sin retroceder ni amagar)
+        self.aggressive = aggressive
         # Medido contra una persona (2026-10-14): los ataques de presion iniciados pegado al
         # rival mientras el rival TAMBIEN atacaba entraron 8 de 8 (el 2B rival gana a un golpe
         # lento). Con este interruptor la presion cercana solo sale si el rival esta pasivo.
@@ -121,6 +123,11 @@ class Strategy:
 
     def choose_mode(self, state, my_life_lead):
         d, f = state.distance, state.frame
+        if self.aggressive:
+            new = Mode("RUSH", "agresivo: acercarse y pegar segun la distancia")
+            if new.name != self.mode.name:
+                self.mode, self.mode_since = new, f
+            return self.mode
         m = self.model
         passive = self.passivity_score(f)
         rival_passive = m.rival_passive(f)
@@ -166,7 +173,27 @@ class Strategy:
         cornered_rival = 1.5 if state.rival_cornered else 1.0
         lows = m.low_ratio > 0.4          # el rival ataca mucho por abajo
 
-        if mode.name == "APPROACH":
+        if mode.name == "RUSH":
+            # Tabla por distancia (alcances medidos 2026-10-15/16: 2B <= 30, C ~40, 2C 60-100,
+            # Yami Barai de lejos). Rival en el aire: Oniyaki si cae cerca, si no acercarse por debajo.
+            if state.rival.airborne:
+                opts = ([O(50, "anti-aire especial", moves["anti_air"]), O(20, "guardia corta", "G[4]")] if d <= 90
+                        else [O(40, "acercarse (pasos cortos)", "6[8]", interruptible=True), O(15, "guardia corta", "G[4]")])
+            elif d <= 45:
+                opts = [O(30, "combo: C Oniyaki C", "C>623C"), O(20, "combo corto 2B", "2B>2A"),
+                        O(15, "agarre C", "6C"), O(10, "agarre D", "6D"), O(10, "overhead", moves["overhead"]),
+                        O(10, "golpe bajo 2B", "2B")]
+                opts += [O(20 / max(len(combos_in_range), 1), f"combo: {name}", notation)
+                         for name, notation in combos_in_range.items()]
+            elif d <= 100:
+                opts = [O(35, "poke", moves["poke"]), O(20, "barrida 2D", "2D"),
+                        O(30, "acercarse (pasos cortos)", "6[8]", interruptible=True), O(8, "hop adelante", "9[3]")]
+            else:
+                opts = [O(40, "correr", "6 5 6[18]", interruptible=True), O(25, "acercarse (pasos cortos)", "6[10]", interruptible=True),
+                        O(20, "especial de lejos", moves["far_special"])]
+            if not attacks_ready:
+                opts = [O(1, "esperar que el rival se levante", "G[6]"), O(1, "acercarse (pasos cortos)", "6[6]", interruptible=True)]
+        elif mode.name == "APPROACH":
             opts = [O(30 * push, "acercarse (pasos cortos)", "6[10]", interruptible=True),
                     O(12 * push if d > 180 else 4, "correr", "6 5 6[18]", interruptible=True),
                     O(12, "guardia corta", "G[6]"),

@@ -46,7 +46,8 @@ class Proposal:
 
 
 class CombatActionArbiter:
-    def __init__(self, mode):
+    def __init__(self, mode, aggressive=False):
+        self.aggressive = aggressive
         self.mode = mode
         self.decisions = {"defensa": 0, "castigo": 0, "ataque": 0}
 
@@ -65,6 +66,9 @@ class CombatActionArbiter:
         if punish is not None:
             return punish, "castigo"
         if (self.mode == BALANCED_EXPERIMENTAL and attack is not None
-                and defense.situation in NEUTRAL_SITUATIONS):
+                and (defense.situation in NEUTRAL_SITUATIONS
+                     or (self.aggressive and defense.situation not in HARD_THREATS))):
+            # aggressive (pedido del usuario 2026-10-17): atacar tambien entre golpes del rival,
+            # con el rival en el aire lejos o acorralado; solo las amenazas duras lo frenan.
             return attack, "ataque"
         return defense, "defensa"

@@ -116,3 +116,43 @@ class PokeRanges(unittest.TestCase):
         # 2C de Iori medido en 5 trazas: pega 12/16 a 70-89 y 2/5 a 100+ (antes POKE_MAX = 130)
         from kof_ai.strategy import POKE_MAX
         self.assertEqual(POKE_MAX, 100)
+
+
+class Rush(unittest.TestCase):
+    """Estilo aggressive: un solo modo RUSH que elige por distancia; nunca retrocede ni amaga."""
+
+    def brain(self, states):
+        feed = Feed()
+        b = RuleBrain(feed, {**STRATEGIC, "style": "aggressive", "preventive_guard": False})
+        for s in states:
+            feed.s = s
+            b.state()
+        return b
+
+    def names(self, mx, rx, rh=0):
+        b = self.brain([st(f, mx=mx, rx=rx, rh=rh) for f in range(0, 30)])
+        sit, opts = b._options_for(b.state())
+        return sit, {o.name for o in opts}
+
+    def test_far_runs_or_fireballs(self):
+        sit, names = self.names(200, 450)
+        self.assertEqual(sit, "NEUTRAL:RUSH")
+        self.assertTrue(names & {"correr", "especial de lejos"})
+        self.assertFalse([n for n in names if "retroceder" in n or "amague" in n])
+
+    def test_mid_pokes(self):
+        _, names = self.names(400, 480)
+        self.assertIn("poke", names)
+
+    def test_close_combos(self):
+        _, names = self.names(400, 430)
+        self.assertIn("combo: C Oniyaki C", names)
+
+    def test_air_rival_close_gets_anti_air(self):
+        _, names = self.names(400, 460, rh=60)
+        self.assertIn("anti-aire especial", names)
+
+    def test_attacks_between_rival_hits_when_aggressive(self):
+        b = self.brain([st(f, mx=400, rx=440, ratk=(5 <= f < 30)) for f in range(0, 40)])
+        sit, _ = b._options_for(b.state())
+        self.assertEqual(sit, "NEUTRAL:RUSH")      # la "presion del rival" ya no bloquea el ataque

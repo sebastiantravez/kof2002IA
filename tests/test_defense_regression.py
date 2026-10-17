@@ -931,8 +931,9 @@ class AggressiveStyle(unittest.TestCase):
         self.assertNotEqual(sit2, "rival corre hacia mi")
 
     def test_pressure_gap_is_contested(self):
+        # la defensa propone pegar en el hueco; el arbitro agresivo puede preferir el ataque (RUSH)
         b = self.brain([st(f, mx=400, rx=440, ratk=(5 <= f < 30)) for f in range(0, 40)])
-        sit, opts = b._options_for(b.state())
+        sit, opts = b._defense_options(b.state(), allow_punish=False)
         self.assertEqual(sit, "presion del rival")
         self.assertTrue([o for o in opts if o.name == "golpe bajo 2B"])
 
