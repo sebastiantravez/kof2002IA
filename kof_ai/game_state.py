@@ -121,7 +121,9 @@ BLOCKSTUN_STATES = set(range(27, 38))      # bloqueando: 27-31 de pie, 32-37 aga
 # Kim agarrando (confirmado por el usuario 2026-10-17): adelante+C = 229-231, adelante+D = 232,
 # atras+C = 248 (se suelta con C: 4/4), atras+D = 249 (con D: 3/3). 250 = intento de agarre que no
 # conecta: el 4C de la soltada le pega (65 de danio en una pelea). 251 por ver.
-THROWING_STATES = {229, 230, 231, 232, 248, 249, 250, 251}
+# OJO: 250 NO es agarre (es el remate de la patada 214+K): tenerlo aqui hacia que Iori soltara la guardia
+# para 'escapar' y se comiera el remate 13 de 13 (pelea 2026-10-17 17:28).
+THROWING_STATES = {229, 230, 231, 232, 248, 249}
 # Movimientos del rival que hay que bloquear AGACHADO (golpes bajos que no salen de agachado, asi que
 # el bit de agachado no los delata), por personaje. Kim 137 = Haki Kyaku (abajo-abajo + D, golpea el
 # piso): pelea 2026-10-15, 18 de 22 entraron con Iori cubriendo DE PIE, 9-10 de danio cada uno.

@@ -848,10 +848,11 @@ class MoreKimThrowsAndOverhead(unittest.TestCase):
             b.state()
         return b._options_for(b.state())
 
-    def test_248_to_251_are_throws(self):
-        for rs in (248, 249, 250, 251):
+    def test_248_and_249_are_throws_250_is_not(self):
+        for rs in (248, 249):
             sit, opts = self.thrown_by(rs)
             self.assertEqual(sit, "me agarran", rs)
+        self.assertNotEqual(self.thrown_by(250)[0], "me agarran")   # remate de la patada 214+K: cubrir agachado
         self.assertIn("4C", self.thrown_by(248)[1][0].notation)
         self.assertIn("4D", self.thrown_by(249)[1][0].notation)
 
