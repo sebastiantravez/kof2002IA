@@ -127,7 +127,9 @@ THROWING_STATES = {229, 230, 231, 232, 248, 249, 250, 251}
 # piso): pelea 2026-10-15, 18 de 22 entraron con Iori cubriendo DE PIE, 9-10 de danio cada uno.
 #  Kim 144/146 = arranque y barrida del Hou'ou Kyaku (DM): si esa barrida entra, el resto (167, 14 de
 #  danio por golpe) ya no se bloquea. Pelea 19:27: 5 veces, las 5 con Iori cubriendo DE PIE.
-LOW_HIT_STATES = {"Kim": {137, 144, 146}}
+#  Kim 250 = tercera parte (abajo+D) de la patada 214+K con seguimientos (235 -> 246/247 -> 250): pelea
+#  2026-10-17, 23 de 23 entraron con Iori cubriendo DE PIE tras bloquear las dos primeras partes.
+LOW_HIT_STATES = {"Kim": {137, 144, 146, 250}}
 # Carrera del rival (sin guardia mientras corre, segun el usuario): Kim 95 (el estado mas rapido
 # en el suelo, 2026-10-16).
 RUN_STATES = {"Kim": {95}}

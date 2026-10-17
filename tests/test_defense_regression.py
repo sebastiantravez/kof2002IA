@@ -942,3 +942,14 @@ class AggressiveStyle(unittest.TestCase):
         sit, opts = b._options_for(b.state())
         self.assertEqual(sit, "presion del rival")
         self.assertEqual({o.name for o in opts}, {"guardia"})
+
+
+class KimSankuuThirdPartIsLow(unittest.TestCase):
+    def test_250_blocked_crouching(self):
+        feed = Feed()
+        b = RuleBrain(feed, IORI)
+        for f in range(0, 12):
+            s = st(f, mx=400, rx=460, ratk=(f >= 2))
+            feed.s = replace(s, rival=replace(s.rival, state_id=250 if f >= 6 else 247, character_id=6))
+            b.state()
+        self.assertTrue(b.guard_low())
