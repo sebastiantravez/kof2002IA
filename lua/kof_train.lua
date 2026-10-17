@@ -20,8 +20,8 @@ local RESP = ROOT .. "lock_resp.txt"
 
 local P1, P2 = 0x108100, 0x108300
 -- Solo los bytes que usa el bot (igual que SPARSE_OFFSETS en kof_ai/lockstep.py):
--- x, altura, x/y en pantalla, personaje, agarre, flags ataque/agachado, vida, barras.
-local OFFSETS = {0x18, 0x19, 0x20, 0x21, 0x24, 0x25, 0x26, 0x27, 0x71, 0x73, 0xE0, 0x139, 0x1E3}
+-- x, altura, x/y en pantalla, personaje, estado, flags ataque/agachado, vida, barras, orientacion (+0x31).
+local OFFSETS = {0x18, 0x19, 0x20, 0x21, 0x24, 0x25, 0x26, 0x27, 0x71, 0x73, 0xE0, 0x139, 0x1E3, 0x31}
 local KEYMAP = {
   up = "P1 Up", down = "P1 Down", left = "P1 Left", right = "P1 Right",
   A = "P1 Button A", B = "P1 Button B", C = "P1 Button C", D = "P1 Button D",

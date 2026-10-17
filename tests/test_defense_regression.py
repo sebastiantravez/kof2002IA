@@ -815,3 +815,24 @@ class CornerOverhead(unittest.TestCase):
         b = self.brain(40, 100, [100, 95, 90, 83, 73])
         sit, _ = b._options_for(b.state())
         self.assertNotEqual(sit, "rival encima (esquina)")
+
+
+class GameFacing(unittest.TestCase):
+    """+0x31 del juego manda sobre la posicion (levantarse de espaldas en la esquina, cruces)."""
+
+    def test_raw_facing_overrides_position(self):
+        s = st(0, mx=40, rx=60)
+        self.assertTrue(s.facing_right)
+        s2 = replace(s, me=replace(s.me, facing_right_raw=0))
+        self.assertFalse(s2.facing_right)                 # el juego lo tiene mirando a la pared
+        self.assertTrue(replace(s, me=replace(s.me, facing_right_raw=1)).facing_right)
+
+    def test_unknown_falls_back_to_position(self):
+        self.assertFalse(st(0, mx=500, rx=400).facing_right)
+
+    def test_sparse_parse_with_and_without_facing(self):
+        from kof_ai.lockstep import _fighter_from_sparse
+        old = "00af00480000000000dc0015000000660000"[:26]       # 13 bytes
+        self.assertEqual(_fighter_from_sparse(old).facing_right_raw, -1)
+        new = old + "01"
+        self.assertEqual(_fighter_from_sparse(new).facing_right_raw, 1)

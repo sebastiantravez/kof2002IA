@@ -332,6 +332,8 @@ class RuleBrain:
         state = self.state()
         if state is None:
             return True
+        if state.me.facing_right_raw in (0, 1):
+            return state.facing_right          # orientacion real del juego: no hay que adivinar
         rival, prev = state.rival, self._prev
         if (rival.airborne and state.distance <= CROSSUP_RANGE and prev is not None
                 and prev.rival.x != rival.x):

@@ -6,6 +6,7 @@ virtuales con la misma interfaz que VirtualKeyboard, FrameClock y StateReader: e
 cerebro, los combos y la guardia funcionan igual, pero por frames y sin foco.
 """
 import time
+from dataclasses import replace
 from pathlib import Path
 
 from .game_state import STRUCT_SIZE, Fighter, GameState
@@ -15,14 +16,19 @@ from .game_state import STRUCT_SIZE, Fighter, GameState
 # solo estos en vez de los 512 bytes acelera mucho cada frame.
 ROUND_MAX_FRAMES = 80 * 60   # ronda sin KO mas larga que esto: recargar igual
 
-SPARSE_OFFSETS = (0x18, 0x19, 0x20, 0x21, 0x24, 0x25, 0x26, 0x27, 0x71, 0x73, 0xE0, 0x139, 0x1E3)
+SPARSE_OFFSETS = (0x18, 0x19, 0x20, 0x21, 0x24, 0x25, 0x26, 0x27, 0x71, 0x73, 0xE0, 0x139, 0x1E3, 0x31)
+LEGACY_SPARSE = 13   # kof_train.lua anterior: sin el byte de orientacion (+0x31)
 
 
 def _fighter_from_sparse(hex_bytes):
     raw = bytearray(STRUCT_SIZE)
-    for off, value in zip(SPARSE_OFFSETS, bytes.fromhex(hex_bytes)):
+    values = bytes.fromhex(hex_bytes)
+    for off, value in zip(SPARSE_OFFSETS, values):
         raw[off] = value
-    return Fighter.from_bytes(bytes(raw))
+    fighter = Fighter.from_bytes(bytes(raw))
+    if len(values) < len(SPARSE_OFFSETS):      # script Lua viejo: orientacion desconocida
+        fighter = replace(fighter, facing_right_raw=-1)
+    return fighter
 
 
 class Lockstep:
@@ -121,7 +127,7 @@ class Lockstep:
     def _wait_request(self):
         """Linea "seq frame ack p1 p2 seq"; si los dos seq no coinciden, Lua la estaba
         escribiendo: se descarta y se vuelve a leer."""
-        size = len(SPARSE_OFFSETS) * 2
+        sizes = (len(SPARSE_OFFSETS) * 2, LEGACY_SPARSE * 2)
         start = time.time()
         warned = False
         while time.time() - start < self.max_wait:
@@ -132,7 +138,7 @@ class Lockstep:
                 parts = self.req.read_text().split()
             except OSError:
                 continue
-            if len(parts) != 6 or parts[0] != parts[5] or len(parts[3]) != size or len(parts[4]) != size:
+            if len(parts) != 6 or parts[0] != parts[5] or len(parts[3]) not in sizes or len(parts[4]) != len(parts[3]):
                 continue
             seq = int(parts[0])
             if self.last_seq is None and seq == self._stale_seq:

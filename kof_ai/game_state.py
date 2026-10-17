@@ -6,6 +6,7 @@ verificados en KOF 2002 moviendo, saltando y golpeando:
     +0x20 word  altura sobre el suelo (0 = en el suelo)
     +0x24 word  X en pantalla (0..304)
     +0x26 word  Y en pantalla (220 = suelo, menor = mas alto)
+    +0x031 byte 1 = mira a la derecha, 0 = a la izquierda (orientacion REAL del juego)
     +0x0E0 bit0 en animacion de ataque (arranque + activo + recuperacion)
     +0x0E0 bit2 agachado quieto (se apaga al atacar agachado)
     +0x139 byte vida (102 = llena)
@@ -47,6 +48,7 @@ class Fighter:
     character_id: int = -1
     stocks: int = 0          # barras de poder llenas (para DMs)
     state_id: int = 0        # +0x073: identificador de animacion/estado (ver STATE_OFFSET)
+    facing_right_raw: int = -1   # +0x031 del juego: 1 derecha, 0 izquierda, -1 desconocido
 
     @property
     def character(self):
@@ -63,7 +65,7 @@ class Fighter:
                    height=word(0x20), life=raw[0x139], attacking=_is_attacking(raw),
                    crouching=_is_crouching(raw), character_id=raw[CHARACTER_OFFSET],
                    stocks=raw[POWER_OFFSET] if POWER_OFFSET is not None else 0,
-                   state_id=raw[STATE_OFFSET])
+                   state_id=raw[STATE_OFFSET], facing_right_raw=raw[FACING_OFFSET])
 
     @property
     def down(self):
@@ -109,6 +111,10 @@ THROWN_MASK = 0x02
 # era este byte. La tabla de valores (bloqueo, agarre, por personaje) se completa con
 # tools/guard_test.py en modo versus.
 STATE_OFFSET = 0x73
+# Orientacion real (encontrado 2026-10-16 en 8 volcados .bin: coincide con la posicion el 95-99% y
+# los desacuerdos son el juego girando tarde: levantarse de espaldas, cruces). Decide hacia donde
+# se cubre: en la esquina, levantandose mirando a la pared, la guardia por posicion salia al reves.
+FACING_OFFSET = 0x31
 # Valores de +0x073 medidos en tools/guard_test.py (Iori defendiendo, Kim atacando, 2026-10-14):
 THROWN_STATES = {168}                      # agarrado (entrada del agarre, C y D)
 BLOCKSTUN_STATES = set(range(27, 38))      # bloqueando: 27-31 de pie, 32-37 agachado (segun golpe)
@@ -144,6 +150,9 @@ class GameState:
 
     @property
     def facing_right(self):
+        """Hacia donde mira el juego a mi personaje (+0x31); por posicion si no se conoce."""
+        if self.me.facing_right_raw in (0, 1):
+            return self.me.facing_right_raw == 1
         return self.me.x <= self.rival.x
 
     @property
