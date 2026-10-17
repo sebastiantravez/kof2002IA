@@ -133,7 +133,9 @@ THROWING_STATES = {229, 230, 231, 232, 248, 249}
 #  2026-10-17, 23 de 23 entraron con Iori cubriendo DE PIE tras bloquear las dos primeras partes.
 #  Kim 235 = primera parte de esa patada (214+K): el usuario confirma que se bloquea agachado; 247 (arriba+D,
 #  saltito) de pie.
-LOW_HIT_STATES = {"Kim": {137, 144, 146, 235, 250}}
+#  Kim 250 NO es bajo: con Iori cubriendo AGACHADO entro 18 de 18 (17:46); va por el aire (altura 27-33,
+#  avanza ~70 px): es el seguimiento arriba+D, un overhead -> OVERHEAD_STATES.
+LOW_HIT_STATES = {"Kim": {137, 144, 146, 235}}
 # Carrera del rival (sin guardia mientras corre, segun el usuario): Kim 95 (el estado mas rapido
 # en el suelo, 2026-10-16).
 RUN_STATES = {"Kim": {95}}
@@ -143,7 +145,7 @@ RUN_STATES = {"Kim": {95}}
 DOWN_STATES = {72, 73, 78}
 # Movimientos que hay que bloquear DE PIE (overheads de pie). Kim 89 = patada en arco (6B tras 2D,
 # segun el usuario); medido: 88 se bloqueo agachado 79/79 (no es el overhead), 89 entro agachado.
-OVERHEAD_STATES = {"Kim": {89}}
+OVERHEAD_STATES = {"Kim": {89, 250}}
 POWER_OFFSET = 0x1E3
 
 
