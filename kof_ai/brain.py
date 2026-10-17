@@ -664,11 +664,12 @@ class RuleBrain:
             # Muchos bloqueos seguidos y un hueco: en Magic Plus la guardia se ROMPE si solo
             # cubres (guard crush). Respuesta del usuario: pegar bajo, el Oniyaki o rodar; nunca
             # seguir cubriendo. Sin _threat_guard: aqui cubrir es justo lo que no vale.
-            return "guardia desgastada: responder", [
-                Option(50, "golpe bajo 2B", "2B"),
-                Option(30, "anti-aire en la esquina", m["anti_air"]),
-                Option(20, "roll adelante (salir de la esquina)", "AB") if state.back_to_wall else Option(20, "backdash", "4 5 4"),
-            ]
+            # Medido 2026-10-17 (2 x 5 min, 18 respuestas): 2B pego 5/7, Oniyaki 4/6, rodada 2/2 sin
+            # castigo; el backdash 0/3 util y 2 castigados: fuera.
+            options = [Option(50, "golpe bajo 2B", "2B"), Option(30, "anti-aire en la esquina", m["anti_air"])]
+            if state.back_to_wall:
+                options.append(Option(20, "roll adelante (salir de la esquina)", "AB"))
+            return "guardia desgastada: responder", options
 
         if self._under_pressure(state):
             # Entre golpes de una cadena del rival: seguir cubierto hasta que termine.
