@@ -836,3 +836,30 @@ class GameFacing(unittest.TestCase):
         self.assertEqual(_fighter_from_sparse(old).facing_right_raw, -1)
         new = old + "01"
         self.assertEqual(_fighter_from_sparse(new).facing_right_raw, 1)
+
+
+class MoreKimThrowsAndOverhead(unittest.TestCase):
+    def thrown_by(self, rival_state):
+        feed = Feed()
+        b = RuleBrain(feed, IORI)
+        for f in range(0, 10):
+            s = st(f, mx=400, rx=430)
+            feed.s = replace(s, me=replace(s.me, state_id=23), rival=replace(s.rival, state_id=rival_state if f >= 6 else 1))
+            b.state()
+        return b._options_for(b.state())
+
+    def test_248_to_251_are_throws(self):
+        for rs in (248, 249, 250, 251):
+            sit, opts = self.thrown_by(rs)
+            self.assertEqual(sit, "me agarran", rs)
+        self.assertIn("4C", self.thrown_by(248)[1][0].notation)
+        self.assertIn("4D", self.thrown_by(249)[1][0].notation)
+
+    def test_kim_arc_kick_is_blocked_standing(self):
+        feed = Feed()
+        b = RuleBrain(feed, IORI)
+        for f in range(0, 12):
+            s = st(f, mx=400, rx=440, ratk=(f >= 4), rcr=(f < 4))
+            feed.s = replace(s, rival=replace(s.rival, state_id=89 if f >= 6 else 115, character_id=6))
+            b.state()
+        self.assertFalse(b.guard_low())

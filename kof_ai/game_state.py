@@ -118,7 +118,10 @@ FACING_OFFSET = 0x31
 # Valores de +0x073 medidos en tools/guard_test.py (Iori defendiendo, Kim atacando, 2026-10-14):
 THROWN_STATES = {168}                      # agarrado (entrada del agarre, C y D)
 BLOCKSTUN_STATES = set(range(27, 38))      # bloqueando: 27-31 de pie, 32-37 agachado (segun golpe)
-THROWING_STATES = {229, 230, 231, 232}     # Kim agarrando (C: 229-231, D: 232); otros personajes: por medir
+# Kim agarrando. 229-231 = C y 232 = D de frente (guard_test). 248-251 medidos en peleas reales
+# (2026-10-16): Iori entra en 168 al empezar; 248 se solto con C (4 de 4 cuando el bot lo intento),
+# 249 NO se solto con C (0 de 7, dura 55-100 frames con golpes de 4): se prueba D; 250/251 por medir.
+THROWING_STATES = {229, 230, 231, 232, 248, 249, 250, 251}
 # Movimientos del rival que hay que bloquear AGACHADO (golpes bajos que no salen de agachado, asi que
 # el bit de agachado no los delata), por personaje. Kim 137 = Haki Kyaku (abajo-abajo + D, golpea el
 # piso): pelea 2026-10-15, 18 de 22 entraron con Iori cubriendo DE PIE, 9-10 de danio cada uno.
@@ -129,8 +132,9 @@ LOW_HIT_STATES = {"Kim": {137, 144, 146}}
 # del 2026-10-15 (Iori): 20 entradas, 0 ataques salieron con el boton pulsado dentro, las rodadas y
 # castigos que el bot pidio ahi se perdieron. Lo unico util es levantarse cubierto.
 DOWN_STATES = {72, 73, 78}
-# Movimientos que hay que bloquear DE PIE (overheads de pie): ninguno medido aun.
-OVERHEAD_STATES = {}
+# Movimientos que hay que bloquear DE PIE (overheads de pie). Kim 89 = patada en arco (6B tras 2D,
+# segun el usuario); medido: 88 se bloqueo agachado 79/79 (no es el overhead), 89 entro agachado.
+OVERHEAD_STATES = {"Kim": {89}}
 POWER_OFFSET = 0x1E3
 
 

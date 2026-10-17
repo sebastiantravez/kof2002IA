@@ -43,7 +43,7 @@ LONG_ATTACK_FRAMES = 24   # ataque rival que dura >= N frames: lo deja vulnerabl
 # sin que empiece otro (ataques de varias partes apagan el bit de ataque entre partes).
 # Configurable por perfil: "punish_confirm_frames".
 PUNISH_CONFIRM_FRAMES = 4
-D_THROW_STATES = {232}    # estado del rival mientras agarra con D (Kim; otros personajes por medir)
+D_THROW_STATES = {232, 249}   # agarres que se sueltan con D (Kim 232 medido; 249: con C fallo 0 de 7)
 THROW_ESCAPE_DELAY = 6    # frames de espera tras ver el agarre antes de pulsar (persona: soltadas en t=13..21)
 THROW_ESCAPE_HOLD = 5     # frames con atras+boton mantenidos (la persona mantuvo 2-7)
 CORNER_ESCAPE_RANGE = 70      # salida de esquina: el rival esta a menos de esto
