@@ -804,7 +804,7 @@ class CornerOverhead(unittest.TestCase):
         sit, opts = b._options_for(b.state())
         self.assertEqual(sit, "rival encima (esquina)")
         self.assertEqual({o.name for o in opts}, {"anti-aire en la esquina", "guardia"})
-        self.assertEqual(max(opts, key=lambda o: o.weight).notation, IORI["anti_air"])
+        self.assertEqual(max(opts, key=lambda o: o.weight).name, "guardia")     # medido: cubrir gana ahi
 
     def test_open_field_overhead_stays_guarded(self):
         b = self.brain(400, 402, [100, 95, 90, 83, 73])

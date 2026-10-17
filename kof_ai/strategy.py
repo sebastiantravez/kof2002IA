@@ -173,7 +173,9 @@ class Strategy:
                     O(6, "especial de lejos", moves["far_special"]) if d > 120 else None,
                     O(3, "hop adelante", "9[3]") if m.jump_rate < 3 else None]
         elif mode.name == "POKE":
-            opts = [O(30 * push, "poke", moves["poke"]),
+            # Poke (2C) contra esta persona: 1 de 6 y 1 de 7 pegaron, 6 castigados (salta y lo pasa por
+            # encima): peso bajo; la barrida y acercarse valen mas.
+            opts = [O(10 * push, "poke", moves["poke"]),
                     O(15 * push, "barrida 2D", "2D") if d <= 110 else None,
                     O(15, "acercarse (pasos cortos)", "6[8]", interruptible=True),
                     O(10, "retroceder (pasos cortos)", "4[8]", interruptible=True),

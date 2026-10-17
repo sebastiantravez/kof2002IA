@@ -596,9 +596,12 @@ class RuleBrain:
             # salto cruzados entraron cubriendo hacia cualquier lado; contra la pared el lado del
             # golpe es ambiguo). Respuesta del usuario: el Oniyaki (623A, invulnerable al salir,
             # pega arriba y a los dos lados). Sin _threat_guard: aqui cubrirse es lo que falla.
+            # Medido 2026-10-16 (8 min, 30 veces): Oniyaki 25 veces = 50 de danio hecho y 51
+            # recibido (8 castigos); guardia 5 veces = 1 recibido. Con la orientacion real (+0x31)
+            # cubrir vuelve a funcionar ahi: guardia primero, Oniyaki como sorpresa.
             return "rival encima (esquina)", [
-                Option(70, "anti-aire en la esquina", m["anti_air"]),
-                Option(30, "guardia", "G[6]"),
+                Option(70, "guardia", "G[6]"),
+                Option(30, "anti-aire en la esquina", m["anti_air"]),
             ]
 
         if self._rival_jumping_in(state):
