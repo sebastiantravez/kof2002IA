@@ -786,3 +786,32 @@ class CrossupAndAirGuard(unittest.TestCase):
             feed.s = replace(s, rival=replace(s.rival, state_id=146 if f >= 6 else 144, character_id=6))
             b.state()
         self.assertTrue(b.guard_low())
+
+
+class CornerOverhead(unittest.TestCase):
+    """Acorralado y el rival cae encima (d <= 20): anti-aire 623A, porque cubrir no vale ahi."""
+
+    def brain(self, mx, rx, heights):
+        feed = Feed()
+        b = RuleBrain(feed, {**IORI, "combat_mode": "BALANCED_EXPERIMENTAL"})
+        for f, h in enumerate(heights):
+            feed.s = st(f, mx=mx, rx=rx, rh=h, ratk=(h > 0))
+            b.state()
+        return b
+
+    def test_corner_overhead_uses_anti_air(self):
+        b = self.brain(40, 42, [100, 95, 90, 83, 73])       # pared izquierda en 32; Kim cae encima
+        sit, opts = b._options_for(b.state())
+        self.assertEqual(sit, "rival encima (esquina)")
+        self.assertEqual({o.name for o in opts}, {"anti-aire en la esquina", "guardia"})
+        self.assertEqual(max(opts, key=lambda o: o.weight).notation, IORI["anti_air"])
+
+    def test_open_field_overhead_stays_guarded(self):
+        b = self.brain(400, 402, [100, 95, 90, 83, 73])
+        sit, _ = b._options_for(b.state())
+        self.assertNotEqual(sit, "rival encima (esquina)")
+
+    def test_corner_but_rival_far_is_not_overhead(self):
+        b = self.brain(40, 100, [100, 95, 90, 83, 73])
+        sit, _ = b._options_for(b.state())
+        self.assertNotEqual(sit, "rival encima (esquina)")

@@ -22,6 +22,7 @@ ANTI_AIR_MAX_HEIGHT = 70  # y ya no muy alto, para que el anti-aire conecte
 JUMP_GUARD_HEIGHT = 60    # rival en el aire por encima de esto: guardia agachada (no caminar atras)
 JUMP_GUARD_RANGE = 70     # rival en el aire mas lejos de esto: idem
 CROSSUP_RANGE = 30        # rival en el aire a menos de esto: cubrir hacia donde va a caer, no donde esta
+CORNER_OVERHEAD_RANGE = 20  # acorralado y el rival cae a menos de esto: anti-aire, no guardia
 CROSSUP_LOOKAHEAD = 4     # frames de avance para estimar donde cae (el golpe llega 3-5 frames tras el bit)
 HIT_MEMORY_FRAMES = 40   # cuanto tiempo "recuerdo" haber recibido un golpe
 MAX_DAMAGE_PER_FRAME = 60  # caidas mayores son KO/transiciones de ronda, no golpes
@@ -586,6 +587,16 @@ class RuleBrain:
             return "castigar", options + [
                 Option(12, "agarre", "6C") if d <= CLOSE_C_RANGE else Option(12, "barrida 2D", "2D"),
                 Option(8, "golpe bajo 2B", "2B"),
+            ]
+
+        if state.back_to_wall and rival.airborne and d <= CORNER_OVERHEAD_RANGE and self._rival_descending(state):
+            # Rival cayendo ENCIMA en la esquina: la guardia no vale (2026-10-16: 2 de 2 golpes de
+            # salto cruzados entraron cubriendo hacia cualquier lado; contra la pared el lado del
+            # golpe es ambiguo). Respuesta del usuario: el Oniyaki (623A, invulnerable al salir,
+            # pega arriba y a los dos lados). Sin _threat_guard: aqui cubrirse es lo que falla.
+            return "rival encima (esquina)", [
+                Option(70, "anti-aire en la esquina", m["anti_air"]),
+                Option(30, "guardia", "G[6]"),
             ]
 
         if self._rival_jumping_in(state):
