@@ -693,7 +693,7 @@ class NoWalkingIntoTheCorner(unittest.TestCase):
         self.assertTrue([o for o in opts if o.name == "retroceder un paso"])
 
     def test_profile_rolls_out_of_the_corner(self):
-        self.assertEqual(IORI.get("corner_escape"), "roll")
+        self.assertIn(IORI.get("corner_escape"), ("roll", "mix"))
 
 
 class KnockedDown(unittest.TestCase):
@@ -863,3 +863,48 @@ class MoreKimThrowsAndOverhead(unittest.TestCase):
             feed.s = replace(s, rival=replace(s.rival, state_id=89 if f >= 6 else 115, character_id=6))
             b.state()
         self.assertFalse(b.guard_low())
+
+
+class CornerMixAndGuardWorn(unittest.TestCase):
+    def cornered_brain(self, mode="mix", blocks=0):
+        feed = Feed()
+        b = RuleBrain(feed, {**IORI, "combat_mode": "DEFENSE_ONLY", "corner_escape": mode})
+        for f in range(0, 60):
+            feed.s = st(f, mx=40, rx=90, ratk=(5 <= f < 40))
+            b.state()
+        for k in range(blocks):
+            b._block_starts.append(50 + k)
+        return b
+
+    def test_mix_never_rolls_twice_in_a_row(self):
+        import random
+        random.seed(1)
+        for _ in range(30):
+            b = self.cornered_brain()
+            b._last_corner_move, b._last_corner_escape = "roll", b.state().frame - 200
+            opt = b._corner_option(b.state())
+            self.assertFalse(opt is not None and "roll" in opt.name)
+
+    def test_mix_can_roll_after_the_repeat_window(self):
+        import random
+        random.seed(2)
+        seen = set()
+        for _ in range(40):
+            b = self.cornered_brain()
+            b._last_corner_move, b._last_corner_escape = "roll", b.state().frame - 400
+            opt = b._corner_option(b.state())
+            seen.add(opt.name if opt else "stay")
+        self.assertIn("salida de esquina: roll", seen)
+        self.assertTrue(len(seen) >= 2)
+
+    def test_guard_worn_responds_instead_of_guarding(self):
+        b = self.cornered_brain(blocks=4)
+        sit, opts = b._options_for(b.state())
+        self.assertEqual(sit, "guardia desgastada: responder")
+        self.assertFalse([o for o in opts if o.name == "guardia"])
+        self.assertFalse([o for o in opts if "CD" in o.notation])
+
+    def test_few_blocks_keep_guarding(self):
+        b = self.cornered_brain(blocks=2)
+        sit, _ = b._options_for(b.state())
+        self.assertNotEqual(sit, "guardia desgastada: responder")

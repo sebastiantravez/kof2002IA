@@ -38,6 +38,9 @@ HEAVY_START = re.compile(r"^[1-9]?[CD]")  # combo que empieza con C/D (o 6C...):
 DISTANCE_BUCKET = 40      # igual que en learning.py (tramos de distancia de los contextos)
 LOW_ATTACK_WINDOW = 4     # ataque que empieza <= N frames despues de estar agachado = low
 PRESSURE_FRAMES = 30      # el rival ataco hace <= N frames y sigue cerca: la presion no termino
+GUARD_WORN_BLOCKS = 4     # bloqueos en GUARD_WORN_WINDOW que ya son 'demasiados' (guard crush en Magic Plus)
+GUARD_WORN_WINDOW = 240   # 4 s
+GUARD_WORN_RANGE = 60     # la respuesta (2B / Oniyaki) tiene que llegar
 LONG_ATTACK_FRAMES = 24   # ataque rival que dura >= N frames: lo deja vulnerable al terminar
 # Castigo seguro (DEFENSE_WITH_PUNISH): el ataque rival tiene que llevar N frames terminado
 # sin que empiece otro (ataques de varias partes apagan el bit de ataque entre partes).
@@ -48,7 +51,8 @@ THROW_ESCAPE_DELAY = 6    # frames de espera tras ver el agarre antes de pulsar 
 THROW_ESCAPE_HOLD = 5     # frames con atras+boton mantenidos (la persona mantuvo 2-7)
 CORNER_ESCAPE_RANGE = 70      # salida de esquina: el rival esta a menos de esto
 CORNER_ESCAPE_COOLDOWN = 90   # frames minimos entre dos salidas (no repetirla en cada hueco)
-HARD_ESCAPE_BLOCK = {"ronda terminada", "me agarran", "me golpearon"}
+CORNER_REPEAT_FRAMES = 300    # tras una rodada de salida, no rodar otra vez en 5 s (corner_escape=mix)
+HARD_ESCAPE_BLOCK = {"ronda terminada", "me agarran", "me golpearon", "guardia desgastada: responder"}
 # Regla del usuario (KOF 2002 Magic Plus): el empuje con C+D al bloquear NO se usa nunca: gasta
 # barra, es falta/desventaja y el rival puede cruzar y castigar con un combo. Solo la rodada
 # A+B. Medido en FBNeo (docs/DEFENSE_AUDIT_V4.md, seccion 8): atras + A+B funciona (gasta una
@@ -106,6 +110,7 @@ class RuleBrain:
         # Salida de esquina (none = comportamiento actual): ver _corner_option.
         self.corner_escape = str(moves.get("corner_escape", "none"))
         self._last_corner_escape = -10_000
+        self._last_corner_move = None
         # Cancelacion de guardia (none = actual): ver guard_cancel_ready.
         self.guard_cancel = str(moves.get("guard_cancel", "none"))
         self.guard_cancel_after = int(moves.get("guard_cancel_after", 2))
@@ -318,6 +323,17 @@ class RuleBrain:
             return self._rival_attack_duration >= LONG_ATTACK_FRAMES
         return True
 
+    def _guard_worn(self, state):
+        """Bloqueos recientes >= GUARD_WORN_BLOCKS en GUARD_WORN_WINDOW frames, y ahora un hueco:
+        el rival no ataca, yo ni bloqueando ni golpeado, en el suelo, a distancia de golpe."""
+        me = state.me
+        if (state.rival.attacking or state.rival.airborne or me.airborne or me.down or me.thrown
+                or me.state_id in BLOCKSTUN_STATES or self._recently_hit(state, 6)
+                or state.distance > GUARD_WORN_RANGE):
+            return False
+        recent = [f for f in self._block_starts if state.frame - f <= GUARD_WORN_WINDOW]
+        return len(recent) >= GUARD_WORN_BLOCKS
+
     def _under_pressure(self, state):
         """El rival ataco hace poco y sigue cerca: no soltar la guardia todavia."""
         last_attack = max(self._rival_attack_start_frame, self._rival_attack_end_frame)
@@ -484,10 +500,24 @@ class RuleBrain:
                 or self._recently_hit(state, 6) or not self._under_pressure(state)
                 or state.frame - self._last_corner_escape < CORNER_ESCAPE_COOLDOWN):
             return None
+        if mode == "mix":
+            # Variar la salida (medido 2026-10-16: 3 de 11 rodadas castigadas, 2 con agarre al
+            # salir: el rival la lee si se repite). Nunca dos rodadas seguidas en el mismo
+            # acorralamiento; a veces no salir y seguir cubierto, para no ser predecible.
+            choices = [("jump", "9[8]", 30), ("stay", None, 20)]
+            if not (self._last_corner_move == "roll" and state.frame - self._last_corner_escape < CORNER_REPEAT_FRAMES):
+                choices.append(("roll", "AB", 50))
+            mode, move, _ = random.choices(choices, weights=[c[2] for c in choices])[0]
+            self._last_corner_escape = state.frame
+            self._last_corner_move = mode
+            if move is None:
+                return None
+            return Option(1, f"salida de esquina: {mode}", move)
         move = {"roll": "AB", "jump": "9[8]"}.get(mode) or self._moves.get("reversal")
         if not move:
             return None
         self._last_corner_escape = state.frame
+        self._last_corner_move = mode
         return Option(1, f"salida de esquina: {mode}", move)
 
     @staticmethod
@@ -629,6 +659,16 @@ class RuleBrain:
                 Option(10, "backdash", "4 5 4") if not state.back_to_wall else Option(10, "roll adelante", "AB"),
                 Option(5, "reversal", m["reversal"]),
             ])
+
+        if self._under_pressure(state) and self._guard_worn(state):
+            # Muchos bloqueos seguidos y un hueco: en Magic Plus la guardia se ROMPE si solo
+            # cubres (guard crush). Respuesta del usuario: pegar bajo, el Oniyaki o rodar; nunca
+            # seguir cubriendo. Sin _threat_guard: aqui cubrir es justo lo que no vale.
+            return "guardia desgastada: responder", [
+                Option(50, "golpe bajo 2B", "2B"),
+                Option(30, "anti-aire en la esquina", m["anti_air"]),
+                Option(20, "roll adelante (salir de la esquina)", "AB") if state.back_to_wall else Option(20, "backdash", "4 5 4"),
+            ]
 
         if self._under_pressure(state):
             # Entre golpes de una cadena del rival: seguir cubierto hasta que termine.
