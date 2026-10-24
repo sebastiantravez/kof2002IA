@@ -1105,7 +1105,7 @@ class LeaveTheCorner(unittest.TestCase):
 class RollUnderTheKick(unittest.TestCase):
     def brain(self, my_state, rival_state=246):
         feed = Feed()
-        b = RuleBrain(feed, {**IORI, "combat_mode": "BALANCED_EXPERIMENTAL"})
+        b = RuleBrain(feed, {**IORI, "combat_mode": "BALANCED_EXPERIMENTAL", "roll_under_kick": True})
         for f in range(0, 12):
             s = st(f, mx=400, rx=460, ratk=True)
             feed.s = replace(s, me=replace(s.me, state_id=my_state), rival=replace(s.rival, state_id=rival_state if f >= 6 else 235, character_id=6))

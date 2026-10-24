@@ -667,7 +667,9 @@ class RuleBrain:
         if self._thrown(state):
             return "me agarran", [Option(1, "escapar agarre", self.throw_escape(state))]
 
-        if (rival.state_id in KICK_FOLLOWUP_STATES.get(rival.character, ()) and d <= 90
+        # Medido 2026-10-24 12:25: 3 rodadas bajo la patada, las 3 castigadas (-18, -16, -10), 0 pegadas. Apagado
+        # salvo perfil "roll_under_kick": true.
+        if (self._moves.get("roll_under_kick", False) and rival.state_id in KICK_FOLLOWUP_STATES.get(rival.character, ()) and d <= 90
                 and not me.airborne and not me.down and me.state_id not in BLOCKSTUN_STATES
                 and not self._recently_hit(state, 6)):
             # La patada 214+K va a seguir (saltito + remate): rodar por debajo en vez de cubrir. Al caer,
