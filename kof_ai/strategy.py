@@ -183,13 +183,14 @@ class Strategy:
                 opts = ([O(50, "guardia corta", "G[4]"), O(12, "anti-aire especial", moves["anti_air"])] if d <= 90
                         else [O(40, "acercarse (pasos cortos)", "6[8]", interruptible=True), O(15, "guardia corta", "G[4]")])
             elif d <= 45:
-                opts = [O(50, "combo: C Oniyaki C", "C>623C"), O(12, "combo corto 2B", "2B>2A"),
+                # 2026-10-24: C>623C 10/10 y 11/13 como castigo; la barrida 2D 5/5 y 3/3; el 2B sigue flojo.
+                opts = [O(55, "combo: C Oniyaki C", "C>623C"), O(5, "combo corto 2B", "2B>2A"),
                         O(12, "agarre C", "6C"), O(8, "agarre D", "6D"), O(8, "overhead", moves["overhead"])]
                 opts += [O(20 / max(len(combos_in_range), 1), f"combo: {name}", notation)
                          for name, notation in combos_in_range.items()]
             elif d <= 100:
-                opts = [O(45, "acercarse (pasos cortos)", "6[8]", interruptible=True), O(30, "barrida 2D", "2D"),
-                        O(8, "poke", moves["poke"]), O(8, "hop adelante", "9[3]")]
+                opts = [O(40, "acercarse (pasos cortos)", "6[8]", interruptible=True), O(40, "barrida 2D", "2D"),
+                        O(6, "poke", moves["poke"]), O(8, "hop adelante", "9[3]")]
             else:
                 opts = [O(50, "correr", "6 5 6[18]", interruptible=True), O(30, "acercarse (pasos cortos)", "6[10]", interruptible=True),
                         O(6, "especial de lejos", moves["far_special"])]
