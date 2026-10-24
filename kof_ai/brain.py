@@ -69,7 +69,10 @@ GUARD_CANCEL_WINDOW = 90      # bloqueos contados en los ultimos N frames
 GUARD_CANCEL_COOLDOWN = 150   # frames minimos entre dos cancelaciones
 # Guardia preventiva: situaciones sin amenaza pero con el rival en rango, y acciones que alli
 # dejan a Iori atado (no se pueden cortar a tiempo: el golpe rival llega en 3-5 frames).
-PREVENTIVE_SITUATIONS = {"pegado al rival", "media distancia", "acorralado", "rival en el aire, esperando"}
+# "acorralado" ya no esta: la guardia preventiva le quitaba la rodada y el salto justo en la esquina, y
+# Iori se quedaba cubriendo con Kim quieta a 40-80 (962 intercambios en la pelea del 2026-10-24 11:40,
+# 21% de su tiempo acorralado). Salir de la esquina es la prioridad ahi (usuario).
+PREVENTIVE_SITUATIONS = {"pegado al rival", "media distancia", "rival en el aire, esperando"}
 PREVENTIVE_DROP = ("combo", "hop", "salto", "roll", "especial de media", "overhead", "reversal",
                    "acercarse a rango de combo")
 
@@ -795,10 +798,12 @@ class RuleBrain:
             # (eso lo deciden las ramas anteriores).
             counter = ([Option(25, "castigo seguro: C Oniyaki", "C>623C")] if d <= CLOSE_C_RANGE
                        else [Option(20, "barrida 2D", "2D")] if d <= 100 else [])
+            # Kim quieta (sin atacar hace un rato) y a 30-90: la rodada pasa por detras y el salto por encima.
+            calm = not rival.attacking and not self._under_pressure(state) and 30 <= d <= 90
             return "acorralado", attack + counter + [
-                Option(30, "guardia", "G[10]"),
-                Option(25, "roll adelante (salir de la esquina)", "AB"),
-                Option(15, "salto adelante", "9[8]"),
+                Option(15 if calm else 30, "guardia", "G[10]"),
+                Option(45 if calm else 25, "roll adelante (salir de la esquina)", "AB"),
+                Option(25 if calm else 15, "salto adelante", "9[8]"),
             ]
 
         if rival.airborne and d <= MID:

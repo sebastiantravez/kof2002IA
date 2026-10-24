@@ -1085,3 +1085,18 @@ class WhiffNowOffByDefault(unittest.TestCase):
             feed.s = replace(s, rival=replace(s.rival, state_id=98, character_id=6))
             b.state()
         self.assertNotEqual(b._options_for(b.state())[0], "castigo a fallo")   # 0 de 12 medido: apagado
+
+
+class LeaveTheCorner(unittest.TestCase):
+    def test_preventive_guard_keeps_corner_exits(self):
+        feed = Feed()
+        b = RuleBrain(feed, {**IORI, "combat_mode": "BALANCED_EXPERIMENTAL", "preventive_guard": True, "corner_escape": "none"})
+        for f in range(0, 120):
+            feed.s = st(f, mx=40, rx=100)       # acorralado, Kim quieta a 60
+            b.state()
+        sit, opts = b._options_for(b.state())
+        self.assertEqual(sit, "acorralado")
+        names = {o.name: o.weight for o in opts}
+        self.assertIn("roll adelante (salir de la esquina)", names)
+        self.assertIn("salto adelante", names)
+        self.assertGreater(names["roll adelante (salir de la esquina)"], names["guardia"])
