@@ -1045,3 +1045,32 @@ class PunishMistakes(unittest.TestCase):
         states = [st(f, mx=400, rx=440, rh=(60 - 6 * f if f < 10 else 0), ratk=(3 <= f < 9)) for f in range(0, 12)]
         b = self.brain(states, rival_state=1)
         self.assertEqual(b._options_for(b.state())[0], "castigo a fallo")
+
+
+class CornerFiftyFifty(unittest.TestCase):
+    def test_cornered_without_attack_guard_is_not_dominant(self):
+        feed = Feed()
+        b = RuleBrain(feed, {**IORI, "combat_mode": "DEFENSE_ONLY", "corner_escape": "none"})
+        for f in range(0, 80):
+            feed.s = st(f, mx=40, rx=80)        # acorralado a la izquierda, rival a 40 sin atacar
+            b.state()
+        sit, opts = b._defense_options(b.state(), allow_punish=False)
+        self.assertEqual(sit, "acorralado")
+        names = {o.name: o.weight for o in opts}
+        self.assertIn("castigo seguro: C Oniyaki", names)
+        guard = names["guardia"]
+        self.assertGreater(sum(w for n, w in names.items() if n != "guardia"), guard)   # salir/pegar > cubrir
+
+    def test_corner_mix_can_counter(self):
+        import random
+        random.seed(3)
+        seen = set()
+        for _ in range(60):
+            feed = Feed()
+            b = RuleBrain(feed, {**IORI, "combat_mode": "DEFENSE_ONLY", "corner_escape": "mix"})
+            for f in range(0, 60):
+                feed.s = st(f, mx=40, rx=80, ratk=(5 <= f < 40))
+                b.state()
+            opt = b._corner_option(b.state())
+            seen.add(opt.name if opt else "stay")
+        self.assertIn("salida de esquina: counter", seen)

@@ -39,7 +39,7 @@ HEAVY_START = re.compile(r"^[1-9]?[CD]")  # combo que empieza con C/D (o 6C...):
 DISTANCE_BUCKET = 40      # igual que en learning.py (tramos de distancia de los contextos)
 LOW_ATTACK_WINDOW = 4     # ataque que empieza <= N frames despues de estar agachado = low
 PRESSURE_FRAMES = 30      # el rival ataco hace <= N frames y sigue cerca: la presion no termino
-GUARD_WORN_BLOCKS = 4     # bloqueos en GUARD_WORN_WINDOW que ya son 'demasiados' (guard crush en Magic Plus)
+GUARD_WORN_BLOCKS = 3     # bloqueos en GUARD_WORN_WINDOW que ya son 'demasiados' (guard crush en Magic Plus; era 4)
 GUARD_WORN_WINDOW = 240   # 4 s
 GUARD_WORN_RANGE = 60     # la respuesta (2B / Oniyaki) tiene que llegar
 RUN_PUNISH_RANGE = 100    # rival corriendo hacia mi a menos de esto: pegarle (2C llega a 60-100)
@@ -567,9 +567,11 @@ class RuleBrain:
             # Variar la salida (medido 2026-10-16: 3 de 11 rodadas castigadas, 2 con agarre al
             # salir: el rival la lee si se repite). Nunca dos rodadas seguidas en el mismo
             # acorralamiento; a veces no salir y seguir cubierto, para no ser predecible.
-            choices = [("jump", "9[8]", 30), ("stay", None, 20)]
+            choices = [("jump", "9[8]", 25), ("stay", None, 15)]
+            if state.distance <= CLOSE_C_RANGE:
+                choices.append(("counter", "C>623C", 25))      # contraatacar en el hueco (50/50)
             if not (self._last_corner_move == "roll" and state.frame - self._last_corner_escape < CORNER_REPEAT_FRAMES):
-                choices.append(("roll", "AB", 50))
+                choices.append(("roll", "AB", 40))
             mode, move, _ = random.choices(choices, weights=[c[2] for c in choices])[0]
             self._last_corner_escape = state.frame
             self._last_corner_move = mode
@@ -785,11 +787,16 @@ class RuleBrain:
             in_range = self._in_range(m["combos"], d) if self._combos_ready(state) else {}
             attack = [Option(15 / max(len(in_range), 1), f"combo: {name}", notation)
                       for name, notation in in_range.items()]
-            return "acorralado", attack + [
-                Option(40, "guardia", "G[14]"),
-                Option(20, "roll adelante (salir de la esquina)", "AB"),
-                Option(10, "salto adelante", "9[8]"),
-                Option(10, "poke", m["poke"]),
+            # Usuario (2026-10-24): "en la esquina es donde la guardia se rompe; evita la esquina, y si te
+            # presionan reacciona o contraataca: 50 y 50". Sin ataque rival en curso: salir (rodada/salto) o
+            # pegar segun la distancia pesa tanto como cubrirse. La guardia sigue mandando cuando SI ataca
+            # (eso lo deciden las ramas anteriores).
+            counter = ([Option(25, "castigo seguro: C Oniyaki", "C>623C")] if d <= CLOSE_C_RANGE
+                       else [Option(20, "barrida 2D", "2D")] if d <= 100 else [])
+            return "acorralado", attack + counter + [
+                Option(30, "guardia", "G[10]"),
+                Option(25, "roll adelante (salir de la esquina)", "AB"),
+                Option(15, "salto adelante", "9[8]"),
             ]
 
         if rival.airborne and d <= MID:
