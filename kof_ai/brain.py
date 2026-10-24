@@ -604,7 +604,9 @@ class RuleBrain:
 
     def _punish_proposal(self, state):
         d = state.distance
-        if self._whiff_now(state) or self._landing_punish(state):
+        # Medido 2026-10-24 (8 min): 0 de 12 pegaron y 9 castigados: el 'fallo' a los 10 frames era un golpe
+        # que aun venia. Apagado salvo perfil "punish_whiff_now": true.
+        if self._moves.get("punish_whiff_now", False) and (self._whiff_now(state) or self._landing_punish(state)):
             # El usuario (2026-10-24): "cuando ejecuto un poder Kim se queda parada unos milisegundos y Iori
             # no hace nada". Fallo en curso (bit encendido, no me pego, no lo estoy bloqueando) o aterrizaje
             # tras un golpe aereo fallado: castigar YA, sin esperar a que se apague el bit.
@@ -755,14 +757,14 @@ class RuleBrain:
             # castigo; el backdash 0/3 util y 2 castigados: fuera.
             # Por distancia (2026-10-24: el 2B a 30-60 fallo 6 de 12 y 3 castigos; 235 de Kim le entro en
             # la recuperacion): 2B solo pegado, C>623C hasta 45, mas lejos Oniyaki o rodada.
-            if d <= LIGHT_RANGE:
-                options = [Option(50, "golpe bajo 2B", "2B"), Option(30, "castigo seguro: C Oniyaki", "C>623C")]
-            elif d <= CLOSE_C_RANGE:
-                options = [Option(60, "castigo seguro: C Oniyaki", "C>623C"), Option(20, "anti-aire en la esquina", m["anti_air"])]
+            # Medido 2026-10-24: C>623C 4 de 6 sin castigo; el Oniyaki anti-aereo 0 de 5 con 4 castigos: fuera.
+            if d <= CLOSE_C_RANGE:
+                options = [Option(60, "castigo seguro: C Oniyaki", "C>623C")]
+                if d <= LIGHT_RANGE:
+                    options.append(Option(25, "golpe bajo 2B", "2B"))
             else:
-                options = [Option(40, "anti-aire en la esquina", m["anti_air"])]
-            if state.back_to_wall:
-                options.append(Option(25, "roll adelante (salir de la esquina)", "AB"))
+                options = [Option(30, "barrida 2D", "2D")] if d <= 100 else []
+            options.append(Option(30 if state.back_to_wall else 15, "roll adelante (salir de la esquina)" if state.back_to_wall else "roll adelante", "AB"))
             return "guardia desgastada: responder", options
 
         if self._under_pressure(state):

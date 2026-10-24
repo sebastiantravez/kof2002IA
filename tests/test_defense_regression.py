@@ -1015,7 +1015,7 @@ class PunishMistakes(unittest.TestCase):
 
     def brain(self, states, rival_state=98):
         feed = Feed()
-        b = RuleBrain(feed, {**IORI, "combat_mode": "BALANCED_EXPERIMENTAL"})
+        b = RuleBrain(feed, {**IORI, "combat_mode": "BALANCED_EXPERIMENTAL", "punish_whiff_now": True})
         for s in states:
             feed.s = replace(s, rival=replace(s.rival, state_id=rival_state, character_id=6))
             b.state()
@@ -1074,3 +1074,14 @@ class CornerFiftyFifty(unittest.TestCase):
             opt = b._corner_option(b.state())
             seen.add(opt.name if opt else "stay")
         self.assertIn("salida de esquina: counter", seen)
+
+
+class WhiffNowOffByDefault(unittest.TestCase):
+    def test_off_by_default(self):
+        feed = Feed()
+        b = RuleBrain(feed, {**IORI, "combat_mode": "BALANCED_EXPERIMENTAL"})
+        for f in range(0, 18):
+            s = st(f, mx=400, rx=440, ratk=(f >= 4))
+            feed.s = replace(s, rival=replace(s.rival, state_id=98, character_id=6))
+            b.state()
+        self.assertNotEqual(b._options_for(b.state())[0], "castigo a fallo")   # 0 de 12 medido: apagado
