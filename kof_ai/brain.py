@@ -746,11 +746,10 @@ class RuleBrain:
 
         if self.style == "aggressive" and self._rival_running_in(state):
             # Quien corre hacia ti no tiene guardia (usuario): golpe que llegue a esa distancia.
+            # Medido: C>623C a la carrera 2/6 con 3 castigos; 2C 1/2. Solo pegado, y sin el 2B.
             if d <= CLOSE_C_RANGE:
-                options = [Option(60, "castigo a la carrera: C Oniyaki", "C>623C"), Option(30, "golpe bajo 2B", "2B")]
-            else:
-                options = [Option(60, "castigo a la carrera: 2C", m["poke"]), Option(25, "barrida 2D", "2D")]
-            return "rival corre hacia mi", options
+                return "rival corre hacia mi", [Option(60, "castigo a la carrera: C Oniyaki", "C>623C"), Option(40, "guardia", "G[6]")]
+            return "rival corre hacia mi", [Option(70, "guardia", "G[6]"), Option(20, "castigo a la carrera: 2C", m["poke"])]
 
         if self._under_pressure(state) and self._guard_worn(state):
             # Muchos bloqueos seguidos y un hueco: en Magic Plus la guardia se ROMPE si solo

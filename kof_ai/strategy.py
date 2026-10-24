@@ -180,7 +180,8 @@ class Strategy:
             # castigo, 2D 3/3; el Oniyaki anti-aereo 3/14 con 9 castigos, el Yami Barai de lejos 2/9 (4
             # castigos), el 2C 1/7 (5), el 2B 1/6 (4). Se queda lo que pega: acercarse y C>623C / 2D.
             if state.rival.airborne:
-                opts = ([O(50, "guardia corta", "G[4]"), O(12, "anti-aire especial", moves["anti_air"])] if d <= 90
+                # Oniyaki anti-aereo en RUSH: 3/14 (9 castigos) y 7/15 (6 castigos): fuera. Cubrir y castigar al caer.
+                opts = ([O(60, "guardia corta", "G[4]")] if d <= 90
                         else [O(40, "acercarse (pasos cortos)", "6[8]", interruptible=True), O(15, "guardia corta", "G[4]")])
             elif d <= 45:
                 # 2026-10-24: C>623C 10/10 y 11/13 como castigo; la barrida 2D 5/5 y 3/3; el 2B sigue flojo.
@@ -189,8 +190,10 @@ class Strategy:
                 opts += [O(20 / max(len(combos_in_range), 1), f"combo: {name}", notation)
                          for name, notation in combos_in_range.items()]
             elif d <= 100:
-                opts = [O(40, "acercarse (pasos cortos)", "6[8]", interruptible=True), O(40, "barrida 2D", "2D"),
-                        O(6, "poke", moves["poke"]), O(8, "hop adelante", "9[3]")]
+                # La barrida 2D lanzada en neutral a 45-100: 12 pego / 14 fallo / 11 castigos (2026-10-24 12:02).
+                # Como CASTIGO sigue siendo 5/5: aqui solo acercarse, la barrida queda para el castigo.
+                opts = [O(60, "acercarse (pasos cortos)", "6[8]", interruptible=True), O(12, "barrida 2D", "2D"),
+                        O(8, "hop adelante", "9[3]")]
             else:
                 opts = [O(50, "correr", "6 5 6[18]", interruptible=True), O(30, "acercarse (pasos cortos)", "6[10]", interruptible=True),
                         O(6, "especial de lejos", moves["far_special"])]
