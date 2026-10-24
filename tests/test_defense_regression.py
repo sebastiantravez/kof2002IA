@@ -899,11 +899,12 @@ class CornerMixAndGuardWorn(unittest.TestCase):
         self.assertTrue(len(seen) >= 2)
 
     def test_guard_worn_responds_instead_of_guarding(self):
-        b = self.cornered_brain(blocks=4)
+        b = self.cornered_brain(blocks=4)                 # rival a 50: ni 2B (<=30) ni C (<=45)
         sit, opts = b._options_for(b.state())
         self.assertEqual(sit, "guardia desgastada: responder")
         self.assertFalse([o for o in opts if o.name == "guardia"])
         self.assertFalse([o for o in opts if "CD" in o.notation])
+        self.assertFalse([o for o in opts if o.name == "golpe bajo 2B"])   # a 50 el 2B no llega
 
     def test_few_blocks_keep_guarding(self):
         b = self.cornered_brain(blocks=2)

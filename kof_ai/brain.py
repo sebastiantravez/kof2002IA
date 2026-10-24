@@ -692,9 +692,16 @@ class RuleBrain:
             # seguir cubriendo. Sin _threat_guard: aqui cubrir es justo lo que no vale.
             # Medido 2026-10-17 (2 x 5 min, 18 respuestas): 2B pego 5/7, Oniyaki 4/6, rodada 2/2 sin
             # castigo; el backdash 0/3 util y 2 castigados: fuera.
-            options = [Option(50, "golpe bajo 2B", "2B"), Option(30, "anti-aire en la esquina", m["anti_air"])]
+            # Por distancia (2026-10-24: el 2B a 30-60 fallo 6 de 12 y 3 castigos; 235 de Kim le entro en
+            # la recuperacion): 2B solo pegado, C>623C hasta 45, mas lejos Oniyaki o rodada.
+            if d <= LIGHT_RANGE:
+                options = [Option(50, "golpe bajo 2B", "2B"), Option(30, "castigo seguro: C Oniyaki", "C>623C")]
+            elif d <= CLOSE_C_RANGE:
+                options = [Option(60, "castigo seguro: C Oniyaki", "C>623C"), Option(20, "anti-aire en la esquina", m["anti_air"])]
+            else:
+                options = [Option(40, "anti-aire en la esquina", m["anti_air"])]
             if state.back_to_wall:
-                options.append(Option(20, "roll adelante (salir de la esquina)", "AB"))
+                options.append(Option(25, "roll adelante (salir de la esquina)", "AB"))
             return "guardia desgastada: responder", options
 
         if self._under_pressure(state):
