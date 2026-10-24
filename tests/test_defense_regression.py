@@ -965,3 +965,28 @@ class KimSankuuParts(unittest.TestCase):
                 feed.s = replace(s, rival=replace(s.rival, state_id=state_id if f >= 6 else 97, character_id=6))
                 b.state()
             self.assertEqual(b.guard_low(), low, state_id)
+
+
+class RecoveryPunish(unittest.TestCase):
+    def brain(self, rival_state, my_state=0, rx=430):
+        feed = Feed()
+        b = RuleBrain(feed, {**IORI, "combat_mode": "BALANCED_EXPERIMENTAL"})
+        for f in range(0, 12):
+            s = st(f, mx=400, rx=rx, ratk=True)                   # el bit de ataque sigue encendido
+            feed.s = replace(s, me=replace(s.me, state_id=my_state),
+                             rival=replace(s.rival, state_id=rival_state if f >= 6 else 250, character_id=6))
+            b.state()
+        return b
+
+    def test_kim_landing_after_blocked_kick_is_punished(self):
+        sit, opts = self.brain(251)._options_for(self.brain(251).state())
+        self.assertEqual(sit, "castigo a recuperacion")
+        self.assertEqual(opts[0].notation, "C>623C")
+
+    def test_not_while_still_in_blockstun(self):
+        b = self.brain(251, my_state=30)
+        self.assertNotEqual(b._options_for(b.state())[0], "castigo a recuperacion")
+
+    def test_not_out_of_range(self):
+        b = self.brain(251, rx=470)
+        self.assertNotEqual(b._options_for(b.state())[0], "castigo a recuperacion")

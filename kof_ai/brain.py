@@ -11,7 +11,8 @@ from dataclasses import dataclass, replace
 
 from .arbiter import (BALANCED_EXPERIMENTAL, DEFENSE_ONLY, GUARD_ONLY_TEST, CombatActionArbiter, Proposal,
                       mode_from_profile)
-from .game_state import BLOCKSTUN_STATES, LOW_HIT_STATES, OVERHEAD_STATES, RUN_STATES, THROWING_STATES
+from .game_state import (BLOCKSTUN_STATES, LOW_HIT_STATES, OVERHEAD_STATES, RECOVERY_STATES, RUN_STATES,
+                         THROWING_STATES)
 from .strategy import Strategy, is_useful
 
 # Distancias en unidades del escenario (la pantalla mide ~304).
@@ -422,6 +423,12 @@ class RuleBrain:
                 and self._guarded_attack and not self._rival_attack_hit_me
                 and not self._recently_hit(state, 20) and state.distance <= CLOSE_C_RANGE)
 
+    def _in_recovery_window(self, state):
+        me, rival = state.me, state.rival
+        return (rival.state_id in RECOVERY_STATES.get(rival.character, ()) and state.distance <= CLOSE_C_RANGE
+                and not me.airborne and not me.down and not me.thrown and me.state_id not in BLOCKSTUN_STATES
+                and not self._recently_hit(state, 6))
+
     def _whiff_punishable(self, state):
         """WHIFF_PUNISH (solo BALANCED_EXPERIMENTAL): el ataque rival termino sin estar
         nunca cerca de mi: lo fallo; se castiga corriendo."""
@@ -555,6 +562,10 @@ class RuleBrain:
 
     def _punish_proposal(self, state):
         d = state.distance
+        if self._in_recovery_window(state):
+            # El rival esta en una recuperacion conocida (RECOVERY_STATES) y al alcance del C.
+            return Proposal("castigo a recuperacion", [Option(70, "castigo seguro: C Oniyaki", "C>623C"),
+                                                      Option(20, "castigo seguro: C Aoi Hana", "C>214C>214C>214C")])
         if self._confirmed_punish(state):
             # Combo corto CON confirmacion: la segunda parte solo sale si la primera pego
             # (combo.py '>'), asi que bloqueado sigue siendo seguro. Pelea 2026-10-15: el C

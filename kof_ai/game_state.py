@@ -139,6 +139,11 @@ LOW_HIT_STATES = {"Kim": {137, 144, 146, 235}}
 # Carrera del rival (sin guardia mientras corre, segun el usuario): Kim 95 (el estado mas rapido
 # en el suelo, 2026-10-16).
 RUN_STATES = {"Kim": {95}}
+# Recuperacion tras un ataque: el rival no puede hacer nada y el bit de ataque SIGUE encendido, asi que
+# el castigo normal (que espera a que se apague) llega tarde. Kim 251 = aterrizaje tras el remate
+# aereo de la patada 214+K: 17 frames (85 medidos, 2026-10-24), termina a 13-57 de distancia; Iori lo
+# bloqueo 45 veces y solo cubrio despues.
+RECOVERY_STATES = {"Kim": {251}}
 # Derribado: cayendo al suelo (78), tirado (73) y levantandose (72, ~50 frames). Medido en las trazas
 # del 2026-10-15 (Iori): 20 entradas, 0 ataques salieron con el boton pulsado dentro, las rodadas y
 # castigos que el bot pidio ahi se perdieron. Lo unico util es levantarse cubierto.
