@@ -14,6 +14,7 @@ MIN_DWELL_FRAMES = 20            # histeresis: minimo en un modo antes de cambia
 POKE_MIN, POKE_MAX = 60, 100     # 2C de Iori medido (5 trazas, 2026-10-15): pega 12/16 a 70-89 y 2/5 a 100+
 PASSIVE_RIVAL_FRAMES = 90        # rival sin atacar este tiempo: esta pasivo
 CALM_PRESSURE_RANGE = 60         # presion cercana: distancia a la que aplica pressure_needs_calm
+RUSH_CALM_FRAMES = 30            # RUSH: entrar desde lejos solo si el rival lleva >= N frames sin atacar
 BAIT_COOLDOWN_FRAMES = 300       # tras un amague, no volver a amagar en 5 s (medido: 24% del tiempo en BAIT sin pegar)
 
 # Riesgo si la accion falla o la bloquean (heuristico, por tipo de accion):
@@ -173,7 +174,11 @@ class Strategy:
         cornered_rival = 1.5 if state.rival_cornered else 1.0
         lows = m.low_ratio > 0.4          # el rival ataca mucho por abajo
 
-        if mode.name == "RUSH":
+        if mode.name == "RUSH" and d > 45 and state.frame - m.last_attack_frame < RUSH_CALM_FRAMES and not state.rival.airborne:
+            # Punto medio (usuario, 2026-10-24): entrar solo cuando el rival lleva >= medio segundo sin atacar;
+            # con el rival activo y lejos, cubrir y esperar su error (al 100% entraba al 5C: 4-8, 1233 recibidos).
+            opts = [O(60, "guardia corta", "G[4]"), O(10, "acercarse (pasos cortos)", "6[6]", interruptible=True)]
+        elif mode.name == "RUSH":
             # Tabla por distancia (alcances medidos 2026-10-15/16: 2B <= 30, C ~40, 2C 60-100,
             # Yami Barai de lejos). Rival en el aire: Oniyaki si cae cerca, si no acercarse por debajo.
             # Medido contra el usuario (5 min, 2026-10-17, 62 ataques): C>623C 11/12 y 150 de danio sin

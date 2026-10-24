@@ -157,3 +157,29 @@ class Rush(unittest.TestCase):
         b = self.brain([st(f, mx=400, rx=440, ratk=(5 <= f < 30)) for f in range(0, 40)])
         sit, _ = b._options_for(b.state())
         self.assertEqual(sit, "NEUTRAL:RUSH")      # la "presion del rival" ya no bloquea el ataque
+
+
+class RushMiddleGround(unittest.TestCase):
+    def brain(self, states):
+        feed = Feed()
+        b = RuleBrain(feed, {**STRATEGIC, "style": "aggressive", "preventive_guard": False})
+        for s in states:
+            feed.s = s
+            b.state()
+        return b
+
+    def test_far_and_rival_just_attacked_waits(self):
+        b = self.brain([st(f, mx=400, rx=480, ratk=(20 <= f < 26)) for f in range(0, 40)])   # ataco hace 14 f
+        sit, opts = b._options_for(b.state())
+        self.assertEqual(sit, "NEUTRAL:RUSH")
+        self.assertEqual(max(opts, key=lambda o: o.weight).name, "guardia corta")
+
+    def test_far_and_rival_calm_goes_in(self):
+        b = self.brain([st(f, mx=400, rx=480) for f in range(0, 40)])
+        _, opts = b._options_for(b.state())
+        self.assertIn(max(opts, key=lambda o: o.weight).name, ("acercarse (pasos cortos)", "correr"))
+
+    def test_close_attacks_regardless(self):
+        b = self.brain([st(f, mx=400, rx=430, ratk=(20 <= f < 26)) for f in range(0, 40)])
+        _, opts = b._options_for(b.state())
+        self.assertEqual(max(opts, key=lambda o: o.weight).name, "combo: C Oniyaki C")
