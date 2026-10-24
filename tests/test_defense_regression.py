@@ -1133,3 +1133,12 @@ class KimDMEnderIsLow(unittest.TestCase):
             feed.s = replace(s, rival=replace(s.rival, state_id=167 if f >= 6 else 146, character_id=6))
             b.state()
         self.assertTrue(b.guard_low())
+
+    def test_dm_startup_142_already_crouching(self):
+        feed = Feed()
+        b = RuleBrain(feed, IORI)
+        for f in range(0, 10):
+            s = st(f, mx=400, rx=460, ratk=(f >= 6))
+            feed.s = replace(s, rival=replace(s.rival, state_id=142 if f >= 6 else 1, character_id=6))
+            b.state()
+        self.assertTrue(b.guard_low())

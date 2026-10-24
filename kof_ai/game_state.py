@@ -138,7 +138,9 @@ THROWING_STATES = {229, 230, 231, 232, 248, 249}
 #  Kim 136: medido en 12 peleas (160 usos): bloqueado agachado 92, de pie 11, y ENTRO con guardia de pie 34.
 #  Kim 167 (remate del DM Hou'ou Kyaku): en 14 peleas entro 79 veces con guardia DE PIE y 0 con guardia
 #  agachada (42 bloqueos agachado): es BAJO. Faltaba en la tabla y costo 178 de danio en una pelea.
-LOW_HIT_STATES = {"Kim": {136, 137, 144, 146, 167, 235}}
+#  Kim 142 = arranque del DM (siempre antes de 144). Medido 12:36: el 167 entro 5 veces con Iori en blockstun DE PIE
+#  pulsando abajo+atras: en blockstun no se cambia la altura, asi que hay que estar agachado ANTES del primer golpe.
+LOW_HIT_STATES = {"Kim": {136, 137, 142, 144, 146, 167, 235}}
 # Carrera del rival (sin guardia mientras corre, segun el usuario): Kim 95 (el estado mas rapido
 # en el suelo, 2026-10-16).
 RUN_STATES = {"Kim": {95}}
