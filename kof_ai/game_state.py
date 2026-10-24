@@ -136,7 +136,9 @@ THROWING_STATES = {229, 230, 231, 232, 248, 249}
 #  Kim 250 NO es bajo: con Iori cubriendo AGACHADO entro 18 de 18 (17:46); va por el aire (altura 27-33,
 #  avanza ~70 px): es el seguimiento arriba+D, un overhead -> OVERHEAD_STATES.
 #  Kim 136: medido en 12 peleas (160 usos): bloqueado agachado 92, de pie 11, y ENTRO con guardia de pie 34.
-LOW_HIT_STATES = {"Kim": {136, 137, 144, 146, 235}}
+#  Kim 167 (remate del DM Hou'ou Kyaku): en 14 peleas entro 79 veces con guardia DE PIE y 0 con guardia
+#  agachada (42 bloqueos agachado): es BAJO. Faltaba en la tabla y costo 178 de danio en una pelea.
+LOW_HIT_STATES = {"Kim": {136, 137, 144, 146, 167, 235}}
 # Carrera del rival (sin guardia mientras corre, segun el usuario): Kim 95 (el estado mas rapido
 # en el suelo, 2026-10-16).
 RUN_STATES = {"Kim": {95}}

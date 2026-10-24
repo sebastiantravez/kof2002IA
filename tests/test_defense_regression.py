@@ -1122,3 +1122,14 @@ class RollUnderTheKick(unittest.TestCase):
     def test_still_in_blockstun_keeps_guarding(self):
         b = self.brain(30)
         self.assertNotEqual(b._options_for(b.state())[0], "rodar bajo la patada")
+
+
+class KimDMEnderIsLow(unittest.TestCase):
+    def test_167_blocked_crouching(self):
+        feed = Feed()
+        b = RuleBrain(feed, IORI)
+        for f in range(0, 12):
+            s = st(f, mx=400, rx=460, ratk=True)
+            feed.s = replace(s, rival=replace(s.rival, state_id=167 if f >= 6 else 146, character_id=6))
+            b.state()
+        self.assertTrue(b.guard_low())
