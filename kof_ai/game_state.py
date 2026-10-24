@@ -145,6 +145,10 @@ RUN_STATES = {"Kim": {95}}
 # aereo de la patada 214+K: 17 frames (85 medidos, 2026-10-24), termina a 13-57 de distancia; Iori lo
 # bloqueo 45 veces y solo cubrio despues.
 RECOVERY_STATES = {"Kim": {251}}
+# Movimientos de varias partes: el bit de ataque sigue encendido entre partes, asi que NO son un fallo
+# castigable aunque lleven muchos frames sin pegar. Kim: patada 214+K (235/246/247/250), DM (144/146/167),
+# patada B+diagonal (143/145/147).
+MULTIPART_STATES = {"Kim": {235, 246, 247, 250, 251, 144, 146, 167, 143, 145, 147}}
 # Derribado: cayendo al suelo (78), tirado (73) y levantandose (72, ~50 frames). Medido en las trazas
 # del 2026-10-15 (Iori): 20 entradas, 0 ataques salieron con el boton pulsado dentro, las rodadas y
 # castigos que el bot pidio ahi se perdieron. Lo unico util es levantarse cubierto.

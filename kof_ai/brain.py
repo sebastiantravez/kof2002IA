@@ -11,8 +11,8 @@ from dataclasses import dataclass, replace
 
 from .arbiter import (BALANCED_EXPERIMENTAL, DEFENSE_ONLY, GUARD_ONLY_TEST, CombatActionArbiter, Proposal,
                       mode_from_profile)
-from .game_state import (BLOCKSTUN_STATES, LOW_HIT_STATES, OVERHEAD_STATES, RECOVERY_STATES, RUN_STATES,
-                         THROWING_STATES)
+from .game_state import (BLOCKSTUN_STATES, LOW_HIT_STATES, MULTIPART_STATES, OVERHEAD_STATES, RECOVERY_STATES,
+                         RUN_STATES, THROWING_STATES)
 from .strategy import Strategy, is_useful
 
 # Distancias en unidades del escenario (la pantalla mide ~304).
@@ -44,6 +44,10 @@ GUARD_WORN_WINDOW = 240   # 4 s
 GUARD_WORN_RANGE = 60     # la respuesta (2B / Oniyaki) tiene que llegar
 RUN_PUNISH_RANGE = 100    # rival corriendo hacia mi a menos de esto: pegarle (2C llega a 60-100)
 RUN_SPEED = 5.0           # acercamiento por frame que ya es carrera (caminar: ~2-3)
+WHIFF_AGE = 10            # frames de ataque rival sin pegarme ni bloquearlo: ya es un fallo castigable
+WHIFF_NOW_RANGE = 100     # hasta donde se castiga un fallo (2D a 45-100, C>623C mas cerca)
+LANDING_AFTER_AIR_ATTACK = 25   # aterrizaje a <= N frames de un golpe aereo fallado: castigable
+LANDING_WINDOW = 8              # frames tras aterrizar en los que el rival no puede hacer nada
 LONG_ATTACK_FRAMES = 24   # ataque rival que dura >= N frames: lo deja vulnerable al terminar
 # Castigo seguro (DEFENSE_WITH_PUNISH): el ataque rival tiene que llevar N frames terminado
 # sin que empiece otro (ataques de varias partes apagan el bit de ataque entre partes).
@@ -148,6 +152,8 @@ class RuleBrain:
         self._rival_attack_low = False
         self._rival_attack_end_frame = -10_000
         self._rival_attack_hit_me = False
+        self._rival_air_attack_frame = -10_000   # ultimo frame con el rival atacando EN EL AIRE
+        self._rival_landed_frame = -10_000       # ultimo aterrizaje del rival
 
     def state(self):
         """Estado cacheado ~8 ms; ademas registra golpes recibidos frame a frame."""
@@ -181,6 +187,10 @@ class RuleBrain:
                 if self._cached.rival.crouching:
                     self._rival_crouch_frame = self._cached.frame
                 ended_clean = False
+                if state.rival.attacking and state.rival.airborne:
+                    self._rival_air_attack_frame = state.frame
+                if self._cached.rival.airborne and not state.rival.airborne:
+                    self._rival_landed_frame = state.frame
                 if state.rival.attacking and not self._cached.rival.attacking:
                     self._rival_attack_start_frame = state.frame
                     self._rival_attack_low = state.frame - self._rival_crouch_frame <= LOW_ATTACK_WINDOW
@@ -423,6 +433,36 @@ class RuleBrain:
                 and self._guarded_attack and not self._rival_attack_hit_me
                 and not self._recently_hit(state, 20) and state.distance <= CLOSE_C_RANGE)
 
+    def _free_to_punish(self, state):
+        me = state.me
+        return (not me.airborne and not me.down and not me.thrown and me.state_id not in BLOCKSTUN_STATES
+                and not self._recently_hit(state, 12))
+
+    def _whiff_now(self, state):
+        """El ataque rival lleva >= WHIFF_AGE frames, no me ha pegado, no lo estoy bloqueando (si no estaria
+        en blockstun) y no es un movimiento de varias partes: esta fallando y Kim esta atada a el."""
+        rival = state.rival
+        if self.strategy is None:        # solo con ofensiva (BALANCED_EXPERIMENTAL); DEFENSE_WITH_PUNISH espera al final
+            return False
+        if not rival.attacking or rival.airborne or self._rival_attack_age(state) < WHIFF_AGE:
+            return False
+        if self._last_hit_frame >= self._rival_attack_start_frame:          # este ataque si me pego
+            return False
+        if rival.state_id in MULTIPART_STATES.get(rival.character, ()):
+            return False
+        return self._free_to_punish(state) and state.distance <= WHIFF_NOW_RANGE
+
+    def _landing_punish(self, state):
+        """El rival acaba de aterrizar tras atacar en el aire sin pegarme: unos frames de aterrizaje."""
+        if self.strategy is None or state.rival.airborne:
+            return False
+        landed = self._rival_landed_frame
+        if state.frame - landed > LANDING_WINDOW or landed - self._rival_air_attack_frame > LANDING_AFTER_AIR_ATTACK:
+            return False
+        if self._last_hit_frame >= self._rival_air_attack_frame - 20:      # su golpe aereo si me pego
+            return False
+        return self._free_to_punish(state) and state.distance <= CLOSE_C_RANGE
+
     def _in_recovery_window(self, state):
         me, rival = state.me, state.rival
         return (rival.state_id in RECOVERY_STATES.get(rival.character, ()) and state.distance <= CLOSE_C_RANGE
@@ -562,6 +602,14 @@ class RuleBrain:
 
     def _punish_proposal(self, state):
         d = state.distance
+        if self._whiff_now(state) or self._landing_punish(state):
+            # El usuario (2026-10-24): "cuando ejecuto un poder Kim se queda parada unos milisegundos y Iori
+            # no hace nada". Fallo en curso (bit encendido, no me pego, no lo estoy bloqueando) o aterrizaje
+            # tras un golpe aereo fallado: castigar YA, sin esperar a que se apague el bit.
+            if d <= CLOSE_C_RANGE:
+                return Proposal("castigo a fallo", [Option(70, "castigo seguro: C Oniyaki", "C>623C"),
+                                                   Option(20, "castigo seguro: C Aoi Hana", "C>214C>214C>214C")])
+            return Proposal("castigo a fallo", [Option(60, "castigo: barrida 2D", "2D"), Option(10, "castigo: poke", self._moves["poke"])])
         if self._in_recovery_window(state):
             # El rival esta en una recuperacion conocida (RECOVERY_STATES) y al alcance del C.
             return Proposal("castigo a recuperacion", [Option(70, "castigo seguro: C Oniyaki", "C>623C"),

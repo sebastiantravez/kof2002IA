@@ -1008,3 +1008,40 @@ class KimGuardTableFromTwelveFights(unittest.TestCase):
     def test_129_and_224_standing(self):
         self.assertFalse(self.guard_low_vs(129))
         self.assertFalse(self.guard_low_vs(224))
+
+
+class PunishMistakes(unittest.TestCase):
+    """Pedido del usuario: castigar el fallo EN CURSO (Kim atada a un poder que no pego) y el aterrizaje."""
+
+    def brain(self, states, rival_state=98):
+        feed = Feed()
+        b = RuleBrain(feed, {**IORI, "combat_mode": "BALANCED_EXPERIMENTAL"})
+        for s in states:
+            feed.s = replace(s, rival=replace(s.rival, state_id=rival_state, character_id=6))
+            b.state()
+        return b
+
+    def test_whiffing_special_is_punished_before_it_ends(self):
+        b = self.brain([st(f, mx=400, rx=440, ratk=(f >= 4)) for f in range(0, 18)])   # 14 frames atacando sin pegar
+        sit, opts = b._options_for(b.state())
+        self.assertEqual(sit, "castigo a fallo")
+        self.assertEqual(opts[0].notation, "C>623C")
+
+    def test_not_in_the_first_frames(self):
+        b = self.brain([st(f, mx=400, rx=440, ratk=(f >= 4)) for f in range(0, 9)])
+        self.assertNotEqual(b._options_for(b.state())[0], "castigo a fallo")
+
+    def test_multipart_kick_is_not_a_whiff(self):
+        b = self.brain([st(f, mx=400, rx=440, ratk=(f >= 4)) for f in range(0, 18)], rival_state=235)
+        self.assertNotEqual(b._options_for(b.state())[0], "castigo a fallo")
+
+    def test_far_whiff_uses_sweep(self):
+        b = self.brain([st(f, mx=400, rx=480, ratk=(f >= 4)) for f in range(0, 18)])
+        sit, opts = b._options_for(b.state())
+        self.assertEqual(sit, "castigo a fallo")
+        self.assertEqual(opts[0].notation, "2D")
+
+    def test_landing_after_missed_air_attack(self):
+        states = [st(f, mx=400, rx=440, rh=(60 - 6 * f if f < 10 else 0), ratk=(3 <= f < 9)) for f in range(0, 12)]
+        b = self.brain(states, rival_state=1)
+        self.assertEqual(b._options_for(b.state())[0], "castigo a fallo")

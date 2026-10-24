@@ -26,6 +26,9 @@ MODES = (DEFENSE_ONLY, DEFENSE_WITH_PUNISH, BALANCED_EXPERIMENTAL, GUARD_ONLY_TE
 # Situaciones defensivas que el ataque no puede interrumpir nunca.
 HARD_THREATS = {"ronda terminada", "me agarran", "derribado", "rival encima (esquina)", "guardia desgastada: responder", "rival corre hacia mi", "en el aire (esperando aterrizar)", "estoy en el aire",
                 "me golpearon", "rival cae hacia mi", "rival ataca desde el aire", "rival ataca"}
+# Castigos que SI pueden interrumpir una amenaza dura: el fallo en curso del rival ("rival ataca" con el bit
+# encendido pero sin pegarme) es justo cuando hay que pegar.
+PUNISH_OVERRIDES = {"castigo a fallo": {"rival ataca", "presion del rival"}}
 # Neutral de la defensa original: sin amenaza, el ataque estrategico puede proponer.
 NEUTRAL_SITUATIONS = {"rival lejos", "media distancia", "pegado al rival"}
 
@@ -61,6 +64,9 @@ class CombatActionArbiter:
         return chosen.situation, chosen.options
 
     def _select(self, defense, punish, attack):
+        if (self.mode != DEFENSE_ONLY and punish is not None
+                and defense.situation in PUNISH_OVERRIDES.get(punish.situation, ())):
+            return punish, "castigo"
         if self.mode == DEFENSE_ONLY or defense.situation in HARD_THREATS:
             return defense, "defensa"
         if punish is not None:
