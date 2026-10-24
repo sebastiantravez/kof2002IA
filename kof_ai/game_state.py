@@ -135,7 +135,8 @@ THROWING_STATES = {229, 230, 231, 232, 248, 249}
 #  saltito) de pie.
 #  Kim 250 NO es bajo: con Iori cubriendo AGACHADO entro 18 de 18 (17:46); va por el aire (altura 27-33,
 #  avanza ~70 px): es el seguimiento arriba+D, un overhead -> OVERHEAD_STATES.
-LOW_HIT_STATES = {"Kim": {137, 144, 146, 235}}
+#  Kim 136: medido en 12 peleas (160 usos): bloqueado agachado 92, de pie 11, y ENTRO con guardia de pie 34.
+LOW_HIT_STATES = {"Kim": {136, 137, 144, 146, 235}}
 # Carrera del rival (sin guardia mientras corre, segun el usuario): Kim 95 (el estado mas rapido
 # en el suelo, 2026-10-16).
 RUN_STATES = {"Kim": {95}}
@@ -150,7 +151,9 @@ RECOVERY_STATES = {"Kim": {251}}
 DOWN_STATES = {72, 73, 78}
 # Movimientos que hay que bloquear DE PIE (overheads de pie). Kim 89 = patada en arco (6B tras 2D,
 # segun el usuario); medido: 88 se bloqueo agachado 79/79 (no es el overhead), 89 entro agachado.
-OVERHEAD_STATES = {"Kim": {89, 250}}
+#  Kim 129: bloqueado de pie 76, entro agachado 26 (vs 2 de pie). Kim 224 (381 usos): entro agachado 30 de 249,
+#  de pie 2 de 61: de pie es mas seguro.
+OVERHEAD_STATES = {"Kim": {89, 129, 224, 250}}
 POWER_OFFSET = 0x1E3
 
 

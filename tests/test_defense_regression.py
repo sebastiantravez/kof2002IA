@@ -990,3 +990,21 @@ class RecoveryPunish(unittest.TestCase):
     def test_not_out_of_range(self):
         b = self.brain(251, rx=470)
         self.assertNotEqual(b._options_for(b.state())[0], "castigo a recuperacion")
+
+
+class KimGuardTableFromTwelveFights(unittest.TestCase):
+    def guard_low_vs(self, rival_state):
+        feed = Feed()
+        b = RuleBrain(feed, IORI)
+        for f in range(0, 12):
+            s = st(f, mx=400, rx=455, ratk=(f >= 2))
+            feed.s = replace(s, rival=replace(s.rival, state_id=rival_state if f >= 6 else 1, character_id=6))
+            b.state()
+        return b.guard_low()
+
+    def test_136_low(self):
+        self.assertTrue(self.guard_low_vs(136))
+
+    def test_129_and_224_standing(self):
+        self.assertFalse(self.guard_low_vs(129))
+        self.assertFalse(self.guard_low_vs(224))
