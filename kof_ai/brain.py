@@ -11,8 +11,8 @@ from dataclasses import dataclass, replace
 
 from .arbiter import (BALANCED_EXPERIMENTAL, DEFENSE_ONLY, GUARD_ONLY_TEST, CombatActionArbiter, Proposal,
                       mode_from_profile)
-from .game_state import (BLOCKSTUN_STATES, LOW_HIT_STATES, MULTIPART_STATES, OVERHEAD_STATES, RECOVERY_STATES,
-                         RUN_STATES, THROWING_STATES)
+from .game_state import (BLOCKSTUN_STATES, KICK_FOLLOWUP_STATES, LOW_HIT_STATES, MULTIPART_STATES, OVERHEAD_STATES,
+                         RECOVERY_STATES, RUN_STATES, THROWING_STATES)
 from .strategy import Strategy, is_useful
 
 # Distancias en unidades del escenario (la pantalla mide ~304).
@@ -666,6 +666,13 @@ class RuleBrain:
 
         if self._thrown(state):
             return "me agarran", [Option(1, "escapar agarre", self.throw_escape(state))]
+
+        if (rival.state_id in KICK_FOLLOWUP_STATES.get(rival.character, ()) and d <= 90
+                and not me.airborne and not me.down and me.state_id not in BLOCKSTUN_STATES
+                and not self._recently_hit(state, 6)):
+            # La patada 214+K va a seguir (saltito + remate): rodar por debajo en vez de cubrir. Al caer,
+            # Kim queda en 251 y el castigo a recuperacion entra.
+            return "rodar bajo la patada", [Option(70, "roll adelante", "AB"), Option(30, "guardia", "G[8]")]
 
         if me.down:
             # Tirado o levantandose: nada sale. Atras+abajo sostenido para levantarse cubriendo

@@ -145,6 +145,11 @@ RUN_STATES = {"Kim": {95}}
 # aereo de la patada 214+K: 17 frames (85 medidos, 2026-10-24), termina a 13-57 de distancia; Iori lo
 # bloqueo 45 veces y solo cubrio despues.
 RECOVERY_STATES = {"Kim": {251}}
+# Arranque de los seguimientos de la patada 214+K (246 = 12 frames de transicion, 247 = saltito): si Iori
+# esta libre, rodar por debajo (la rodada no recibe golpes) deja a Kim aterrizando (251) de espaldas.
+# Medido 2026-10-24: el remate 250 entra con la guardia puesta a cualquier altura (12-18 por pelea) tras
+# muchos bloqueos seguidos: cubrirlo no sirve, hay que no estar ahi.
+KICK_FOLLOWUP_STATES = {"Kim": {246, 247}}
 # Movimientos de varias partes: el bit de ataque sigue encendido entre partes, asi que NO son un fallo
 # castigable aunque lleven muchos frames sin pegar. Kim: patada 214+K (235/246/247/250), DM (144/146/167),
 # patada B+diagonal (143/145/147).

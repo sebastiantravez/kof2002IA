@@ -24,7 +24,7 @@ GUARD_ONLY_TEST = "GUARD_ONLY_TEST"
 MODES = (DEFENSE_ONLY, DEFENSE_WITH_PUNISH, BALANCED_EXPERIMENTAL, GUARD_ONLY_TEST)
 
 # Situaciones defensivas que el ataque no puede interrumpir nunca.
-HARD_THREATS = {"ronda terminada", "me agarran", "derribado", "rival encima (esquina)", "guardia desgastada: responder", "rival corre hacia mi", "en el aire (esperando aterrizar)", "estoy en el aire",
+HARD_THREATS = {"ronda terminada", "me agarran", "derribado", "rival encima (esquina)", "guardia desgastada: responder", "rival corre hacia mi", "rodar bajo la patada", "en el aire (esperando aterrizar)", "estoy en el aire",
                 "me golpearon", "rival cae hacia mi", "rival ataca desde el aire", "rival ataca"}
 # Castigos que SI pueden interrumpir una amenaza dura: el fallo en curso del rival ("rival ataca" con el bit
 # encendido pero sin pegarme) es justo cuando hay que pegar.

@@ -1100,3 +1100,25 @@ class LeaveTheCorner(unittest.TestCase):
         self.assertIn("roll adelante (salir de la esquina)", names)
         self.assertIn("salto adelante", names)
         self.assertGreater(names["roll adelante (salir de la esquina)"], names["guardia"])
+
+
+class RollUnderTheKick(unittest.TestCase):
+    def brain(self, my_state, rival_state=246):
+        feed = Feed()
+        b = RuleBrain(feed, {**IORI, "combat_mode": "BALANCED_EXPERIMENTAL"})
+        for f in range(0, 12):
+            s = st(f, mx=400, rx=460, ratk=True)
+            feed.s = replace(s, me=replace(s.me, state_id=my_state), rival=replace(s.rival, state_id=rival_state if f >= 6 else 235, character_id=6))
+            b.state()
+        return b
+
+    def test_free_iori_rolls_under_followup(self):
+        for rs in (246, 247):
+            b = self.brain(0, rs)
+            sit, opts = b._options_for(b.state())
+            self.assertEqual(sit, "rodar bajo la patada", rs)
+            self.assertEqual(max(opts, key=lambda o: o.weight).notation, "AB")
+
+    def test_still_in_blockstun_keeps_guarding(self):
+        b = self.brain(30)
+        self.assertNotEqual(b._options_for(b.state())[0], "rodar bajo la patada")
