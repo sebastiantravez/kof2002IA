@@ -1191,3 +1191,17 @@ class KickStartResponse(unittest.TestCase):
     def test_too_late_just_guards(self):
         b = self.brain(470, age=14)
         self.assertNotIn("patada 214+K", b._options_for(b.state())[0])
+
+
+class NewKimThrows(unittest.TestCase):
+    def test_201_and_202_are_throws(self):
+        for rs, btn in ((201, "C"), (202, "D")):
+            feed = Feed()
+            b = RuleBrain(feed, IORI)
+            for f in range(0, 10):
+                s = st(f, mx=400, rx=428)
+                feed.s = replace(s, me=replace(s.me, state_id=168 if f >= 6 else 23), rival=replace(s.rival, state_id=rs if f >= 6 else 1))
+                b.state()
+            sit, opts = b._options_for(b.state())
+            self.assertEqual(sit, "me agarran", rs)
+            self.assertIn("4" + btn, opts[0].notation)
