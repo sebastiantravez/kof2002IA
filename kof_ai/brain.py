@@ -629,7 +629,10 @@ class RuleBrain:
             if d <= CLOSE_C_RANGE:
                 return Proposal("castigo a fallo", [Option(70, "castigo seguro: C Oniyaki", "C>623C"),
                                                    Option(20, "castigo seguro: C Aoi Hana", "C>214C>214C>214C")])
-            return Proposal("castigo a fallo", [Option(60, "castigo: barrida 2D", "2D"), Option(10, "castigo: poke", self._moves["poke"])])
+            # 2026-10-31: 'castigo: poke' 3/10 con 5 castigos (y 1/7 antes): fuera. Barrida solo hasta 60.
+            if d <= 60:
+                return Proposal("castigo a fallo", [Option(60, "castigo: barrida 2D", "2D")])
+            return None
         if self._in_recovery_window(state):
             # El rival esta en una recuperacion conocida (RECOVERY_STATES) y al alcance del C.
             return Proposal("castigo a recuperacion", [Option(70, "castigo seguro: C Oniyaki", "C>623C"),
@@ -644,15 +647,15 @@ class RuleBrain:
                 options.append(Option(30, "castigo seguro: 2B", "2B"))
             return Proposal("castigo seguro", options)
         if self.strategy is not None and self._whiff_punishable(state):
-            m = self._moves
             # "correr + 2B" medido 0 de 4 (3 fallos, 2 castigados): el rival ya no esta donde
             # estaba al llegar. De lejos, poke o barrida; de cerca, el combo confirmado.
             if d <= CLOSE_C_RANGE:
                 options = [Option(45, "castigo: C Oniyaki", "C>623C"),
                            Option(20, "castigo: 2B", "2B") if d <= LIGHT_RANGE else None]
+            elif d <= 60:
+                options = [Option(45, "castigo: barrida 2D", "2D")]
             else:
-                options = [Option(45, "castigo: poke", m["poke"]),
-                           Option(20, "castigo: barrida 2D", "2D") if d <= 110 else None]
+                return None          # de lejos el 2C de castigo fue 3/10 y 1/7 con 9 castigos: no vale
             return Proposal("castigo a golpe fallado", [o for o in options if o])
         return None
 

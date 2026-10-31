@@ -655,11 +655,11 @@ class ConfirmedPunishCombos(unittest.TestCase):
         feed = Feed()
         b = RB(feed, {**IORI, "combat_mode": "BALANCED_EXPERIMENTAL"})
         for f in range(0, 15):
-            feed.s = st(f, mx=300, rx=420, ratk=(5 <= f < 12))
+            feed.s = st(f, mx=300, rx=420, ratk=(5 <= f < 12))      # fallo desde lejos (120)
             b.state()
+        # medido: correr a castigar 0/4 y el 2C de lejos 4/17 con 9 castigos -> un fallo lejano ya no se castiga
         sit, opts = b._options_for(b.state())
-        self.assertEqual(sit, "castigo a golpe fallado")
-        self.assertFalse([o for o in opts if "correr" in o.name])
+        self.assertNotEqual(sit, "castigo a golpe fallado")
 
 
 class NoWalkingIntoTheCorner(unittest.TestCase):
@@ -1035,11 +1035,13 @@ class PunishMistakes(unittest.TestCase):
         b = self.brain([st(f, mx=400, rx=440, ratk=(f >= 4)) for f in range(0, 18)], rival_state=235)
         self.assertNotEqual(b._options_for(b.state())[0], "castigo a fallo")
 
-    def test_far_whiff_uses_sweep(self):
-        b = self.brain([st(f, mx=400, rx=480, ratk=(f >= 4)) for f in range(0, 18)])
+    def test_mid_whiff_uses_sweep_far_is_left_alone(self):
+        b = self.brain([st(f, mx=400, rx=455, ratk=(f >= 4)) for f in range(0, 18)])
         sit, opts = b._options_for(b.state())
         self.assertEqual(sit, "castigo a fallo")
         self.assertEqual(opts[0].notation, "2D")
+        far = self.brain([st(f, mx=400, rx=480, ratk=(f >= 4)) for f in range(0, 18)])
+        self.assertNotEqual(far._options_for(far.state())[0], "castigo a fallo")
 
     def test_landing_after_missed_air_attack(self):
         states = [st(f, mx=400, rx=440, rh=(60 - 6 * f if f < 10 else 0), ratk=(3 <= f < 9)) for f in range(0, 12)]

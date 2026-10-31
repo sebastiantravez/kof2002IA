@@ -62,7 +62,8 @@ class StrategyTests(unittest.TestCase):
         # el rival ataca a 120 de distancia (nunca se acerca) y termina: golpe fallado
         b = brain_after([st(f, mx=300, rx=420, ratk=(5 <= f < 12)) for f in range(0, 15)])
         self.assertTrue(b.can_punish_now())
-        self.assertEqual(b._options_for(b.state())[0], "castigo a golpe fallado")
+        # a 120 ya no se propone castigo (medido: correr 0/4, 2C de lejos 4/17); se queda cubierto
+        self.assertNotEqual(b._options_for(b.state())[0], "castigo a golpe fallado")
         # el mismo ataque a 150: fuera de alcance, no se castiga
         far = brain_after([st(f, mx=300, rx=450, ratk=(5 <= f < 12)) for f in range(0, 15)])
         self.assertFalse(far.can_punish_now())
