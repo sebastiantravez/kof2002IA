@@ -27,7 +27,8 @@ class StrategyTests(unittest.TestCase):
         self.assertEqual(b._options_for(b.state())[0], "NEUTRAL:APPROACH")
 
     def test_poke_range(self):
-        b = brain_after([st(f, mx=400, rx=500) for f in range(0, 30)])
+        # el rival ataco hace poco (si lleva >= 90 f sin atacar, el modo es ir a por el: PassiveRival)
+        b = brain_after([st(f, mx=400, rx=500, ratk=(5 <= f < 8)) for f in range(0, 60)])   # ataco hace 52 f
         self.assertEqual(b._options_for(b.state())[0], "NEUTRAL:POKE")
 
     def test_close_without_threat_is_pressure_not_guard_only(self):
@@ -38,21 +39,21 @@ class StrategyTests(unittest.TestCase):
         self.assertLess(guard, sum(o.weight for o in opts) * 0.25)
 
     def test_passivity_raises_useful_actions(self):
-        b = brain_after([st(f, mx=400, rx=500) for f in range(0, 30)])
+        b = brain_after([st(f, mx=400, rx=500) for f in range(0, 100)])
         calm = {o.name: o.weight for o in b._options_for(b.state())[1]}
         b2 = brain_after([st(f, mx=400, rx=500) for f in range(0, 400)])   # ~6 s sin nada util
         bored = {o.name: o.weight for o in b2._options_for(b2.state())[1]}
         self.assertGreater(b2.strategy.passivity_score(b2.state().frame), 5)
-        self.assertGreater(bored["poke"], calm["poke"])
+        self.assertGreater(bored["acercarse (pasos cortos)"], calm["acercarse (pasos cortos)"])   # rival pasivo: ir a por el
 
     def test_hysteresis_keeps_mode_briefly(self):
-        b = brain_after([st(f, mx=200, rx=450) for f in range(0, 30)])      # APPROACH
+        b = brain_after([st(f, mx=200, rx=450, ratk=(5 <= f < 8)) for f in range(0, 45)])      # APPROACH
         b._options_for(b.state())
         feed = b._reader
-        feed.s = st(31, mx=400, rx=500)                                     # ahora a distancia de poke
+        feed.s = st(46, mx=400, rx=500)                                     # ahora a distancia de poke
         b.state()
         self.assertEqual(b._options_for(b.state())[0], "NEUTRAL:APPROACH")  # aun no pasaron 20 frames
-        for f in range(32, 60):
+        for f in range(47, 75):
             feed.s = st(f, mx=400, rx=500)
             b.state()
         self.assertEqual(b._options_for(b.state())[0], "NEUTRAL:POKE")
@@ -183,3 +184,18 @@ class RushMiddleGround(unittest.TestCase):
         b = self.brain([st(f, mx=400, rx=430, ratk=(20 <= f < 26)) for f in range(0, 40)])
         _, opts = b._options_for(b.state())
         self.assertEqual(max(opts, key=lambda o: o.weight).name, "combo: C Oniyaki C")
+
+
+class PassiveRival(unittest.TestCase):
+    def test_passive_rival_far_means_approach_without_bait(self):
+        b = brain_after([st(f, mx=300, rx=420) for f in range(0, 200)])    # 200 f sin atacar
+        sit, opts = b._options_for(b.state())
+        self.assertEqual(sit, "NEUTRAL:APPROACH")
+        names = {o.name for o in opts}
+        self.assertFalse([n for n in names if "amague" in n or "guardia" in n or "retroceder" in n])
+
+    def test_passive_rival_close_means_pressure(self):
+        b = brain_after([st(f, mx=400, rx=435) for f in range(0, 200)], {**STRATEGIC, "pressure_needs_calm": True})
+        sit, opts = b._options_for(b.state())
+        self.assertEqual(sit, "NEUTRAL:PRESSURE")
+        self.assertTrue([o for o in opts if o.name.startswith("combo")])

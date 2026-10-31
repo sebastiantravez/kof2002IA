@@ -132,7 +132,11 @@ class Strategy:
         m = self.model
         passive = self.passivity_score(f)
         rival_passive = m.rival_passive(f)
-        if d > 180:
+        if rival_passive and not self.aggressive:
+            # Usuario (2026-10-24): "si no me muevo, Iori no sabe que hacer". Rival quieto >= PASSIVE_RIVAL_FRAMES:
+            # nada de amagues (BAIT) ni retiradas: acercarse y, pegado, presion (la tabla medida).
+            new = Mode("APPROACH", "rival pasivo: ir a por el") if d > 45 else Mode("PRESSURE", "rival pasivo y pegado: presion")
+        elif d > 180:
             new = Mode("APPROACH", "rival lejos: acercarse")
             if m.aggression > 25 and passive < 2 and not rival_passive:
                 new = Mode("BAIT", "rival agresivo: provocar que ataque desde lejos")
@@ -174,7 +178,11 @@ class Strategy:
         cornered_rival = 1.5 if state.rival_cornered else 1.0
         lows = m.low_ratio > 0.4          # el rival ataca mucho por abajo
 
-        if mode.name == "RUSH" and d > 45 and state.frame - m.last_attack_frame < RUSH_CALM_FRAMES and not state.rival.airborne:
+        if mode.name == "APPROACH" and m.rival_passive(state.frame) and not self.aggressive:
+            opts = [O(40 * push, "acercarse (pasos cortos)", "6[10]", interruptible=True),
+                    O((30 if d > 120 else 10) * push, "correr", "6 5 6[18]", interruptible=True),
+                    O(8, "hop adelante", "9[3]")]
+        elif mode.name == "RUSH" and d > 45 and state.frame - m.last_attack_frame < RUSH_CALM_FRAMES and not state.rival.airborne:
             # Punto medio (usuario, 2026-10-24): entrar solo cuando el rival lleva >= medio segundo sin atacar;
             # con el rival activo y lejos, cubrir y esperar su error (al 100% entraba al 5C: 4-8, 1233 recibidos).
             opts = [O(60, "guardia corta", "G[4]"), O(10, "acercarse (pasos cortos)", "6[6]", interruptible=True)]

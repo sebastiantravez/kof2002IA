@@ -1142,3 +1142,23 @@ class KimDMEnderIsLow(unittest.TestCase):
             feed.s = replace(s, rival=replace(s.rival, state_id=142 if f >= 6 else 1, character_id=6))
             b.state()
         self.assertTrue(b.guard_low())
+
+
+class WhiffByState(unittest.TestCase):
+    def brain(self, rival_state, rx=440):
+        feed = Feed()
+        b = RuleBrain(feed, {**IORI, "combat_mode": "BALANCED_EXPERIMENTAL"})
+        for f in range(0, 14):
+            s = st(f, mx=400, rx=rx, ratk=(f >= 4))
+            feed.s = replace(s, rival=replace(s.rival, state_id=rival_state, character_id=6))
+            b.state()
+        return b
+
+    def test_whiffed_sweep_is_punished(self):
+        sit, opts = self.brain(115)._options_for(self.brain(115).state())
+        self.assertEqual(sit, "castigo a fallo")
+        self.assertEqual(opts[0].notation, "C>623C")
+
+    def test_unknown_move_is_not_punished_by_time(self):
+        b = self.brain(98)
+        self.assertNotEqual(b._options_for(b.state())[0], "castigo a fallo")

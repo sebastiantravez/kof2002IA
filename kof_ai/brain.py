@@ -12,7 +12,7 @@ from dataclasses import dataclass, replace
 from .arbiter import (BALANCED_EXPERIMENTAL, DEFENSE_ONLY, GUARD_ONLY_TEST, CombatActionArbiter, Proposal,
                       mode_from_profile)
 from .game_state import (BLOCKSTUN_STATES, KICK_FOLLOWUP_STATES, LOW_HIT_STATES, MULTIPART_STATES, OVERHEAD_STATES,
-                         RECOVERY_STATES, RUN_STATES, THROWING_STATES)
+                         RECOVERY_STATES, RUN_STATES, THROWING_STATES, WHIFF_PUNISH_STATES)
 from .strategy import Strategy, is_useful
 
 # Distancias en unidades del escenario (la pantalla mide ~304).
@@ -455,6 +455,18 @@ class RuleBrain:
             return False
         return self._free_to_punish(state) and state.distance <= WHIFF_NOW_RANGE
 
+    def _whiff_by_state(self, state):
+        """El rival esta en un movimiento que ya no me va a pegar (WHIFF_PUNISH_STATES): lleva >= 6 frames, no me
+        ha pegado y no lo estoy bloqueando. Castigo por movimiento, no por tiempo."""
+        rival = state.rival
+        if self.strategy is None or rival.state_id not in WHIFF_PUNISH_STATES.get(rival.character, ()):
+            return False
+        if not rival.attacking or self._rival_attack_age(state) < 6:
+            return False
+        if self._last_hit_frame >= self._rival_attack_start_frame:
+            return False
+        return self._free_to_punish(state) and state.distance <= WHIFF_NOW_RANGE
+
     def _landing_punish(self, state):
         """El rival acaba de aterrizar tras atacar en el aire sin pegarme: unos frames de aterrizaje."""
         if self.strategy is None or state.rival.airborne:
@@ -609,7 +621,8 @@ class RuleBrain:
         d = state.distance
         # Medido 2026-10-24 (8 min): 0 de 12 pegaron y 9 castigados: el 'fallo' a los 10 frames era un golpe
         # que aun venia. Apagado salvo perfil "punish_whiff_now": true.
-        if self._moves.get("punish_whiff_now", False) and (self._whiff_now(state) or self._landing_punish(state)):
+        if self._whiff_by_state(state) or (self._moves.get("punish_whiff_now", False)
+                                           and (self._whiff_now(state) or self._landing_punish(state))):
             # El usuario (2026-10-24): "cuando ejecuto un poder Kim se queda parada unos milisegundos y Iori
             # no hace nada". Fallo en curso (bit encendido, no me pego, no lo estoy bloqueando) o aterrizaje
             # tras un golpe aereo fallado: castigar YA, sin esperar a que se apague el bit.

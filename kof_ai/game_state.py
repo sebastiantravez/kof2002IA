@@ -158,6 +158,11 @@ KICK_FOLLOWUP_STATES = {"Kim": {246, 247}}
 # castigable aunque lleven muchos frames sin pegar. Kim: patada 214+K (235/246/247/250), DM (144/146/167),
 # patada B+diagonal (143/145/147).
 MULTIPART_STATES = {"Kim": {235, 246, 247, 250, 251, 144, 146, 167, 143, 145, 147}}
+# Movimientos que, cuando fallan (ni pegan ni son bloqueados), dejan al rival atado el tiempo suficiente para
+# castigarlos. Medido en 9 peleas del 2026-10-24: Kim 115 (barrida 2D: 18% fallos, 17 f, acaba a 47), 135 (47%,
+# 16 f, a 77), 162 (73%, 10 f, a 89), 234 (25%, 19 f, a 56). El castigo por tiempo (10 f) fue 0 de 12; este es
+# por estado, en cuanto se ve que no pego.
+WHIFF_PUNISH_STATES = {"Kim": {115, 135, 162, 234}}
 # Derribado: cayendo al suelo (78), tirado (73) y levantandose (72, ~50 frames). Medido en las trazas
 # del 2026-10-15 (Iori): 20 entradas, 0 ataques salieron con el boton pulsado dentro, las rodadas y
 # castigos que el bot pidio ahi se perdieron. Lo unico util es levantarse cubierto.
