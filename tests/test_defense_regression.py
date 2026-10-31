@@ -1193,15 +1193,21 @@ class KickStartResponse(unittest.TestCase):
         self.assertNotIn("patada 214+K", b._options_for(b.state())[0])
 
 
-class NewKimThrows(unittest.TestCase):
-    def test_201_and_202_are_throws(self):
-        for rs, btn in ((201, "C"), (202, "D")):
-            feed = Feed()
-            b = RuleBrain(feed, IORI)
-            for f in range(0, 10):
-                s = st(f, mx=400, rx=428)
-                feed.s = replace(s, me=replace(s.me, state_id=168 if f >= 6 else 23), rival=replace(s.rival, state_id=rs if f >= 6 else 1))
-                b.state()
-            sit, opts = b._options_for(b.state())
-            self.assertEqual(sit, "me agarran", rs)
-            self.assertIn("4" + btn, opts[0].notation)
+class ThrowsByRivalCharacter(unittest.TestCase):
+    def thrown(self, rs, rival_char):
+        feed = Feed()
+        b = RuleBrain(feed, IORI)
+        for f in range(0, 10):
+            s = st(f, mx=400, rx=428)
+            feed.s = replace(s, me=replace(s.me, state_id=23), rival=replace(s.rival, state_id=rs if f >= 6 else 1, character_id=rival_char))
+            b.state()
+        return b._options_for(b.state())[0] == "me agarran"
+
+    def test_iori_mirror_throws_201_202(self):
+        self.assertTrue(self.thrown(201, 21))
+        self.assertTrue(self.thrown(202, 21))
+        self.assertFalse(self.thrown(201, 6))        # Kim nunca usa 201: no es agarre suyo
+
+    def test_kim_throws_still_work(self):
+        self.assertTrue(self.thrown(229, 6))
+        self.assertTrue(self.thrown(249, 6))

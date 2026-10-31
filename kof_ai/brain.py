@@ -12,7 +12,8 @@ from dataclasses import dataclass, replace
 from .arbiter import (BALANCED_EXPERIMENTAL, DEFENSE_ONLY, GUARD_ONLY_TEST, CombatActionArbiter, Proposal,
                       mode_from_profile)
 from .game_state import (BLOCKSTUN_STATES, KICK_FOLLOWUP_STATES, KICK_START_STATES, LOW_HIT_STATES, MULTIPART_STATES,
-                         OVERHEAD_STATES, RECOVERY_STATES, RUN_STATES, THROWING_STATES, WHIFF_PUNISH_STATES)
+                         OVERHEAD_STATES, RECOVERY_STATES, RUN_STATES, THROWING_STATES, THROWING_STATES_BY_CHARACTER,
+                         WHIFF_PUNISH_STATES)
 from .strategy import Strategy, is_useful
 
 # Distancias en unidades del escenario (la pantalla mide ~304).
@@ -54,7 +55,7 @@ LONG_ATTACK_FRAMES = 24   # ataque rival que dura >= N frames: lo deja vulnerabl
 # sin que empiece otro (ataques de varias partes apagan el bit de ataque entre partes).
 # Configurable por perfil: "punish_confirm_frames".
 PUNISH_CONFIRM_FRAMES = 4
-D_THROW_STATES = {232, 249, 202}   # agarres que se sueltan con D (Kim 232 medido; 249 confirmado; 202 hipotesis por dano)
+D_THROW_STATES = {232, 249, 202}   # agarres que se sueltan con D (Kim 232 medido; 249 confirmado; Iori 202 hipotesis)
 THROW_ESCAPE_DELAY = 6    # frames de espera tras ver el agarre antes de pulsar (persona: soltadas en t=13..21)
 THROW_ESCAPE_HOLD = 5     # frames con atras+boton mantenidos (la persona mantuvo 2-7)
 CORNER_ESCAPE_RANGE = 70      # salida de esquina: el rival esta a menos de esto
@@ -307,7 +308,8 @@ class RuleBrain:
         (229-232 en Kim: solo aparecen cuando el agarre conecto; si falla sale un normal).
         Pelea 2026-10-15: 8 agarres de una persona sobre Iori en guardia agachada y el 168
         no aparecio ni una vez, asi que el estado del rival es la senal fiable."""
-        return state.me.thrown or state.rival.state_id in THROWING_STATES
+        rival = state.rival
+        return state.me.thrown or rival.state_id in THROWING_STATES_BY_CHARACTER.get(rival.character, THROWING_STATES)
 
     def _rival_attack_age(self, state):
         return state.frame - self._rival_attack_start_frame

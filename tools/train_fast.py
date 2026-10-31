@@ -242,6 +242,15 @@ stop_file = ROOT / "logs" / "STOP"   # crear este archivo corta la sesion guarda
 stop_file.unlink(missing_ok=True)
 while bot.running and time.time() - start < minutes * 60:
     time.sleep(1)
+    # Al acabar una partida en versus se vuelve a elegir personaje: si cambian (2026-10-31: P1 paso a
+    # Kyo y P2 a Iori sin que nadie lo notara), lo medido deja de valer. Parar y avisar.
+    now_state = reader.read()
+    if now_state is not None and 0 < now_state.me.life <= MAX_LIFE and (
+            now_state.me.character != character or (wanted_rival and now_state.rival.character != wanted_rival)
+            or now_state.rival.character != first.rival.character):
+        print(f"DETENIDO: los personajes cambiaron: P1 = {now_state.me.character}, P2 = {now_state.rival.character} "
+              f"(empezo Iori vs {first.rival.character}). Vuelve a elegir y lanza de nuevo.")
+        break
     if stop_file.exists():
         stop_file.unlink(missing_ok=True)
         print("Corte pedido (logs/STOP): termino la sesion guardando el resumen.")
