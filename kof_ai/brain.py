@@ -159,6 +159,7 @@ class RuleBrain:
         self._rival_attack_hit_me = False
         self._rival_air_attack_frame = -10_000   # ultimo frame con el rival atacando EN EL AIRE
         self._rival_landed_frame = -10_000       # ultimo aterrizaje del rival
+        self._rival_state_since = -10_000        # frame en que el rival entro en su estado actual
 
     def state(self):
         """Estado cacheado ~8 ms; ademas registra golpes recibidos frame a frame."""
@@ -196,6 +197,8 @@ class RuleBrain:
                     self._rival_air_attack_frame = state.frame
                 if self._cached.rival.airborne and not state.rival.airborne:
                     self._rival_landed_frame = state.frame
+                if state.rival.state_id != self._cached.rival.state_id:
+                    self._rival_state_since = state.frame
                 if state.rival.attacking and not self._cached.rival.attacking:
                     self._rival_attack_start_frame = state.frame
                     self._rival_attack_low = state.frame - self._rival_crouch_frame <= LOW_ATTACK_WINDOW
@@ -686,7 +689,9 @@ class RuleBrain:
         if self._thrown(state):
             return "me agarran", [Option(1, "escapar agarre", self.throw_escape(state))]
 
-        if (rival.state_id in KICK_START_STATES.get(rival.character, ()) and self._rival_attack_age(state) <= KICK_REACT_FRAMES
+        # La edad se mide desde que Kim ENTRO en 235, no desde que encendio el bit de ataque: la patada viene
+        # encadenada tras un 2B y el bit lleva encendido desde antes (por eso no se disparo nunca el 31/10).
+        if (rival.state_id in KICK_START_STATES.get(rival.character, ()) and state.frame - self._rival_state_since <= KICK_REACT_FRAMES
                 and d <= 110 and not me.airborne and not me.down and me.state_id not in BLOCKSTUN_STATES
                 and not self._recently_hit(state, 6)):
             # La patada 214+K arranca: lo que hace el usuario con Iori. Pegado, 2B antes de que salga;

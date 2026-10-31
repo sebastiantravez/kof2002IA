@@ -1211,3 +1211,14 @@ class ThrowsByRivalCharacter(unittest.TestCase):
     def test_kim_throws_still_work(self):
         self.assertTrue(self.thrown(229, 6))
         self.assertTrue(self.thrown(249, 6))
+
+
+class KickAfterChain(unittest.TestCase):
+    def test_kick_chained_after_2b_still_triggers(self):
+        feed = Feed()
+        b = RuleBrain(feed, {**IORI, "combat_mode": "BALANCED_EXPERIMENTAL"})
+        for f in range(0, 30):
+            s = st(f, mx=400, rx=470, ratk=(f >= 4))                  # bit encendido desde f=4 (2B fallado lejos)
+            feed.s = replace(s, rival=replace(s.rival, state_id=235 if f >= 26 else 97, character_id=6))
+            b.state()
+        self.assertEqual(b._options_for(b.state())[0], "patada 214+K: salto atras")
