@@ -154,6 +154,9 @@ RECOVERY_STATES = {"Kim": {251}}
 # Medido 2026-10-24: el remate 250 entra con la guardia puesta a cualquier altura (12-18 por pelea) tras
 # muchos bloqueos seguidos: cubrirlo no sirve, hay que no estar ahi.
 KICK_FOLLOWUP_STATES = {"Kim": {246, 247}}
+# Arranque de la patada 214+K (234 a veces precede a 235). Respuesta del usuario (2026-10-31): "cuando la veo
+# venir salto hacia atras o pego antes con 2B".
+KICK_START_STATES = {"Kim": {234, 235}}
 # Movimientos de varias partes: el bit de ataque sigue encendido entre partes, asi que NO son un fallo
 # castigable aunque lleven muchos frames sin pegar. Kim: patada 214+K (235/246/247/250), DM (144/146/167),
 # patada B+diagonal (143/145/147).

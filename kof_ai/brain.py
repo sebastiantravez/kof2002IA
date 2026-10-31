@@ -11,8 +11,8 @@ from dataclasses import dataclass, replace
 
 from .arbiter import (BALANCED_EXPERIMENTAL, DEFENSE_ONLY, GUARD_ONLY_TEST, CombatActionArbiter, Proposal,
                       mode_from_profile)
-from .game_state import (BLOCKSTUN_STATES, KICK_FOLLOWUP_STATES, LOW_HIT_STATES, MULTIPART_STATES, OVERHEAD_STATES,
-                         RECOVERY_STATES, RUN_STATES, THROWING_STATES, WHIFF_PUNISH_STATES)
+from .game_state import (BLOCKSTUN_STATES, KICK_FOLLOWUP_STATES, KICK_START_STATES, LOW_HIT_STATES, MULTIPART_STATES,
+                         OVERHEAD_STATES, RECOVERY_STATES, RUN_STATES, THROWING_STATES, WHIFF_PUNISH_STATES)
 from .strategy import Strategy, is_useful
 
 # Distancias en unidades del escenario (la pantalla mide ~304).
@@ -48,6 +48,7 @@ WHIFF_AGE = 10            # frames de ataque rival sin pegarme ni bloquearlo: ya
 WHIFF_NOW_RANGE = 100     # hasta donde se castiga un fallo (2D a 45-100, C>623C mas cerca)
 LANDING_AFTER_AIR_ATTACK = 25   # aterrizaje a <= N frames de un golpe aereo fallado: castigable
 LANDING_WINDOW = 8              # frames tras aterrizar en los que el rival no puede hacer nada
+KICK_REACT_FRAMES = 8           # la patada 214+K pega a los 8-10 frames: reaccionar solo si se ve a tiempo
 LONG_ATTACK_FRAMES = 24   # ataque rival que dura >= N frames: lo deja vulnerable al terminar
 # Castigo seguro (DEFENSE_WITH_PUNISH): el ataque rival tiene que llevar N frames terminado
 # sin que empiece otro (ataques de varias partes apagan el bit de ataque entre partes).
@@ -682,6 +683,15 @@ class RuleBrain:
 
         if self._thrown(state):
             return "me agarran", [Option(1, "escapar agarre", self.throw_escape(state))]
+
+        if (rival.state_id in KICK_START_STATES.get(rival.character, ()) and self._rival_attack_age(state) <= KICK_REACT_FRAMES
+                and d <= 110 and not me.airborne and not me.down and me.state_id not in BLOCKSTUN_STATES
+                and not self._recently_hit(state, 6)):
+            # La patada 214+K arranca: lo que hace el usuario con Iori. Pegado, 2B antes de que salga;
+            # si no, salto hacia atras (la patada pasa por debajo y Kim aterriza lejos).
+            if d <= LIGHT_RANGE:
+                return "patada 214+K: pegar antes", [Option(70, "golpe bajo 2B", "2B"), Option(30, "salto atras", "7[8]")]
+            return "patada 214+K: salto atras", [Option(80, "salto atras", "7[8]"), Option(20, "guardia", "G[8]")]
 
         # Medido 2026-10-24 12:25: 3 rodadas bajo la patada, las 3 castigadas (-18, -16, -10), 0 pegadas. Apagado
         # salvo perfil "roll_under_kick": true.

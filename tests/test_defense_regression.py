@@ -1164,3 +1164,30 @@ class WhiffByState(unittest.TestCase):
     def test_unknown_move_is_not_punished_by_time(self):
         b = self.brain(98)
         self.assertNotEqual(b._options_for(b.state())[0], "castigo a fallo")
+
+
+class KickStartResponse(unittest.TestCase):
+    """Usuario: ante la patada 214+K, salto atras o 2B antes."""
+
+    def brain(self, rx, age=2):
+        feed = Feed()
+        b = RuleBrain(feed, {**IORI, "combat_mode": "BALANCED_EXPERIMENTAL"})
+        for f in range(0, 10 + age):
+            s = st(f, mx=400, rx=rx, ratk=(f >= 10))
+            feed.s = replace(s, rival=replace(s.rival, state_id=235 if f >= 10 else 97, character_id=6))
+            b.state()
+        return b
+
+    def test_close_hits_first_with_2b(self):
+        sit, opts = self.brain(425)._options_for(self.brain(425).state())
+        self.assertEqual(sit, "patada 214+K: pegar antes")
+        self.assertEqual(max(opts, key=lambda o: o.weight).notation, "2B")
+
+    def test_mid_jumps_back(self):
+        sit, opts = self.brain(470)._options_for(self.brain(470).state())
+        self.assertEqual(sit, "patada 214+K: salto atras")
+        self.assertEqual(max(opts, key=lambda o: o.weight).notation, "7[8]")
+
+    def test_too_late_just_guards(self):
+        b = self.brain(470, age=14)
+        self.assertNotIn("patada 214+K", b._options_for(b.state())[0])
