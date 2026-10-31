@@ -27,7 +27,7 @@ CORNER_MARGIN = 28
 CHARACTER_OFFSET = 0x071
 # Verificados con capturas de una repeticion (KOF 2002 Plus): Kyo 0, Kim 6, Choi 8, Iori 21.
 # 39 = Rugal: deducido (el usuario vio a Rugal y un jugador lo uso toda la repeticion), sin captura.
-CHARACTER_IDS = {0: "Kyo", 6: "Kim", 8: "Choi", 9: "Athena", 11: "Chin", 21: "Iori", 39: "Rugal"}
+CHARACTER_IDS = {0: "Kyo", 6: "Kim", 8: "Choi", 9: "Athena", 11: "Chin", 17: "Takuma", 21: "Iori", 39: "Rugal"}
 STRUCT_SIZE = 0x200
 
 
