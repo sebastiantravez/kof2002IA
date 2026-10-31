@@ -691,7 +691,10 @@ class RuleBrain:
 
         # La edad se mide desde que Kim ENTRO en 235, no desde que encendio el bit de ataque: la patada viene
         # encadenada tras un 2B y el bit lleva encendido desde antes (por eso no se disparo nunca el 31/10).
-        if (rival.state_id in KICK_START_STATES.get(rival.character, ()) and state.frame - self._rival_state_since <= KICK_REACT_FRAMES
+        # Medido 2026-10-31 12:42: 4 disparos (3 saltos atras, 1 guardia), los 4 golpeados: con 2 frames de
+        # latencia y 4 de pre-salto no llega antes del golpe (8-10 f). Apagado salvo perfil "kick_react": true.
+        if (self._moves.get("kick_react", False) and rival.state_id in KICK_START_STATES.get(rival.character, ())
+                and state.frame - self._rival_state_since <= KICK_REACT_FRAMES
                 and d <= 110 and not me.airborne and not me.down and me.state_id not in BLOCKSTUN_STATES
                 and not self._recently_hit(state, 6)):
             # La patada 214+K arranca: lo que hace el usuario con Iori. Pegado, 2B antes de que salga;

@@ -1171,7 +1171,7 @@ class KickStartResponse(unittest.TestCase):
 
     def brain(self, rx, age=2):
         feed = Feed()
-        b = RuleBrain(feed, {**IORI, "combat_mode": "BALANCED_EXPERIMENTAL"})
+        b = RuleBrain(feed, {**IORI, "combat_mode": "BALANCED_EXPERIMENTAL", "kick_react": True})
         for f in range(0, 10 + age):
             s = st(f, mx=400, rx=rx, ratk=(f >= 10))
             feed.s = replace(s, rival=replace(s.rival, state_id=235 if f >= 10 else 97, character_id=6))
@@ -1216,7 +1216,7 @@ class ThrowsByRivalCharacter(unittest.TestCase):
 class KickAfterChain(unittest.TestCase):
     def test_kick_chained_after_2b_still_triggers(self):
         feed = Feed()
-        b = RuleBrain(feed, {**IORI, "combat_mode": "BALANCED_EXPERIMENTAL"})
+        b = RuleBrain(feed, {**IORI, "combat_mode": "BALANCED_EXPERIMENTAL", "kick_react": True})
         for f in range(0, 30):
             s = st(f, mx=400, rx=470, ratk=(f >= 4))                  # bit encendido desde f=4 (2B fallado lejos)
             feed.s = replace(s, rival=replace(s.rival, state_id=235 if f >= 26 else 97, character_id=6))
